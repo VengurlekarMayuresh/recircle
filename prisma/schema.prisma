@@ -1,0 +1,585 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  individual
+  business
+  ngo
+  volunteer
+  transporter
+  admin
+}
+
+enum Condition {
+  new
+  like_new
+  good
+  fair
+  salvage
+}
+
+enum ListingType {
+  donate
+  sell
+  exchange
+}
+
+enum MaterialStatus {
+  available
+  reserved
+  claimed
+  archived
+  future
+}
+
+enum TransportMethod {
+  self_pickup
+  supplier_delivery
+  platform_transporter
+}
+
+enum TransactionStatus {
+  negotiating
+  scheduled
+  in_transit
+  delivered
+  confirmed
+  cancelled
+}
+
+enum VehicleType {
+  mini_truck
+  pickup_van
+  tempo
+  autorickshaw
+  bike
+  other
+}
+
+enum TransporterStatus {
+  available
+  busy
+  offline
+}
+
+enum BookingStatus {
+  requested
+  accepted
+  pickup_scheduled
+  collected
+  in_transit
+  delivered
+  completed
+  cancelled
+}
+
+enum Urgency {
+  low
+  medium
+  high
+}
+
+enum WantStatus {
+  open
+  fulfilled
+  expired
+}
+
+enum MatchStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum RouteRecommendation {
+  reuse
+  repair
+  recycle
+  dispose
+}
+
+enum UserLevel {
+  seedling
+  sprout
+  sapling
+  tree
+  forest
+}
+
+enum VerificationLevel {
+  unverified
+  basic
+  verified
+  trusted
+}
+
+enum ReviewType {
+  supplier_review
+  receiver_review
+  transporter_review
+}
+
+enum DisputeStatus {
+  open
+  reviewing
+  resolved
+}
+
+enum AgentName {
+  scout
+  advisor
+  quality
+  sentinel
+}
+
+enum RepairHubType {
+  workshop
+  makerspace
+  event
+}
+
+enum FraudStatus {
+  pending
+  reviewed
+  cleared
+  banned
+}
+
+model User {
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  passwordHash      String            @map("password_hash")
+  phone              String
+  role               Role
+  orgName            String?           @map("org_name")
+  bio                String?
+  avatarUrl          String?           @map("avatar_url")
+  locationLat        Float?            @map("location_lat")
+  locationLng        Float?            @map("location_lng")
+  address            String?
+  city               String
+  greenPoints        Int               @default(0) @map("green_points")
+  level              UserLevel         @default(seedling)
+  trustScore         Int               @default(0) @map("trust_score")
+  verificationLevel  VerificationLevel @default(unverified) @map("verification_level")
+  idVerified         Boolean           @default(false) @map("id_verified")
+  avgRating          Float             @default(0) @map("avg_rating")
+  totalRatings       Int               @default(0) @map("total_ratings")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  materials          Material[]
+  wantRequests       WantRequest[]
+  directRequests     DirectRequest[]
+  matches            Match[]
+  suppliedTransactions Transaction[]    @relation("SupplierRelation")
+  receivedTransactions Transaction[]    @relation("ReceiverRelation")
+  transporterProfile Transporter?
+  transportBookings  TransportBooking[]
+  sentMessages       Message[]         @relation("SenderRelation")
+  receivedReviews    Review[]          @relation("RevieweeRelation")
+  givenReviews       Review[]          @relation("ReviewerRelation")
+  raisedDisputes     Dispute[]         @relation("DisputeRaiser")
+  resolvedDisputes   Dispute[]         @relation("DisputeResolver")
+  notifications      Notification[]
+  badges             UserBadge[]
+  chatHistory        ChatHistory[]
+  agentLogs          AgentLog[]
+  fraudFlags         FraudFlag[]       @relation("UserFraudFlags")
+  reviewedFlags      FraudFlag[]       @relation("FraudReviewer")
+  savedMaterials     SavedMaterial[]
+
+  @@map("users")
+}
+
+model Category {
+  id                     Int      @id @default(autoincrement())
+  name                   String
+  slug                   String   @unique
+  icon                   String
+  co2FactorKg            Float    @map("co2_factor_kg")
+  waterFactorLiters      Float    @default(0) @map("water_factor_liters")
+  landfillCostInrPerTonne Float    @map("landfill_cost_inr_per_tonne")
+  newCostInrPerUnit       Float    @map("new_cost_inr_per_unit")
+  decompositionYears     Int      @map("decomposition_years")
+  peakMonths             Json     @map("peak_months") // array of month numbers
+  description            String
+
+  materials              Material[]
+  wantRequests           WantRequest[]
+  demandHistory          DemandHistory[]
+
+  @@map("categories")
+}
+
+model Material {
+  id                   Int           @id @default(autoincrement())
+  userId               String        @map("user_id")
+  categoryId           Int           @map("category_id")
+  title                String
+  description          String
+  condition            Condition
+  quantity             Int           @default(1)
+  unit                 String        @default("pieces")
+  weightKg             Float?        @map("weight_kg")
+  listingType          ListingType   @map("listing_type")
+  price                Float         @default(0)
+  status               MaterialStatus @default(available)
+  locationLat          Float         @map("location_lat")
+  locationLng          Float         @map("location_lng")
+  address              String
+  city                 String
+  images               Json          @map("images") // array of URLs
+  tags                 Json          @map("tags") // array of strings
+  availableFromDate    DateTime?     @map("available_from_date")
+  aiDetectedType       String?       @map("ai_detected_type")
+  reusePotentialScore  Int?          @map("reuse_potential_score")
+  aiUseCases           Json?         @map("ai_use_cases")
+  aiRouteRecommendation RouteRecommendation? @map("ai_route_recommendation")
+  co2SavedKg           Float         @default(0) @map("co2_saved_kg")
+  rupeesSaved          Float         @default(0) @map("rupees_saved")
+  fraudRiskScore       Int           @default(0) @map("fraud_risk_score")
+  viewsCount           Int           @default(0) @map("views_count")
+  reuseCount           Int           @default(0) @map("reuse_count")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  user                 User          @relation(fields: [userId], references: [id])
+  category             Category      @relation(fields: [categoryId], references: [id])
+  directRequests       DirectRequest[]
+  matches              Match[]
+  transactions         Transaction[]
+  agentLogs            AgentLog[]
+  fraudFlags           FraudFlag[]
+  savedSubscribers     SavedMaterial[]
+
+  @@map("materials")
+}
+
+model WantRequest {
+  id             Int        @id @default(autoincrement())
+  userId         String     @map("user_id")
+  categoryId     Int        @map("category_id")
+  title          String
+  description    String
+  keywords       String
+  quantityNeeded Int        @map("quantity_needed")
+  locationLat    Float      @map("location_lat")
+  locationLng    Float      @map("location_lng")
+  radiusKm       Int        @default(10) @map("radius_km")
+  urgency        Urgency
+  status         WantStatus @default(open)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  user           User       @relation(fields: [userId], references: [id])
+  category       Category   @relation(fields: [categoryId], references: [id])
+  matches        Match[]
+
+  @@map("want_requests")
+}
+
+model DirectRequest {
+  id                 Int               @id @default(autoincrement())
+  materialId         Int               @map("material_id")
+  receiverId         String            @map("receiver_id")
+  quantityRequested  Int               @map("quantity_requested")
+  message            String
+  preferredTransport TransportMethod   @map("preferred_transport")
+  status             MatchStatus       @default(pending)
+  responseMessage    String?           @map("response_message")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  respondedAt        DateTime?         @map("responded_at")
+
+  material           Material          @relation(fields: [materialId], references: [id])
+  receiver           User              @relation(fields: [receiverId], references: [id])
+
+  @@map("direct_requests")
+}
+
+model Match {
+  id             Int         @id @default(autoincrement())
+  materialId     Int         @map("material_id")
+  wantRequestId  Int?        @map("want_request_id")
+  userId         String      @map("user_id")
+  score          Float
+  reason         String
+  status         MatchStatus @default(pending)
+  notified       Boolean     @default(false)
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  material       Material    @relation(fields: [materialId], references: [id])
+  wantRequest    WantRequest? @relation(fields: [wantRequestId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
+
+  @@map("matches")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  materialId        Int               @map("material_id")
+  supplierId        String            @map("supplier_id")
+  receiverId        String            @map("receiver_id")
+  quantity          Int
+  transportMethod   TransportMethod   @map("transport_method")
+  status            TransactionStatus @default(negotiating)
+  pickupDate        DateTime?         @map("pickup_date")
+  pickupAddress     String            @map("pickup_address")
+  deliveryAddress   String            @map("delivery_address")
+  notes             String?
+  supplierRating    Int?              @map("supplier_rating")
+  receiverRating    Int?              @map("receiver_rating")
+  pickupPhotoUrl    String?           @map("pickup_photo_url")
+  qualityMatchScore Int?              @map("quality_match_score")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  completedAt       DateTime?         @map("completed_at")
+
+  material          Material          @relation(fields: [materialId], references: [id])
+  supplier          User              @relation("SupplierRelation", fields: [supplierId], references: [id])
+  receiver          User              @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  messages          Message[]
+  reviews           Review[]
+  disputes          Dispute[]
+  transportBooking  TransportBooking?
+
+  @@map("transactions")
+}
+
+model Transporter {
+  id                 Int               @id @default(autoincrement())
+  userId             String            @unique @map("user_id")
+  vehicleType        VehicleType       @map("vehicle_type")
+  vehicleCapacityKg  Float             @map("vehicle_capacity_kg")
+  vehicleCapacityCbm Float?            @map("vehicle_capacity_cbm")
+  vehiclePhoto       String?           @map("vehicle_photo")
+  serviceAreaCity    String            @map("service_area_city")
+  serviceRadiusKm    Int               @map("service_radius_km")
+  pricePerKm         Float             @map("price_per_km")
+  baseRate           Float             @map("base_rate")
+  availabilityStatus TransporterStatus @default(available) @map("availability_status")
+  totalDeliveries    Int               @default(0) @map("total_deliveries")
+  avgRating          Float             @default(0) @map("avg_rating")
+  totalRatings       Int               @default(0) @map("total_ratings")
+  isVolunteer        Boolean           @default(false) @map("is_volunteer")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  user               User              @relation(fields: [userId], references: [id])
+  bookings           TransportBooking[]
+
+  @@map("transporters")
+}
+
+model TransportBooking {
+  id                Int           @id @default(autoincrement())
+  transactionId     String        @unique @map("transaction_id")
+  transporterId     Int           @map("transporter_id")
+  receiverId        String        @map("receiver_id")
+  pickupAddress     String        @map("pickup_address")
+  pickupLat         Float         @map("pickup_lat")
+  pickupLng         Float         @map("pickup_lng")
+  deliveryAddress   String        @map("delivery_address")
+  deliveryLat       Float         @map("delivery_lat")
+  deliveryLng       Float         @map("delivery_lng")
+  distanceKm        Float         @map("distance_km")
+  estimatedCost     Float         @map("estimated_cost")
+  actualCost        Float?        @map("actual_cost")
+  status            BookingStatus @default(requested)
+  scheduledDate     DateTime?     @map("scheduled_date")
+  transporterRating Int?          @map("transporter_rating")
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  transaction       Transaction   @relation(fields: [transactionId], references: [id])
+  transporter       Transporter   @relation(fields: [transporterId], references: [id])
+  receiver          User          @relation(fields: [receiverId], references: [id])
+
+  @@map("transport_bookings")
+}
+
+model Message {
+  id            Int         @id @default(autoincrement())
+  transactionId String      @map("transaction_id")
+  senderId      String      @map("sender_id")
+  content       String
+  imageUrl      String?     @map("image_url")
+  read          Boolean     @default(false)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  sender        User        @relation("SenderRelation", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Review {
+  id            Int         @id @default(autoincrement())
+  transactionId String      @map("transaction_id")
+  reviewerId    String      @map("reviewer_id")
+  revieweeId    String      @map("reviewee_id")
+  rating        Int
+  comment       String?
+  reviewType    ReviewType  @map("review_type")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  reviewer      User        @relation("ReviewerRelation", fields: [reviewerId], references: [id])
+  reviewee      User        @relation("RevieweeRelation", fields: [revieweeId], references: [id])
+
+  @@map("reviews")
+}
+
+model Dispute {
+  id             Int           @id @default(autoincrement())
+  transactionId  String        @map("transaction_id")
+  raisedBy       String        @map("raised_by")
+  reason         String
+  evidenceImages Json          @map("evidence_images") // array
+  status         DisputeStatus @default(open)
+  resolution     String?
+  resolvedBy     String?       @map("resolved_by")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  resolvedAt     DateTime?     @map("resolved_at")
+
+  transaction    Transaction   @relation(fields: [transactionId], references: [id])
+  raiser         User          @relation("DisputeRaiser", fields: [raisedBy], references: [id])
+  resolver       User?         @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+
+  @@map("disputes")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  body      String?
+  data      Json     @default("{}")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Badge {
+  id               Int          @id @default(autoincrement())
+  name             String
+  slug             String       @unique
+  description      String
+  icon             String
+  requirementType  String       @map("requirement_type")
+  requirementValue Int          @map("requirement_value")
+
+  userBadges       UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  badgeId   Int      @map("badge_id")
+  earnedAt  DateTime @default(now()) @map("earned_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@map("user_badges")
+}
+
+model ChatHistory {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  role      String // user/assistant
+  content   String
+  toolCalls Json?    @map("tool_calls")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("chat_history")
+}
+
+model RepairHub {
+  id          Int           @id @default(autoincrement())
+  name        String
+  type        RepairHubType
+  address     String
+  locationLat Float         @map("location_lat")
+  locationLng Float         @map("location_lng")
+  categories  Json          @map("categories") // array
+  website     String?
+  hours       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@map("repair_hubs")
+}
+
+model AgentLog {
+  id         Int       @id @default(autoincrement())
+  agentName  AgentName @map("agent_name")
+  action     String
+  materialId Int?      @map("material_id")
+  userId     String?   @map("user_id")
+  details    Json      @default("{}")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  material   Material? @relation(fields: [materialId], references: [id])
+  user       User?     @relation(fields: [userId], references: [id])
+
+  @@map("agent_logs")
+}
+
+model DemandHistory {
+  id               Int      @id @default(autoincrement())
+  categoryId       Int      @map("category_id")
+  city             String
+  month            Int
+  year             Int
+  listingCount     Int      @default(0) @map("listing_count")
+  transactionCount Int      @default(0) @map("transaction_count")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  category         Category @relation(fields: [categoryId], references: [id])
+
+  @@map("demand_history")
+}
+
+model FraudFlag {
+  id          Int         @id @default(autoincrement())
+  materialId  Int?        @map("material_id")
+  userId      String?     @map("user_id")
+  riskScore   Int         @map("risk_score")
+  reasons     Json        @map("reasons") // array
+  status      FraudStatus @default(pending)
+  reviewedBy  String?     @map("reviewed_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  material    Material?   @relation(fields: [materialId], references: [id])
+  user        User?       @relation("UserFraudFlags", fields: [userId], references: [id])
+  reviewer    User?       @relation("FraudReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("fraud_flags")
+}
+
+model SavedMaterial {
+  id         Int      @id @default(autoincrement())
+  userId     String   @map("user_id")
+  materialId Int      @map("material_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id])
+  material   Material @relation(fields: [materialId], references: [id])
+
+  @@unique([userId, materialId])
+  @@map("saved_materials")
+}
