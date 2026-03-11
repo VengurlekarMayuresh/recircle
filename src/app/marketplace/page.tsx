@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, MapPin, Filter, Recycle, Leaf, IndianRupee, Clock } from "lucide-react"
+import { Search, MapPin, Filter, Recycle, Leaf, IndianRupee, Clock, ArrowRight } from "lucide-react"
 
 // Mock materials based on seed data
 const mockMaterials = [

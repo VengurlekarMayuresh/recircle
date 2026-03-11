@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check } from "lucide-react"
+import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart } from "lucide-react"
 
 const conditions = ["New", "Good", "Fair", "Salvageable"]
 const units = ["kg", "tonnes", "pieces", "meters", "sq ft", "liters"]

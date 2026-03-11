@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Package,
   History,
-  Info
+  Info,
+  Recycle
 } from "lucide-react"
 
 // Mock material detail based on ID

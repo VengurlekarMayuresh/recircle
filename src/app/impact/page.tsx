@@ -9,13 +9,15 @@ import {
   Trash2, 
   Globe, 
   Award, 
-  TrendingUp, 
-  Users, 
-  Building2,
-  Factory,
   CheckCircle2,
-  Zap
+  Zap,
+  TrendingUp,
+  Package,
+  Users,
+  Building2,
+  Factory
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function ImpactDashboard() {
   const platformStats = [

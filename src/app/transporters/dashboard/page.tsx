@@ -12,12 +12,17 @@ import {
   Calendar, 
   Clock, 
   CheckCircle2, 
-  IndianRupee, 
-  ArrowRight,
+  MessageSquare,
+  Package,
+  ArrowUpRight,
+  BarChart3,
+  Leaf,
   Navigation,
   Phone,
-  MessageSquare
+  IndianRupee,
+  ArrowRight
 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
 
 // Mock bookings for a transporter
 const mockBookings = [
