@@ -108,7 +108,7 @@ model Material {
   updatedAt            DateTime      @updatedAt @map("updated_at")
 
   user                 User          @relation(fields: [userId], references: [id])
-  category             Category      @relation(fields: [categoryId], references: [id])
+  category             Category?     @relation(fields: [categoryId], references: [id])
   directRequests       DirectRequest[]
   matches              Match[]
   transactions         Transaction[]

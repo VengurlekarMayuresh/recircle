@@ -64,6 +64,7 @@ export default function CreateListingPage() {
     try {
       const resp = await fetch("/api/ai/tag", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: formData.title, description: formData.description }),
       })
       console.log("[CreateListing] API Response Status:", resp.status)
@@ -92,6 +93,10 @@ export default function CreateListingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
+
+      console.log("[CreateListing] Submit Response Status:", response.status)
+      const result = await response.json()
+      console.log("[CreateListing] Submit Response Data:", result)
 
       if (response.ok) {
         toast({

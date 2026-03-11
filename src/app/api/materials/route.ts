@@ -6,9 +6,14 @@ import { NextResponse } from "next/server"
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
+    console.log("[Material API] Session:", session ? `User ${session.user.id}` : "No Session")
+    
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
+
+    const body = await req.json()
+    console.log("[Material API] Body:", body)
 
     const { 
       title, 
@@ -21,43 +26,66 @@ export async function POST(req: Request) {
       city, 
       tags,
       images
-    } = await req.json()
+    } = body
+
+    // Sanitize numbers to avoid NaN
+    const parsedQuantity = parseInt(quantity)
+    const finalQuantity = isNaN(parsedQuantity) ? 1 : parsedQuantity
+    
+    const parsedPrice = parseFloat(price)
+    const finalPrice = isNaN(parsedPrice) ? 0 : parsedPrice
 
     const material = await prisma.material.create({
       data: {
-        userId: session.user.id,
-        title,
-        description,
-        condition: condition.toLowerCase(),
-        quantity: parseInt(quantity) || 1,
-        unit,
-        price: parseFloat(price) || 0,
-        listingType,
-        city,
-        address: "Default Address", // In a real app, this would be from the user or a map picker
-        locationLat: 19.076, // Default Mumbai coords
+        user: { connect: { id: session.user.id } },
+        title: title || "Untitled Material",
+        description: description || "",
+        condition: (condition || "good").toLowerCase(),
+        quantity: finalQuantity,
+        unit: unit || "pieces",
+        price: finalPrice,
+        listingType: listingType || "sell",
+        city: city || "Mumbai",
+        address: "Default Address",
+        locationLat: 19.076,
         locationLng: 72.877,
         tags: Array.isArray(tags) ? tags.join(",") : tags || "",
-        images: images || "https://images.unsplash.com/photo-1590069324154-04663e9f4577", // Placeholder if none provided
+        images: images || "https://images.unsplash.com/photo-1590069324154-04663e9f4577",
         status: "available",
       }
     })
 
+    console.log("[Material API] Success:", material.id)
     return NextResponse.json(material, { status: 201 })
   } catch (error: any) {
-    console.error("Error creating material:", error)
+    console.error("[Material API] Error:", error)
     return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 })
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url)
+    const own = searchParams.get("own") === "true"
+    
+    let where = {}
+    
+    if (own) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.id) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+      }
+      where = { userId: session.user.id }
+    }
+
     const materials = await prisma.material.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: { user: true }
     })
     return NextResponse.json(materials)
   } catch (error) {
+    console.error("[Material API GET] Error:", error)
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 })
   }
 }

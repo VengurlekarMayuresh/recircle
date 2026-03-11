@@ -45,8 +45,16 @@ export async function POST(req: Request) {
       })
     })
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("[AI Tag Route] OpenRouter Error:", response.status, errorText)
+      // Fallback if API fails
+      return NextResponse.json({ tags: ["circular", "recycled", "sustainable"] })
+    }
+
     const data = await response.json()
     console.log("[AI Tag Route] OpenRouter Raw Response:", JSON.stringify(data, null, 2))
+    
     let tags: string[] = []
     
     try {
@@ -61,6 +69,9 @@ export async function POST(req: Request) {
       tags = rawContent.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean)
       console.log("[AI Tag Route] Fallback Tags:", tags)
     }
+
+    // Ensure we always return something
+    if (tags.length === 0) tags = ["reusable", "surplus", "recircle"]
 
     return NextResponse.json({ tags })
 

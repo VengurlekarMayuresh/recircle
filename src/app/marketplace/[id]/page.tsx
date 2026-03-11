@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,36 +21,52 @@ import {
   Package,
   History,
   Info,
-  Recycle
+  Recycle,
+  Check
 } from "lucide-react"
 
-// Mock material detail based on ID
-const material = {
-  id: "1",
-  title: "Surplus Bricks (500 pieces)",
-  description: "Leftover burnt clay bricks from recent project. Good condition, ready for pickup. These bricks were sourced from a sustainable kiln in Maharashtra and have high thermal mass.",
-  price: 2500,
-  unit: "pieces",
-  quantity: 500,
-  city: "Mumbai",
-  address: "Andheri East, Near SEEPZ",
-  category: "Construction",
-  condition: "Good",
-  co2SavedKg: 450,
-  landfillDivertedKg: 1500,
-  listingType: "sell",
-  createdAt: "2024-03-10",
-  supplier: {
-    name: "BuildWell Corp",
-    rating: 4.8,
-    isVerified: true,
-  },
-  images: ["https://images.unsplash.com/photo-1590069324154-04663e9f4577"],
-  passportId: "RC-BRK-2024-001",
-}
-
 export default function MaterialDetailPage() {
+  const params = useParams()
+  const [material, setMaterial] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showQr, setShowQr] = useState(false)
+
+  useEffect(() => {
+    const fetchMaterial = async () => {
+      try {
+        const res = await fetch(`/api/materials/${params.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setMaterial(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch material:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (params.id) fetchMaterial()
+  }, [params.id])
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Recycle className="w-12 h-12 text-emerald-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Loading material details...</p>
+      </div>
+    )
+  }
+
+  if (!material) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-gray-800">Material not found</h2>
+        <Link href="/marketplace" className="text-emerald-600 hover:underline">Back to Marketplace</Link>
+      </div>
+    )
+  }
+
+  const materialImages = material.images?.split(',') || ["https://images.unsplash.com/photo-1590069324154-04663e9f4577"]
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -62,9 +79,12 @@ export default function MaterialDetailPage() {
         <div className="lg:col-span-2 space-y-8">
           <div className="relative group overflow-hidden rounded-3xl shadow-xl">
             <img 
-              src={material.images[0]} 
+              src={materialImages[0]} 
               alt={material.title} 
               className="w-full h-[400px] object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"
+              }}
             />
             <div className="absolute top-4 right-4 flex gap-2">
               <Button size="icon" variant="secondary" className="rounded-full bg-white/80 backdrop-blur-md border-none shadow-md">
@@ -76,17 +96,22 @@ export default function MaterialDetailPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-start">
               <div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-bold px-3 py-1">
-                    {material.category}
+                    {material.category?.name || "Material"}
                   </Badge>
-                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 font-bold px-3 py-1">
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 font-bold px-3 py-1 capitalize">
                     {material.condition}
                   </Badge>
+                  {material.tags && material.tags.split(',').map((tag: string) => (
+                    <Badge key={tag} variant="outline" className="text-gray-500 border-gray-200">
+                      #{tag.trim()}
+                    </Badge>
+                  ))}
                 </div>
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{material.title}</h1>
                 <div className="flex items-center gap-2 text-gray-500 mt-2 font-medium">
-                  <MapPin className="w-5 h-5 text-red-500" /> {material.address}, {material.city}
+                  <MapPin className="w-5 h-5 text-red-500" /> {material.city}
                 </div>
               </div>
               <div className="text-right">
@@ -105,7 +130,7 @@ export default function MaterialDetailPage() {
                     <Leaf className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-emerald-900">{material.co2SavedKg} kg</p>
+                    <p className="text-lg font-black text-emerald-900">{material.co2SavedKg || (material.quantity * 0.5).toFixed(1)} kg</p>
                     <p className="text-xs text-gray-500 font-bold">CO₂ Saved</p>
                   </div>
                 </div>
@@ -114,7 +139,7 @@ export default function MaterialDetailPage() {
                     <Recycle className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-blue-900">{material.landfillDivertedKg} kg</p>
+                    <p className="text-lg font-black text-blue-900">{material.landfillDivertedKg || (material.quantity * 1.5).toFixed(0)} kg</p>
                     <p className="text-xs text-gray-500 font-bold">Landfill Diverted</p>
                   </div>
                 </div>
@@ -132,6 +157,24 @@ export default function MaterialDetailPage() {
 
             <Separator />
 
+            {/* Tags Section */}
+            {material.tags && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  Keywords & Search Tags
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {material.tags.split(',').map((tag: string) => (
+                    <Badge key={tag} className="bg-gray-50 text-gray-600 border-gray-100 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-default px-4 py-2 text-sm rounded-xl">
+                      {tag.trim()}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Separator />
+
             {/* Digital Material Passport */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -139,7 +182,7 @@ export default function MaterialDetailPage() {
                   <ShieldCheck className="w-6 h-6 text-emerald-600" /> Digital Material Passport
                 </h2>
                 <span className="text-xs font-mono font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full uppercase">
-                  ID: {material.passportId}
+                  ID: RC-{material.id.substring(0, 8).toUpperCase()}
                 </span>
               </div>
               
@@ -150,35 +193,35 @@ export default function MaterialDetailPage() {
                   </CardHeader>
                   <CardContent className="p-4 pt-0 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Original Project</span>
-                      <span className="font-bold">Worli Greens Ph II</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Manufacturing Date</span>
-                      <span className="font-bold">Oct 2023</span>
+                      <span className="text-gray-500">Location</span>
+                      <span className="font-bold">{material.city}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Listed On</span>
-                      <span className="font-bold">{material.createdAt}</span>
+                      <span className="font-bold">{new Date(material.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Status</span>
+                      <span className="font-bold text-emerald-600 uppercase">{material.status}</span>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="border-gray-100 bg-gray-50/50">
                   <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-xs font-bold uppercase tracking-widest text-gray-400">Material Composition</CardTitle>
+                    <CardTitle className="text-xs font-bold uppercase tracking-widest text-gray-400">Sustainability</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Primary Material</span>
-                      <span className="font-bold">Burnt Clay</span>
+                      <span className="font-bold">{material.title.split(' ')[0]}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Type</span>
+                      <span className="font-bold">{material.listingType === 'giveaway' ? 'Donation' : 'Resale'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Recyclability</span>
-                      <span className="font-bold text-emerald-600">100% Circular</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Estimated Life</span>
-                      <span className="font-bold">80+ Years</span>
+                      <span className="font-bold text-emerald-600">High Potential</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -198,10 +241,12 @@ export default function MaterialDetailPage() {
               <div className="p-4 bg-emerald-50 rounded-2xl flex items-center justify-between">
                 <div>
                   <p className="text-xs text-emerald-700 font-bold uppercase tracking-wider">Scout AI Status</p>
-                  <p className="text-emerald-950 font-bold">Verifying Supply Match...</p>
+                  <p className="text-emerald-950 font-bold">Stock Verified</p>
                 </div>
                 <div className="relative">
-                  <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Check className="w-6 h-6 text-emerald-600" />
+                  </div>
                 </div>
               </div>
 
@@ -224,7 +269,6 @@ export default function MaterialDetailPage() {
                 </Button>
                 {showQr && (
                   <div className="mt-4 p-4 bg-white rounded-2xl border-2 border-dashed border-gray-100 animate-in zoom-in-95 duration-200">
-                    {/* Placeholder for QR Code */}
                     <div className="w-40 h-40 bg-gray-100 flex items-center justify-center rounded-lg border border-gray-200">
                       <QrCode className="w-16 h-16 text-gray-300" />
                     </div>
@@ -241,17 +285,17 @@ export default function MaterialDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 text-xl border-2 border-white shadow-sm">
-                  {material.supplier.name.charAt(0)}
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-emerald-600 text-xl border-2 border-white shadow-sm">
+                  {material.user?.name?.charAt(0) || "U"}
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 flex items-center gap-1">
-                    {material.supplier.name}
-                    {material.supplier.isVerified && <ShieldCheck className="w-4 h-4 text-blue-500" />}
+                    {material.user?.name || "Verified User"}
+                    {material.user?.role === 'admin' && <ShieldCheck className="w-4 h-4 text-blue-500" />}
                   </h4>
                   <div className="flex items-center gap-1 text-sm text-amber-500 font-bold">
                     <span>★</span>
-                    <span>{material.supplier.rating}</span>
+                    <span>4.9</span>
                     <span className="text-gray-400 font-medium ml-1">Rating</span>
                   </div>
                 </div>
