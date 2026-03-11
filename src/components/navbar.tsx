@@ -55,11 +55,6 @@ export default function Navbar() {
     return (
       <>
         <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
-        <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
-        <Link href="/materials/new" className="text-gray-600 hover:text-emerald-600 font-medium">Create Listing</Link>
-        <Link href="/dashboard/my-listings" className="text-gray-600 hover:text-emerald-600 font-medium">My Listings</Link>
-        <Link href="/my-requests" className="text-gray-600 hover:text-emerald-600 font-medium">My Requests</Link>
-        <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
       </>
     )
   }

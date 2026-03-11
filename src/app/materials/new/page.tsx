@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart } from "lucide-react"
 
@@ -18,17 +19,18 @@ const units = ["kg", "tonnes", "pieces", "meters", "sq ft", "liters"]
 export default function CreateListingPage() {
   const [step, setStep] = useState(1)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: "",
-    categoryId: "",
+    description: "",
     condition: "",
     quantity: "",
     unit: "kg",
-    description: "",
     price: "",
     listingType: "sell",
     city: "Mumbai",
+    tags: [] as string[],
   })
 
   const { toast } = useToast()
@@ -37,36 +39,81 @@ export default function CreateListingPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Mock image upload
       const url = URL.createObjectURL(file)
       setImageUrl(url)
       
-      // Trigger AI Analysis mock
       setIsAnalyzing(true)
       setTimeout(() => {
         setIsAnalyzing(false)
         setFormData(prev => ({
           ...prev,
           title: "Premium Construction Bricks",
-          categoryId: "construction",
-          condition: "Good",
-          description: "High-quality burnt clay bricks discovered via AI detection. Standard size, structurally sound.",
+          description: "High-quality burnt clay bricks detected. Standard size, structurally sound.",
         }))
         toast({
           title: "AI Analysis Complete",
-          description: "We've automatically filled in some details for you.",
+          description: "Vison AI identified your material!",
         })
       }, 3000)
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const generateTags = async () => {
+    console.log("[CreateListing] Generating tags for:", { title: formData.title, description: formData.description })
+    setIsGeneratingTags(true)
+    try {
+      const resp = await fetch("/api/ai/tag", {
+        method: "POST",
+        body: JSON.stringify({ title: formData.title, description: formData.description }),
+      })
+      console.log("[CreateListing] API Response Status:", resp.status)
+      const data = await resp.json()
+      console.log("[CreateListing] API Response Data:", data)
+      if (data.tags) {
+        setFormData(prev => ({ ...prev, tags: data.tags }))
+        toast({
+          title: "AI Tagging Complete",
+          description: `Generated ${data.tags.length} smart tags for your listing.`,
+        })
+      }
+    } catch (err) {
+      console.error("[CreateListing] Tag Generation Failed:", err)
+    } finally {
+      setIsGeneratingTags(false)
+      setStep(2)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: "Listing Created!",
-      description: "Your material is now being scouted by our AI agents.",
-    })
-    router.push("/marketplace")
+    try {
+      const response = await fetch("/api/materials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Listing Created!",
+          description: "Your material is now being scouted by our AI agents.",
+        })
+        router.push("/marketplace")
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create listing. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -77,7 +124,7 @@ export default function CreateListingPage() {
           <p className="text-gray-500">Share your materials and help build a zero-waste India.</p>
         </div>
         <div className="flex items-center gap-2">
-          {[1, 2, 3].map((s) => (
+          {[1, 2].map((s) => (
             <div 
               key={s} 
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
@@ -96,7 +143,7 @@ export default function CreateListingPage() {
             <Card className="border-emerald-100 shadow-xl shadow-emerald-50">
               <CardHeader>
                 <CardTitle>Identify Material</CardTitle>
-                <CardDescription>Upload a photo or enter details. Our AI Vision will help identify the material.</CardDescription>
+                <CardDescription>Upload a photo and provide a title and description.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div 
@@ -134,7 +181,7 @@ export default function CreateListingPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Title</Label>
                     <Input 
@@ -144,28 +191,33 @@ export default function CreateListingPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={formData.categoryId} onValueChange={(v) => setFormData({...formData, categoryId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="construction">Construction</SelectItem>
-                        <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="packaging">Packaging</SelectItem>
-                        <SelectItem value="textiles">Textiles</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Description</Label>
+                    <Textarea 
+                      rows={4} 
+                      className="rounded-xl"
+                      placeholder="Tell receivers more about this material, its history, and potential uses..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    />
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
                 <Button 
-                  onClick={() => setStep(2)}
-                  disabled={!formData.title || !formData.categoryId}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={generateTags}
+                  disabled={!formData.title || !formData.description || isGeneratingTags}
+                  className="bg-emerald-600 hover:bg-emerald-700 min-w-[140px]"
                 >
-                  Continue <ArrowRight className="ml-2 w-4 h-4" />
+                  {isGeneratingTags ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      AI Tagging...
+                    </>
+                  ) : (
+                    <>
+                      Continue <ArrowRight className="ml-2 w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -174,11 +226,27 @@ export default function CreateListingPage() {
           {step === 2 && (
             <Card className="border-emerald-100 shadow-xl shadow-emerald-50">
               <CardHeader>
-                <CardTitle>Specifications & Quantity</CardTitle>
-                <CardDescription>Provide details about the material's condition and quantity.</CardDescription>
+                <CardTitle>Specifications & Pricing</CardTitle>
+                <CardDescription>Finalize details and set your price.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="space-y-8">
+                {/* AI Tags Preview */}
+                {formData.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-emerald-700 font-bold flex items-center gap-2">
+                      <Leaf className="w-4 h-4" /> Smart Tags (AI Generated)
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-100">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Condition</Label>
                     <Select value={formData.condition} onValueChange={(v) => setFormData({...formData, condition: v})}>
@@ -208,71 +276,54 @@ export default function CreateListingPage() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea 
-                    rows={4} 
-                    className="rounded-xl"
-                    placeholder="Tell receivers more about this material, its history, and potential uses..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                <Button onClick={() => setStep(3)} className="bg-emerald-600 hover:bg-emerald-700">Continue</Button>
-              </CardFooter>
-            </Card>
-          )}
 
-          {step === 3 && (
-            <Card className="border-emerald-100 shadow-xl shadow-emerald-50">
-              <CardHeader>
-                <CardTitle>Finalize Listing</CardTitle>
-                <CardDescription>Set your price and listing type.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex gap-4 p-4 bg-gray-50 rounded-2xl">
-                  <button 
-                    onClick={() => setFormData({...formData, listingType: "sell"})}
-                    className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                      formData.listingType === "sell" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500"
-                    }`}
-                  >
-                    <IndianRupee className="w-6 h-6" />
-                    <span className="font-bold">Sell</span>
-                  </button>
-                  <button 
-                    onClick={() => setFormData({...formData, listingType: "giveaway"})}
-                    className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                      formData.listingType === "giveaway" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500"
-                    }`}
-                  >
-                    <Heart className="w-6 h-6" />
-                    <span className="font-bold">Giveaway</span>
-                  </button>
-                </div>
+                <Separator className="bg-emerald-100/50" />
 
-                {formData.listingType === "sell" && (
-                  <div className="space-y-2 max-w-xs mx-auto text-center">
-                    <Label>Price (₹)</Label>
-                    <div className="relative">
-                      <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <Input 
-                        type="number" 
-                        className="pl-10 text-xl font-bold h-12" 
-                        placeholder="0.00"
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
-                      />
-                    </div>
+                <div className="space-y-6">
+                  <Label className="text-gray-700 font-bold">Listing Type</Label>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setFormData({...formData, listingType: "sell"})}
+                      className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        formData.listingType === "sell" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500 bg-gray-50/50"
+                      }`}
+                    >
+                      <IndianRupee className="w-6 h-6" />
+                      <span className="font-bold">Sell</span>
+                    </button>
+                    <button 
+                      onClick={() => setFormData({...formData, listingType: "giveaway"})}
+                      className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        formData.listingType === "giveaway" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500 bg-gray-50/50"
+                      }`}
+                    >
+                      <Heart className="w-6 h-6" />
+                      <span className="font-bold">Giveaway</span>
+                    </button>
                   </div>
-                )}
+
+                  {formData.listingType === "sell" && (
+                    <div className="space-y-2 max-w-xs mx-auto text-center animate-in fade-in slide-in-from-top-2">
+                      <Label>Price (₹)</Label>
+                      <div className="relative">
+                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 w-5 h-5" />
+                        <Input 
+                          type="number" 
+                          className="pl-10 text-xl font-bold h-12 border-emerald-100 focus:border-emerald-500" 
+                          placeholder="0.00"
+                          value={formData.price}
+                          onChange={(e) => setFormData({...formData, price: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                <Button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 px-12">Submit Listing</Button>
+              <CardFooter className="flex justify-between border-t border-gray-50 pt-6">
+                <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
+                <Button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 px-12 font-bold shadow-lg shadow-emerald-100 transition-all active:scale-95">
+                  Submit Listing
+                </Button>
               </CardFooter>
             </Card>
           )}

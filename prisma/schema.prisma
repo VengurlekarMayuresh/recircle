@@ -78,7 +78,7 @@ model Category {
 model Material {
   id                   Int           @id @default(autoincrement())
   userId               String        @map("user_id")
-  categoryId           Int           @map("category_id")
+  categoryId           Int?          @map("category_id")
   title                String
   description          String
   condition            String        // new, like_new, good, fair, salvage
