@@ -7,6 +7,12 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Test {
-  id Int @id @default(autoincrement())
+enum Role {
+  user
+  admin
+}
+
+model User {
+  id   Int  @id @default(autoincrement())
+  role Role @default(user)
 }
