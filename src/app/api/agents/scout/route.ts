@@ -48,6 +48,7 @@ export async function POST(req: Request) {
           userId: match.id,
           score: 85 + Math.random() * 10,
           status: "pending",
+          reason: `Potential match in ${material.city} for ${material.category.name}`,
         }
       })
       matches.push(createdMatch)

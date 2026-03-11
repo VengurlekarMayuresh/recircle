@@ -113,6 +113,9 @@ export default function Navbar() {
                       <Link href="/profile">My Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link href="/dashboard/my-listings">My Listings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/dashboard/my-impact">My Impact</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -162,6 +165,7 @@ export default function Navbar() {
           {status === "authenticated" ? (
             <div className="flex flex-col space-y-4 pt-2">
               <Link href="/profile" className="text-gray-600">My Profile</Link>
+              <Link href="/dashboard/my-listings" className="text-gray-600">My Listings</Link>
               <Button
                 variant="outline"
                 className="w-full text-red-600 border-red-100"

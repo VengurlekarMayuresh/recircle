@@ -40,9 +40,15 @@ export async function POST(req: Request) {
       await prisma.chatHistory.create({
         data: {
           userId,
-          message,
-          response: aiMessage || "",
-          agentName: "advisor",
+          role: "user",
+          content: message,
+        }
+      })
+      await prisma.chatHistory.create({
+        data: {
+          userId,
+          role: "assistant",
+          content: aiMessage || "",
         }
       })
     }
