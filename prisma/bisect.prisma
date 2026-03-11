@@ -7,274 +7,6 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model User {
-  id                 String            @id @default(uuid())
-  name               String
-  email              String            @unique
-  passwordHash      String            @map("password_hash")
-  phone              String
-  role               Role
-  orgName            String?           @map("org_name")
-  bio                String?
-  avatarUrl          String?           @map("avatar_url")
-  locationLat        Float?            @map("location_lat")
-  locationLng        Float?            @map("location_lng")
-  address            String?
-  city               String
-  greenPoints        Int               @default(0) @map("green_points")
-  level              UserLevel         @default(seedling)
-  trustScore         Int               @default(0) @map("trust_score")
-  verificationLevel  VerificationLevel @default(unverified) @map("verification_level")
-  idVerified         Boolean           @default(false) @map("id_verified")
-  avgRating          Float             @default(0) @map("avg_rating")
-  totalRatings       Int               @default(0) @map("total_ratings")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-
-  materials          Material[]
-  wantRequests       WantRequest[]
-  directRequests     DirectRequest[]
-  matches            Match[]
-  suppliedTransactions Transaction[]    @relation("SupplierRelation")
-  receivedTransactions Transaction[]    @relation("ReceiverRelation")
-  transporterProfile Transporter?
-  transportBookings  TransportBooking[]
-  sentMessages       Message[]         @relation("SenderRelation")
-  receivedReviews    Review[]          @relation("RevieweeRelation")
-  givenReviews       Review[]          @relation("ReviewerRelation")
-  raisedDisputes     Dispute[]         @relation("DisputeRaiser")
-  resolvedDisputes   Dispute[]         @relation("DisputeResolver")
-  notifications      Notification[]
-  badges             UserBadge[]
-  chatHistory        ChatHistory[]
-  agentLogs          AgentLog[]
-  fraudFlags         FraudFlag[]       @relation("UserFraudFlags")
-  reviewedFlags      FraudFlag[]       @relation("FraudReviewer")
-  savedMaterials     SavedMaterial[]
-
-  @@map("users")
-}
-
-model Category {
-  id                     Int      @id @default(autoincrement())
-  name                   String
-  slug                   String   @unique
-  icon                   String
-  co2FactorKg            Float    @map("co2_factor_kg")
-  waterFactorLiters      Float    @default(0) @map("water_factor_liters")
-  landfillCostInrPerTonne Float    @map("landfill_cost_inr_per_tonne")
-  newCostInrPerUnit       Float    @map("new_cost_inr_per_unit")
-  decompositionYears     Int      @map("decomposition_years")
-  peakMonths             String   @map("peak_months") 
-  description            String
-
-  materials              Material[]
-  wantRequests           WantRequest[]
-  demandHistory          DemandHistory[]
-
-  @@map("categories")
-}
-
-model Material {
-  id                   Int           @id @default(autoincrement())
-  userId               String        @map("user_id")
-  categoryId           Int           @map("category_id")
-  title                String
-  description          String
-  condition            Condition
-  quantity             Int           @default(1)
-  unit                 String        @default("pieces")
-  weightKg             Float?        @map("weight_kg")
-  listingType          ListingType   @map("listing_type")
-  price                Float         @default(0)
-  status               MaterialStatus @default(available)
-  locationLat          Float         @map("location_lat")
-  locationLng          Float         @map("location_lng")
-  address              String
-  city                 String
-  images               String        @map("images")
-  tags                 String        @map("tags")
-  availableFromDate    DateTime?     @map("available_from_date")
-  aiDetectedType       String?       @map("ai_detected_type")
-  reusePotentialScore  Int?          @map("reuse_potential_score")
-  aiUseCases           String?       @map("ai_use_cases")
-  aiRouteRecommendation RouteRecommendation? @map("ai_route_recommendation")
-  co2SavedKg           Float         @default(0) @map("co2_saved_kg")
-  rupeesSaved          Float         @default(0) @map("rupees_saved")
-  fraudRiskScore       Int           @default(0) @map("fraud_risk_score")
-  viewsCount           Int           @default(0) @map("views_count")
-  reuseCount           Int           @default(0) @map("reuse_count")
-  createdAt            DateTime      @default(now()) @map("created_at")
-  updatedAt            DateTime      @updatedAt @map("updated_at")
-
-  user                 User          @relation(fields: [userId], references: [id])
-  category             Category      @relation(fields: [categoryId], references: [id])
-  directRequests       DirectRequest[]
-  matches              Match[]
-  transactions         Transaction[]
-  agentLogs            AgentLog[]
-  fraudFlags           FraudFlag[]
-  savedSubscribers     SavedMaterial[]
-
-  @@map("materials")
-}
-
-model WantRequest {
-  id             Int        @id @default(autoincrement())
-  userId         String     @map("user_id")
-  categoryId     Int        @map("category_id")
-  title          String
-  description    String
-  keywords       String
-  quantityNeeded Int        @map("quantity_needed")
-  locationLat    Float      @map("location_lat")
-  locationLng    Float      @map("location_lng")
-  radiusKm       Int        @default(10) @map("radius_km")
-  urgency        Urgency
-  status         WantStatus @default(open)
-  createdAt      DateTime   @default(now()) @map("created_at")
-
-  user           User       @relation(fields: [userId], references: [id])
-  category       Category   @relation(fields: [categoryId], references: [id])
-  matches        Match[]
-
-  @@map("want_requests")
-}
-
-model DirectRequest {
-  id                 Int               @id @default(autoincrement())
-  materialId         Int               @map("material_id")
-  receiverId         String            @map("receiver_id")
-  quantityRequested  Int               @map("quantity_requested")
-  message            String
-  preferredTransport TransportMethod   @map("preferred_transport")
-  status             MatchStatus       @default(pending)
-  responseMessage    String?           @map("response_message")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  respondedAt        DateTime?         @map("responded_at")
-
-  material           Material          @relation(fields: [materialId], references: [id])
-  receiver           User              @relation(fields: [receiverId], references: [id])
-
-  @@map("direct_requests")
-}
-
-model Match {
-  id             Int         @id @default(autoincrement())
-  materialId     Int         @map("material_id")
-  wantRequestId  Int?        @map("want_request_id")
-  userId         String      @map("user_id")
-  score          Float
-  reason         String
-  status         MatchStatus @default(pending)
-  notified       Boolean     @default(false)
-  createdAt      DateTime    @default(now()) @map("created_at")
-
-  material       Material    @relation(fields: [materialId], references: [id])
-  wantRequest    WantRequest? @relation(fields: [wantRequestId], references: [id])
-  user           User        @relation(fields: [userId], references: [id])
-
-  @@map("matches")
-}
-
-model Transaction {
-  id                String            @id @default(uuid())
-  materialId        Int               @map("material_id")
-  supplierId        String            @map("supplier_id")
-  receiverId        String            @map("receiver_id")
-  quantity          Int
-  transportMethod   TransportMethod   @map("transport_method")
-  status            TransactionStatus @default(negotiating)
-  pickupDate        DateTime?         @map("pickup_date")
-  pickupAddress     String            @map("pickup_address")
-  deliveryAddress   String            @map("delivery_address")
-  notes             String?
-  supplierRating    Int?              @map("supplier_rating")
-  receiverRating    Int?              @map("receiver_rating")
-  pickupPhotoUrl    String?           @map("pickup_photo_url")
-  qualityMatchScore Int?              @map("quality_match_score")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  completedAt       DateTime?         @map("completed_at")
-
-  material          Material          @relation(fields: [materialId], references: [id])
-  supplier          User              @relation("SupplierRelation", fields: [supplierId], references: [id])
-  receiver          User              @relation("ReceiverRelation", fields: [receiverId], references: [id])
-  messages          Message[]
-  reviews           Review[]
-  disputes          Dispute[]
-  transportBooking  TransportBooking?
-
-  @@map("transactions")
-}
-
-model Transporter {
-  id                 Int               @id @default(autoincrement())
-  userId             String            @unique @map("user_id")
-  vehicleType        VehicleType       @map("vehicle_type")
-  vehicleCapacityKg  Float             @map("vehicle_capacity_kg")
-  vehicleCapacityCbm Float?            @map("vehicle_capacity_cbm")
-  vehiclePhoto       String?           @map("vehicle_photo")
-  serviceAreaCity    String            @map("service_area_city")
-  serviceRadiusKm    Int               @map("service_radius_km")
-  pricePerKm         Float             @map("price_per_km")
-  baseRate           Float             @map("base_rate")
-  availabilityStatus TransporterStatus @default(available) @map("availability_status")
-  totalDeliveries    Int               @default(0) @map("total_deliveries")
-  avgRating          Float             @default(0) @map("avg_rating")
-  totalRatings       Int               @default(0) @map("total_ratings")
-  isVolunteer        Boolean           @default(false) @map("is_volunteer")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-
-  user               User              @relation(fields: [userId], references: [id])
-  bookings           TransportBooking[]
-
-  @@map("transporters")
-}
-
-model TransportBooking {
-  id                Int           @id @default(autoincrement())
-  transactionId     String        @unique @map("transaction_id")
-  transporterId     Int           @map("transporter_id")
-  receiverId        String        @map("receiver_id")
-  pickupAddress     String        @map("pickup_address")
-  pickupLat         Float         @map("pickup_lat")
-  pickupLng         Float         @map("pickup_lng")
-  deliveryAddress   String        @map("delivery_address")
-  deliveryLat       Float         @map("delivery_lat")
-  deliveryLng       Float         @map("delivery_lng")
-  distanceKm        Float         @map("distance_km")
-  estimatedCost     Float         @map("estimated_cost")
-  actualCost        Float?        @map("actual_cost")
-  status            BookingStatus @default(requested)
-  scheduledDate     DateTime?     @map("scheduled_date")
-  transporterRating Int?          @map("transporter_rating")
-  notes             String?
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt          DateTime      @updatedAt @map("updated_at")
-
-  transaction       Transaction   @relation(fields: [transactionId], references: [id])
-  transporter       Transporter   @relation(fields: [transporterId], references: [id])
-  receiver          User          @relation(fields: [receiverId], references: [id])
-
-  @@map("transport_bookings")
-}
-
-model Message {
-  id            Int         @id @default(autoincrement())
-  transactionId String      @map("transaction_id")
-  senderId      String      @map("sender_id")
-  content       String
-  imageUrl      String?     @map("image_url")
-  read          Boolean     @default(false)
-  createdAt     DateTime    @default(now()) @map("created_at")
-
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  sender        User        @relation("SenderRelation", fields: [senderId], references: [id])
-
-  @@map("messages")
-}
-
 enum Role {
   individual
   business
@@ -385,4 +117,36 @@ enum VerificationLevel {
   basic
   verified
   trusted
+}
+
+enum ReviewType {
+  supplier_review
+  receiver_review
+  transporter_review
+}
+
+enum DisputeStatus {
+  open
+  reviewing
+  resolved
+}
+
+enum AgentName {
+  scout
+  advisor
+  quality
+  sentinel
+}
+
+enum RepairHubType {
+  workshop
+  makerspace
+  event
+}
+
+enum FraudStatus {
+  pending
+  reviewed
+  cleared
+  banned
 }

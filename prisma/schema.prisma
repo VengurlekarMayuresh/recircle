@@ -13,7 +13,7 @@ model User {
   email              String            @unique
   passwordHash      String            @map("password_hash")
   phone              String
-  role               Role
+  role               String            // individual, business, ngo, volunteer, transporter, admin
   orgName            String?           @map("org_name")
   bio                String?
   avatarUrl          String?           @map("avatar_url")
@@ -22,9 +22,9 @@ model User {
   address            String?
   city               String
   greenPoints        Int               @default(0) @map("green_points")
-  level              UserLevel         @default(seedling)
+  level              String            @default("seedling") // seedling, sprout, sapling, tree, forest
   trustScore         Int               @default(0) @map("trust_score")
-  verificationLevel  VerificationLevel @default(unverified) @map("verification_level")
+  verificationLevel  String            @default("unverified") @map("verification_level") // unverified, basic, verified, trusted
   idVerified         Boolean           @default(false) @map("id_verified")
   avgRating          Float             @default(0) @map("avg_rating")
   totalRatings       Int               @default(0) @map("total_ratings")
@@ -81,13 +81,13 @@ model Material {
   categoryId           Int           @map("category_id")
   title                String
   description          String
-  condition            Condition
+  condition            String        // new, like_new, good, fair, salvage
   quantity             Int           @default(1)
   unit                 String        @default("pieces")
   weightKg             Float?        @map("weight_kg")
-  listingType          ListingType   @map("listing_type")
+  listingType          String        @map("listing_type") // donate, sell, exchange
   price                Float         @default(0)
-  status               MaterialStatus @default(available)
+  status               String        @default("available") @map("status") // available, reserved, claimed, archived, future
   locationLat          Float         @map("location_lat")
   locationLng          Float         @map("location_lng")
   address              String
@@ -98,7 +98,7 @@ model Material {
   aiDetectedType       String?       @map("ai_detected_type")
   reusePotentialScore  Int?          @map("reuse_potential_score")
   aiUseCases           String?       @map("ai_use_cases")
-  aiRouteRecommendation RouteRecommendation? @map("ai_route_recommendation")
+  aiRouteRecommendation String?      @map("ai_route_recommendation") // reuse, repair, recycle, dispose
   co2SavedKg           Float         @default(0) @map("co2_saved_kg")
   rupeesSaved          Float         @default(0) @map("rupees_saved")
   fraudRiskScore       Int           @default(0) @map("fraud_risk_score")
@@ -130,8 +130,8 @@ model WantRequest {
   locationLat    Float      @map("location_lat")
   locationLng    Float      @map("location_lng")
   radiusKm       Int        @default(10) @map("radius_km")
-  urgency        Urgency
-  status         WantStatus @default(open)
+  urgency        String     // low, medium, high
+  status         String     @default("open") // open, fulfilled, expired
   createdAt      DateTime   @default(now()) @map("created_at")
 
   user           User       @relation(fields: [userId], references: [id])
@@ -147,8 +147,8 @@ model DirectRequest {
   receiverId         String            @map("receiver_id")
   quantityRequested  Int               @map("quantity_requested")
   message            String
-  preferredTransport TransportMethod   @map("preferred_transport")
-  status             MatchStatus       @default(pending)
+  preferredTransport String            @map("preferred_transport") // self_pickup, supplier_delivery, platform_transporter
+  status             String            @default("pending") // pending, accepted, rejected
   responseMessage    String?           @map("response_message")
   createdAt          DateTime          @default(now()) @map("created_at")
   respondedAt        DateTime?         @map("responded_at")
@@ -166,7 +166,7 @@ model Match {
   userId         String      @map("user_id")
   score          Float
   reason         String
-  status         MatchStatus @default(pending)
+  status         String      @default("pending") // pending, accepted, rejected
   notified       Boolean     @default(false)
   createdAt      DateTime    @default(now()) @map("created_at")
 
@@ -183,8 +183,8 @@ model Transaction {
   supplierId        String            @map("supplier_id")
   receiverId        String            @map("receiver_id")
   quantity          Int
-  transportMethod   TransportMethod   @map("transport_method")
-  status            TransactionStatus @default(negotiating)
+  transportMethod   String            @map("transport_method") // self_pickup, supplier_delivery, platform_transporter
+  status            String            @default("negotiating") // negotiating, scheduled, in_transit, delivered, confirmed, cancelled
   pickupDate        DateTime?         @map("pickup_date")
   pickupAddress     String            @map("pickup_address")
   deliveryAddress   String            @map("delivery_address")
@@ -210,7 +210,7 @@ model Transaction {
 model Transporter {
   id                 Int               @id @default(autoincrement())
   userId             String            @unique @map("user_id")
-  vehicleType        VehicleType       @map("vehicle_type")
+  vehicleType        String            @map("vehicle_type") // mini_truck, pickup_van, tempo, autorickshaw, bike, other
   vehicleCapacityKg  Float             @map("vehicle_capacity_kg")
   vehicleCapacityCbm Float?            @map("vehicle_capacity_cbm")
   vehiclePhoto       String?           @map("vehicle_photo")
@@ -218,7 +218,7 @@ model Transporter {
   serviceRadiusKm    Int               @map("service_radius_km")
   pricePerKm         Float             @map("price_per_km")
   baseRate           Float             @map("base_rate")
-  availabilityStatus TransporterStatus @default(available) @map("availability_status")
+  availabilityStatus String            @default("available") @map("availability_status") // available, busy, offline
   totalDeliveries    Int               @default(0) @map("total_deliveries")
   avgRating          Float             @default(0) @map("avg_rating")
   totalRatings       Int               @default(0) @map("total_ratings")
@@ -246,7 +246,7 @@ model TransportBooking {
   distanceKm        Float         @map("distance_km")
   estimatedCost     Float         @map("estimated_cost")
   actualCost        Float?        @map("actual_cost")
-  status            BookingStatus @default(requested)
+  status            String        @default("requested") // requested, accepted, pickup_scheduled, collected, in_transit, delivered, completed, cancelled
   scheduledDate     DateTime?     @map("scheduled_date")
   transporterRating Int?          @map("transporter_rating")
   notes             String?
@@ -282,7 +282,7 @@ model Review {
   revieweeId    String      @map("reviewee_id")
   rating        Int
   comment       String?
-  reviewType    ReviewType  @map("review_type")
+  reviewType    String      @map("review_type") // supplier_review, receiver_review, transporter_review
   createdAt     DateTime    @default(now()) @map("created_at")
 
   transaction   Transaction @relation(fields: [transactionId], references: [id])
@@ -298,7 +298,7 @@ model Dispute {
   raisedBy       String        @map("raised_by")
   reason         String
   evidenceImages String        @map("evidence_images")
-  status         DisputeStatus @default(open)
+  status         String        @default("open") // open, reviewing, resolved
   resolution     String?
   resolvedBy     String?       @map("resolved_by")
   createdAt      DateTime      @default(now()) @map("created_at")
@@ -368,7 +368,7 @@ model ChatHistory {
 model RepairHub {
   id          Int           @id @default(autoincrement())
   name        String
-  type        RepairHubType
+  type        String        // workshop, makerspace, event
   address     String
   locationLat Float         @map("location_lat")
   locationLng Float         @map("location_lng")
@@ -382,7 +382,7 @@ model RepairHub {
 
 model AgentLog {
   id         Int       @id @default(autoincrement())
-  agentName  AgentName @map("agent_name")
+  agentName  String    @map("agent_name") // scout, advisor, quality, sentinel
   action     String
   materialId Int?      @map("material_id")
   userId     String?   @map("user_id")
@@ -416,7 +416,7 @@ model FraudFlag {
   userId      String?     @map("user_id")
   riskScore   Int         @map("risk_score")
   reasons     String      @map("reasons")
-  status      FraudStatus @default(pending)
+  status      String      @default("pending") // pending, reviewed, cleared, banned
   reviewedBy  String?     @map("reviewed_by")
   createdAt   DateTime    @default(now()) @map("created_at")
 
@@ -438,148 +438,4 @@ model SavedMaterial {
 
   @@unique([userId, materialId])
   @@map("saved_materials")
-}
-
-enum Role {
-  individual
-  business
-  ngo
-  volunteer
-  transporter
-  admin
-}
-
-enum Condition {
-  new
-  like_new
-  good
-  fair
-  salvage
-}
-
-enum ListingType {
-  donate
-  sell
-  exchange
-}
-
-enum MaterialStatus {
-  available
-  reserved
-  claimed
-  archived
-  future
-}
-
-enum TransportMethod {
-  self_pickup
-  supplier_delivery
-  platform_transporter
-}
-
-enum TransactionStatus {
-  negotiating
-  scheduled
-  in_transit
-  delivered
-  confirmed
-  cancelled
-}
-
-enum VehicleType {
-  mini_truck
-  pickup_van
-  tempo
-  autorickshaw
-  bike
-  other
-}
-
-enum TransporterStatus {
-  available
-  busy
-  offline
-}
-
-enum BookingStatus {
-  requested
-  accepted
-  pickup_scheduled
-  collected
-  in_transit
-  delivered
-  completed
-  cancelled
-}
-
-enum Urgency {
-  low
-  medium
-  high
-}
-
-enum WantStatus {
-  open
-  fulfilled
-  expired
-}
-
-enum MatchStatus {
-  pending
-  accepted
-  rejected
-}
-
-enum RouteRecommendation {
-  reuse
-  repair
-  recycle
-  dispose
-}
-
-enum UserLevel {
-  seedling
-  sprout
-  sapling
-  tree
-  forest
-}
-
-enum VerificationLevel {
-  unverified
-  basic
-  verified
-  trusted
-}
-
-enum ReviewType {
-  supplier_review
-  receiver_review
-  transporter_review
-}
-
-enum DisputeStatus {
-  open
-  reviewing
-  resolved
-}
-
-enum AgentName {
-  scout
-  advisor
-  quality
-  sentinel
-}
-
-enum RepairHubType {
-  workshop
-  makerspace
-  event
-}
-
-enum FraudStatus {
-  pending
-  reviewed
-  cleared
-  banned
 }

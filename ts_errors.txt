@@ -1,0 +1,4 @@
+src/app/api/agents/advisor/route.ts(43,11): error TS2353: Object literal may only specify known properties, and 'message' does not exist in type '(Without<ChatHistoryCreateInput, ChatHistoryUncheckedCreateInput> & ChatHistoryUncheckedCreateInput) | (Without<...> & ChatHistoryCreateInput)'.
+src/app/api/agents/scout/route.ts(46,9): error TS2322: Type '{ materialId: number; userId: string; score: number; status: string; }' is not assignable to type '(Without<MatchCreateInput, MatchUncheckedCreateInput> & MatchUncheckedCreateInput) | (Without<...> & MatchCreateInput)'.
+  Type '{ materialId: number; userId: string; score: number; status: string; }' is not assignable to type 'Without<MatchCreateInput, MatchUncheckedCreateInput> & MatchUncheckedCreateInput'.
+    Property 'reason' is missing in type '{ materialId: number; userId: string; score: number; status: string; }' but required in type 'MatchUncheckedCreateInput'.
