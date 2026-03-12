@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Menu, X, Leaf } from "lucide-react"
+import { Bell, Menu, X, Leaf, MessageSquare } from "lucide-react"
 import { useState } from "react"
 
 export default function Navbar() {
@@ -62,7 +62,16 @@ export default function Navbar() {
       )
     }
 
-    // individual, business, ngo
+    if (user?.role === "business") {
+      return (
+        <>
+          <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
+        </>
+      )
+    }
+
+    // individual, ngo
     return (
       <>
         <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
@@ -104,6 +113,11 @@ export default function Navbar() {
                   <span>🌱</span>
                   <span>{user?.greenPoints || 0} GP</span>
                 </div>
+                <Link href="/bargain">
+                  <Button variant="ghost" size="icon" className="relative text-gray-500 hover:text-emerald-600 transition-colors">
+                    <MessageSquare className="w-5 h-5" />
+                  </Button>
+                </Link>
                 <Button variant="ghost" size="icon" className="relative text-gray-500">
                   <Bell className="w-5 h-5" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -124,14 +138,22 @@ export default function Navbar() {
                       <Link href="/profile">My Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link href="/materials/new">Create Listing</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/dashboard/my-listings">My Listings</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/bargain">Negotiations</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/my-deals">My Deals</Link>
-                    </DropdownMenuItem>
+                    {user?.role === "business" ? (
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/business/waste">Waste Tracking</Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/my-deals">My Deals</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/my-impact">My Impact</Link>
                     </DropdownMenuItem>
@@ -182,9 +204,18 @@ export default function Navbar() {
           {status === "authenticated" ? (
             <div className="flex flex-col space-y-4 pt-2">
               <Link href="/profile" className="text-gray-600">My Profile</Link>
-              <Link href="/bargain" className="text-gray-600">Negotiations</Link>
-              <Link href="/dashboard/my-deals" className="text-gray-600">My Deals</Link>
+              <Link href="/materials/new" className="text-gray-600">Create Listing</Link>
               <Link href="/dashboard/my-listings" className="text-gray-600">My Listings</Link>
+              <Link href="/bargain" className="text-gray-600 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" /> Negotiations
+              </Link>
+              {user?.role === "business" ? (
+                <Link href="/dashboard/business/waste" className="text-gray-600">Waste Tracking</Link>
+              ) : (
+                <>
+                  <Link href="/dashboard/my-deals" className="text-gray-600">My Deals</Link>
+                </>
+              )}
               <Button
                 variant="outline"
                 className="w-full text-red-600 border-red-100"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -95,6 +95,18 @@ function dateSeparator(dateStr: string) {
 
 // ── Main Component ──────────────────────────────────────
 export default function BargainInboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+      </div>
+    }>
+      <BargainInboxContent />
+    </Suspense>
+  )
+}
+
+function BargainInboxContent() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()

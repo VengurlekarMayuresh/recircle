@@ -11,12 +11,6 @@ export async function POST(req: Request) {
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY
-    console.log("[AI Tag Route] API Key status:", apiKey ? "Loaded (Starts with " + apiKey.substring(0, 4) + "...)" : "Not Loaded")
-    if (!apiKey) {
-      console.warn("OPENROUTER_API_KEY is not set. Falling back to mock tags.")
-      return NextResponse.json({ tags: ["reusable", "surplus", "recircle"] })
-    }
-
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -26,7 +20,7 @@ export async function POST(req: Request) {
         "X-Title": "ReCircle",
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
+        model: "openai/gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -48,26 +42,20 @@ export async function POST(req: Request) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error("[AI Tag Route] OpenRouter Error:", response.status, errorText)
-      // Fallback if API fails
       return NextResponse.json({ tags: ["circular", "recycled", "sustainable"] })
     }
 
     const data = await response.json()
-    console.log("[AI Tag Route] OpenRouter Raw Response:", JSON.stringify(data, null, 2))
-    
     let tags: string[] = []
     
     try {
       const content = data.choices?.[0]?.message?.content || "{}"
       const parsed = JSON.parse(content)
       tags = parsed.tags || []
-      console.log("[AI Tag Route] Parsed Tags:", tags)
     } catch (e) {
       console.error("[AI Tag Route] Failed to parse AI response content:", e)
-      // Fallback to simple split if JSON fails
       const rawContent = data.choices?.[0]?.message?.content || ""
       tags = rawContent.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean)
-      console.log("[AI Tag Route] Fallback Tags:", tags)
     }
 
     // Ensure we always return something
