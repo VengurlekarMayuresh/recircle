@@ -24,12 +24,23 @@ import {
   Recycle,
   Check
 } from "lucide-react"
+import { haversineDistance } from "@/lib/haversine"
 
 export default function MaterialDetailPage() {
   const params = useParams()
   const [material, setMaterial] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showQr, setShowQr] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      )
+    }
+  }, [])
 
   useEffect(() => {
     const fetchMaterial = async () => {
@@ -111,7 +122,17 @@ export default function MaterialDetailPage() {
                 </div>
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{material.title}</h1>
                 <div className="flex items-center gap-2 text-gray-500 mt-2 font-medium">
-                  <MapPin className="w-5 h-5 text-red-500" /> {material.city}
+                  <MapPin className="w-5 h-5 text-red-500" />
+                  {material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}
+                  {userLocation && material.locationLat && (() => {
+                    const dist = haversineDistance(userLocation.lat, userLocation.lng, material.locationLat, material.locationLng)
+                    const isApprox = !material.address || material.address === material.city || material.address === "Default Address"
+                    return (
+                      <span className="text-emerald-600 font-bold text-sm ml-1">
+                        ({isApprox ? "~" : ""}{dist.toFixed(1)} km away)
+                      </span>
+                    )
+                  })()}
                 </div>
               </div>
               <div className="text-right">
@@ -125,12 +146,12 @@ export default function MaterialDetailPage() {
                 <CardTitle className="text-sm font-bold uppercase tracking-widest text-emerald-700">Environmental Impact</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm">
                   <div className="bg-emerald-100 p-2 rounded-xl">
                     <Leaf className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-emerald-900">{material.co2SavedKg || (material.quantity * 0.5).toFixed(1)} kg</p>
+                    <p className="text-lg font-black text-emerald-900">{material.co2SavedKg > 0 ? `${material.co2SavedKg} kg` : "Pending"}</p>
                     <p className="text-xs text-gray-500 font-bold">CO₂ Saved</p>
                   </div>
                 </div>
@@ -139,7 +160,7 @@ export default function MaterialDetailPage() {
                     <Recycle className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-blue-900">{material.landfillDivertedKg || (material.quantity * 1.5).toFixed(0)} kg</p>
+                    <p className="text-lg font-black text-blue-900">{material.weightKg ? `${material.weightKg} kg` : "Pending"}</p>
                     <p className="text-xs text-gray-500 font-bold">Landfill Diverted</p>
                   </div>
                 </div>
@@ -194,7 +215,7 @@ export default function MaterialDetailPage() {
                   <CardContent className="p-4 pt-0 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Location</span>
-                      <span className="font-bold">{material.city}</span>
+                      <span className="font-bold">{material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Listed On</span>

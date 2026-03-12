@@ -24,6 +24,7 @@ import {
   QrCode, ExternalLink
 } from "lucide-react"
 import { routeMaterial, ROUTE_COLORS, ROUTE_ICONS } from "@/lib/material-router"
+import { haversineDistance } from "@/lib/haversine"
 
 const CONDITION_INFO: Record<string, { label: string; color: string; desc: string }> = {
   new: { label: "New", color: "emerald", desc: "Unused, still in original packaging or mint condition" },
@@ -49,8 +50,18 @@ export default function MaterialDetailPage() {
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   const user = session?.user as any
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      )
+    }
+  }, [])
 
   useEffect(() => {
     fetch(`/api/materials/${id}`)
@@ -137,7 +148,7 @@ export default function MaterialDetailPage() {
 
   const co2Saved = material.co2SavedKg || 0
   const rupeesSaved = material.rupeesSaved || 0
-  const treeEquiv = Math.max(1, Math.round(co2Saved / 21))
+  const treeEquiv = co2Saved > 0 ? Math.max(1, Math.round(co2Saved / 21)) : 0
 
   const statusColors: Record<string, string> = {
     available: "bg-emerald-100 text-emerald-700",
@@ -246,7 +257,16 @@ export default function MaterialDetailPage() {
             )}
             <div className="bg-gray-50 rounded-xl p-3">
               <div className="flex items-center gap-2 text-gray-500 text-xs mb-1"><MapPin className="w-3.5 h-3.5" /> Location</div>
-              <p className="font-bold text-gray-800">{material.city}</p>
+              <p className="font-bold text-gray-800">{material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}</p>
+              {userLocation && material.locationLat && (() => {
+                const dist = haversineDistance(userLocation.lat, userLocation.lng, material.locationLat, material.locationLng)
+                const isApprox = !material.address || material.address === material.city || material.address === "Default Address"
+                return (
+                  <p className="text-xs text-emerald-600 font-semibold mt-0.5">
+                    {isApprox ? "~" : ""}{dist.toFixed(1)} km from you
+                  </p>
+                )
+              })()}
             </div>
             <div className="bg-gray-50 rounded-xl p-3">
               <div className="flex items-center gap-2 text-gray-500 text-xs mb-1"><Clock className="w-3.5 h-3.5" /> Listed</div>

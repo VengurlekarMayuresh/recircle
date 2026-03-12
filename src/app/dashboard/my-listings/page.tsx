@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus, Leaf, IndianRupee, Clock, BarChart3, Package, Users, Recycle,
-  CheckCircle, XCircle, Inbox, Bell, MapPin, Truck, MessageCircle } from "lucide-react"
+  CheckCircle, XCircle, Inbox, Bell, MapPin, Truck, MessageCircle, Phone, MessageSquare, ArrowRight } from "lucide-react"
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-100 text-yellow-700",
@@ -365,6 +365,47 @@ export default function SupplierDashboard() {
                         </div>
                       )}
                     </div>
+
+                    {/* Post-deal coordination for agreed deals */}
+                    {s.status === "agreed" && (
+                      <div className="mt-4 pt-3 border-t border-emerald-100 space-y-3">
+                        <div className="bg-emerald-50 rounded-xl p-3 space-y-2">
+                          <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Buyer Contact & Pickup</p>
+                          {s.material?.address && s.material.address !== "Default Address" && (
+                            <div className="flex items-start gap-2 text-sm text-gray-700">
+                              <MapPin className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                              <span>Pickup from: {s.material.address}</span>
+                            </div>
+                          )}
+                          {s.buyer?.phone && (
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Phone className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                              <a href={`tel:${s.buyer.phone}`} className="text-emerald-700 font-semibold hover:underline">
+                                {s.buyer.phone}
+                              </a>
+                              <span className="text-xs text-gray-400">(Buyer: {s.buyer.name})</span>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            Coordinate pickup timing with the buyer. Make sure the material is ready for collection.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          {s.transaction?.id && (
+                            <Link href={`/transactions/${s.transaction.id}`} className="flex-1">
+                              <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-xs h-8">
+                                <MessageSquare className="w-3 h-3 mr-1" /> Message Buyer
+                              </Button>
+                            </Link>
+                          )}
+                          <Link href={`/materials/${s.material?.id}`}>
+                            <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 text-xs h-8">
+                              View Listing <ArrowRight className="w-3 h-3 ml-1" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )

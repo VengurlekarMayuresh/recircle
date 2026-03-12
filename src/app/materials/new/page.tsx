@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
-import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart, MapPin, MessageSquare, Shield, Zap } from "lucide-react"
+import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart, MapPin, MessageSquare, Shield, Zap, Droplets, TreePine } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 const conditionOptions = [
@@ -32,6 +32,7 @@ export default function CreateListingPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [aiImpact, setAiImpact] = useState<any>(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -41,6 +42,9 @@ export default function CreateListingPage() {
     price: "",
     listingType: "sell",
     city: "",
+    address: "",
+    locationLat: "",
+    locationLng: "",
     tags: [] as string[],
     bargainEnabled: false,
     floorPrice: "",
@@ -67,9 +71,6 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const previewUrl = URL.createObjectURL(file)
   setImageUrl(previewUrl)
 
-  // AI Analysis simulation
-  setIsAnalyzing(true)
-
   // Upload to server
   setIsUploading(true)
 
@@ -87,10 +88,50 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (res.ok && data.url) {
       setUploadedImageUrl(data.url)
 
-      toast({
-        title: "Image Uploaded",
-        description: "Your image has been uploaded successfully.",
-      })
+      // Now run real AI analysis via Gemini Vision
+      setIsAnalyzing(true)
+      try {
+        const aiRes = await fetch("/api/ai/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageUrl: data.url,
+            title: formData.title || undefined,
+            description: formData.description || undefined,
+          }),
+        })
+        const aiData = await aiRes.json()
+
+        if (aiRes.ok && aiData.suggestedTitle) {
+          // Auto-populate form with AI suggestions (user can override)
+          setFormData(prev => ({
+            ...prev,
+            title: prev.title || aiData.suggestedTitle || prev.title,
+            description: prev.description || aiData.suggestedDescription || prev.description,
+            condition: aiData.estimatedCondition || prev.condition,
+            tags: aiData.tags || prev.tags,
+          }))
+          setAiImpact(aiData.environmentalImpact || null)
+
+          toast({
+            title: "AI Analysis Complete",
+            description: `Identified: ${aiData.detectedMaterial || "material"}. Title, description, tags & impact auto-filled!`,
+          })
+        } else {
+          toast({
+            title: "AI Analysis Partial",
+            description: "Image uploaded but AI couldn't fully analyze. Fill details manually.",
+          })
+        }
+      } catch (aiErr) {
+        console.error("[CreateListing] AI analysis error:", aiErr)
+        toast({
+          title: "Image Uploaded",
+          description: "AI analysis failed — please fill in details manually.",
+        })
+      } finally {
+        setIsAnalyzing(false)
+      }
     } else {
       toast({
         title: "Upload Failed",
@@ -106,19 +147,17 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     })
   } finally {
     setIsUploading(false)
-
-    // Finish AI analysis
-    setTimeout(() => {
-      setIsAnalyzing(false)
-      toast({
-        title: "AI Analysis Complete",
-        description: "Vision AI identified your material!",
-      })
-    }, 2000)
   }
 }
 
   const generateTags = async () => {
+    // If we already have AI-generated tags from image analysis, just proceed
+    if (formData.tags.length > 0) {
+      setStep(2)
+      return
+    }
+
+    // If no image was analyzed, fall back to text-based tag generation
     setIsGeneratingTags(true)
     try {
       const resp = await fetch("/api/ai/tag", {
@@ -147,7 +186,12 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const payload = {
         ...formData,
-        images: uploadedImageUrl ? [uploadedImageUrl] : []
+        images: uploadedImageUrl ? [uploadedImageUrl] : [],
+        // Pass AI-generated impact data to backend
+        co2SavedKg: aiImpact?.co2SavedKg || 0,
+        waterSavedLiters: aiImpact?.waterSavedLiters || 0,
+        estimatedWeightKg: aiImpact?.landfillDiversionKg || null,
+        aiDetectedType: aiImpact?.impactBasis || null,
       }
       const response = await fetch("/api/materials", {
         method: "POST",
@@ -323,7 +367,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>City / Location</Label>
+                    <Label>City</Label>
                     <Select value={formData.city} onValueChange={(v) => setFormData({...formData, city: v})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your city" />
@@ -332,6 +376,68 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-red-500" /> Pickup Address
+                      <span className="text-xs text-gray-400 font-normal">— where the buyer will collect the material</span>
+                    </Label>
+                    <Input
+                      placeholder="e.g. 42 Patel Nagar, Near Station Road, Andheri West"
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                              const lat = pos.coords.latitude
+                              const lng = pos.coords.longitude
+                              setFormData(prev => ({
+                                ...prev,
+                                locationLat: lat.toString(),
+                                locationLng: lng.toString(),
+                              }))
+                              // Reverse-geocode to auto-fill address
+                              try {
+                                const geoRes = await fetch(
+                                  `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+                                  { headers: { "Accept-Language": "en" } }
+                                )
+                                const geoData = await geoRes.json()
+                                if (geoData?.address) {
+                                  const a = geoData.address
+                                  // Build a concise Indian-style address
+                                  const parts = [
+                                    a.road || a.neighbourhood || a.suburb,
+                                    a.suburb !== (a.road || a.neighbourhood) ? a.suburb : null,
+                                    a.city || a.town || a.village || a.state_district,
+                                  ].filter(Boolean)
+                                  const readableAddress = parts.join(", ") || geoData.display_name?.split(",").slice(0, 3).join(",")
+                                  if (readableAddress) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      address: prev.address || readableAddress,
+                                    }))
+                                  }
+                                }
+                                toast({ title: "Location detected", description: "GPS coordinates & address auto-filled." })
+                              } catch {
+                                toast({ title: "Location detected", description: "GPS saved. Could not auto-detect address — please type it manually." })
+                              }
+                            },
+                            () => toast({ title: "Location denied", description: "Enable location access for distance feature.", variant: "destructive" })
+                          )
+                        }
+                      }}
+                    >
+                      📍 Use my current location
+                    </Button>
                   </div>
                   <div className="flex gap-2">
                     <div className="space-y-2 flex-grow">
@@ -508,7 +614,9 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         <div className="space-y-6">
           <Card className="sticky top-24 border-emerald-100 bg-emerald-50/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold">Estimated Impact</CardTitle>
+              <CardTitle className="text-lg font-bold">
+                {aiImpact ? "AI-Estimated Impact" : "Estimated Impact"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-emerald-100">
@@ -517,18 +625,45 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
                 <div>
                   <p className="text-xs text-emerald-700 uppercase font-bold tracking-wider">CO₂ Saved</p>
-                  <p className="text-lg font-black text-emerald-950">~{formData.quantity ? parseInt(formData.quantity) * 0.9 : 0} kg</p>
+                  <p className="text-lg font-black text-emerald-950">
+                    {aiImpact ? `${aiImpact.co2SavedKg} kg` : "Upload image for estimate"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-blue-100">
                 <div className="bg-blue-100 p-2 rounded-xl text-blue-600">
+                  <Droplets className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-blue-700 uppercase font-bold tracking-wider">Water Saved</p>
+                  <p className="text-lg font-black text-blue-950">
+                    {aiImpact ? `${aiImpact.waterSavedLiters} L` : "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-green-100">
+                <div className="bg-green-100 p-2 rounded-xl text-green-600">
+                  <TreePine className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-green-700 uppercase font-bold tracking-wider">Tree Equivalent</p>
+                  <p className="text-lg font-black text-green-950">
+                    {aiImpact ? `${aiImpact.treeEquivalent} trees/yr` : "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100">
+                <div className="bg-gray-100 p-2 rounded-xl text-gray-600">
                   <IndianRupee className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xs text-blue-700 uppercase font-bold tracking-wider">Circular Value</p>
-                  <p className="text-lg font-black text-blue-950">₹{formData.price || "0"}</p>
+                  <p className="text-xs text-gray-700 uppercase font-bold tracking-wider">Circular Value</p>
+                  <p className="text-lg font-black text-gray-950">₹{formData.price || "0"}</p>
                 </div>
               </div>
+              {aiImpact?.impactBasis && (
+                <p className="text-xs text-gray-400 italic px-1">{aiImpact.impactBasis}</p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -329,7 +329,7 @@ export async function runBargainAgent(
         deliveryAddress: "",
         notes: `Bargain deal: ₹${result.currentOffer.toLocaleString()} (original: ₹${session.askingPrice.toLocaleString()})`,
       },
-    }).catch(() => {})
+    }).catch((err) => console.error("[Bargain] Transaction creation failed:", err?.message || err))
 
     // Notify seller
     await prisma.notification.create({

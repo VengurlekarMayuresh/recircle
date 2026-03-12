@@ -29,33 +29,49 @@ export async function GET() {
       },
     })
 
-    // Also get the seller info for each material
+    // Also get the seller info (including phone + address for agreed deals) for each material
     const materialIds = sessions.map((s) => s.materialId)
     const materials = await prisma.material.findMany({
       where: { id: { in: materialIds } },
       select: {
         id: true,
-        user: { select: { id: true, name: true, city: true, avatarUrl: true } },
+        address: true,
+        locationLat: true,
+        locationLng: true,
+        user: { select: { id: true, name: true, city: true, avatarUrl: true, phone: true, address: true } },
       },
     })
 
-    const sellerMap = new Map(materials.map((m) => [m.id, m.user]))
+    const sellerMap = new Map(materials.map((m) => [m.id, { ...m.user, materialAddress: m.address, materialLat: m.locationLat, materialLng: m.locationLng }]))
+
+    // Get transaction IDs for agreed sessions
+    const agreedMaterialIds = sessions.filter(s => s.status === "agreed").map(s => s.materialId)
+    const transactions = agreedMaterialIds.length > 0 ? await prisma.transaction.findMany({
+      where: { materialId: { in: agreedMaterialIds }, receiverId: session.user.id },
+      select: { id: true, materialId: true, status: true, pickupAddress: true },
+    }) : []
+    const txnMap = new Map(transactions.map(t => [t.materialId, t]))
 
     return NextResponse.json(
-      sessions.map((s) => ({
-        sessionId: s.id,
-        material: s.material,
-        seller: sellerMap.get(s.materialId) || null,
-        status: s.status,
-        askingPrice: s.askingPrice,
-        agreedPrice: s.agreedPrice,
-        messageCount: s.messageCount,
-        discount: s.agreedPrice
-          ? Math.round(((s.askingPrice - s.agreedPrice) / s.askingPrice) * 100)
-          : null,
-        createdAt: s.createdAt,
-        updatedAt: s.updatedAt,
-      }))
+      sessions.map((s) => {
+        const seller = sellerMap.get(s.materialId) || null
+        const txn = txnMap.get(s.materialId) || null
+        return {
+          sessionId: s.id,
+          material: s.material,
+          seller: s.status === "agreed" ? seller : seller ? { id: seller.id, name: seller.name, city: seller.city, avatarUrl: seller.avatarUrl } : null,
+          transaction: txn ? { id: txn.id, status: txn.status, pickupAddress: txn.pickupAddress } : null,
+          status: s.status,
+          askingPrice: s.askingPrice,
+          agreedPrice: s.agreedPrice,
+          messageCount: s.messageCount,
+          discount: s.agreedPrice
+            ? Math.round(((s.askingPrice - s.agreedPrice) / s.askingPrice) * 100)
+            : null,
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt,
+        }
+      })
     )
   } catch (error: any) {
     console.error("[Bargain Buyer] Error:", error)

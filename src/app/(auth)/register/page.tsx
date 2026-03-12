@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -73,12 +74,24 @@ export default function RegisterPage() {
 
       toast({
         title: "Success",
-        description: "Your account has been created!",
+        description: "Your account has been created! Signing you in...",
       })
 
-      if (formData.role === "transporter" || formData.role === "volunteer") {
-        router.push("/transporters/register")
+      // Auto-login after registration so user has a session
+      const signInResult = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      })
+
+      if (signInResult?.ok) {
+        if (formData.role === "transporter" || formData.role === "volunteer") {
+          router.push("/transporters/register")
+        } else {
+          router.push("/dashboard")
+        }
       } else {
+        // Fallback: if auto-login fails, redirect to login page
         router.push("/login")
       }
     } catch (error: any) {

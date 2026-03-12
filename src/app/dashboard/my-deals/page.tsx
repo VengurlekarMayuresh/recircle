@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   CheckCircle, Clock, IndianRupee, MapPin, MessageCircle,
-  Package, Recycle, ShoppingBag, XCircle, ArrowRight
+  Package, Recycle, ShoppingBag, XCircle, ArrowRight, Phone, Navigation, MessageSquare
 } from "lucide-react"
 
 const STATUS_CONFIG: Record<string, { bg: string; label: string }> = {
@@ -225,22 +225,52 @@ function DealCard({ deal }: { deal: any }) {
 
           {/* Next steps for agreed deals */}
           {deal.status === "agreed" && (
-            <div className="mt-4 pt-3 border-t border-emerald-100 flex items-center justify-between">
-              <p className="text-xs text-emerald-700">
-                ✅ Deal confirmed — coordinate pickup with the seller.
-              </p>
-              <Link href={`/materials/${deal.material?.id}`}>
-                <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 text-xs h-8">
-                  View Material <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
+            <div className="mt-4 pt-3 border-t border-emerald-100 space-y-3">
+              {/* Pickup & Contact Info */}
+              <div className="bg-emerald-50 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Pickup Details</p>
+                {(deal.seller?.materialAddress || deal.transaction?.pickupAddress) && (
+                  <div className="flex items-start gap-2 text-sm text-gray-700">
+                    <MapPin className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span>{deal.seller?.materialAddress || deal.transaction?.pickupAddress}</span>
+                  </div>
+                )}
+                {deal.seller?.phone && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Phone className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <a href={`tel:${deal.seller.phone}`} className="text-emerald-700 font-semibold hover:underline">
+                      {deal.seller.phone}
+                    </a>
+                    <span className="text-xs text-gray-400">(Seller: {deal.seller.name})</span>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">
+                  Contact the seller to agree on a pickup time. Inspect the material before accepting.
+                </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                {deal.transaction?.id && (
+                  <Link href={`/transactions/${deal.transaction.id}`} className="flex-1">
+                    <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-xs h-8">
+                      <MessageSquare className="w-3 h-3 mr-1" /> Message Seller
+                    </Button>
+                  </Link>
+                )}
+                <Link href={`/materials/${deal.material?.id}`}>
+                  <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 text-xs h-8">
+                    View Material <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
 
           {/* Resume negotiation for active deals */}
           {deal.status === "active" && (
             <div className="mt-4 pt-3 border-t border-blue-100">
-              <Link href={`/materials/${deal.material?.id}`}>
+              <Link href={`/bargain?materialId=${deal.material?.id}`}>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs h-8">
                   Continue Negotiation <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>

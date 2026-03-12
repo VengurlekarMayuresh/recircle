@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, MapPin, Filter, Recycle, Leaf, Clock, ArrowRight, Sparkles, Star, TrendingUp, Check, X } from "lucide-react"
+import { Search, MapPin, Filter, Recycle, Leaf, Clock, ArrowRight, Sparkles, Star, TrendingUp, Check, X, ArrowUpDown } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { MarketplaceGridSkeleton } from "@/components/skeleton-card"
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
+import { haversineDistance } from "@/lib/haversine"
 
 export default function MarketplacePage() {
   const [materials, setMaterials] = useState<any[]>([])
@@ -25,6 +26,22 @@ export default function MarketplacePage() {
   const [selectedListingType, setSelectedListingType] = useState("All")
   const [discoveredSuppliers, setDiscoveredSuppliers] = useState<any[]>([])
   const [isDiscovering, setIsDiscovering] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [sortBy, setSortBy] = useState<"newest" | "nearest" | "price_low" | "price_high" | "relevance">("newest")
+
+  // Get user's location for distance calculation + auto-sort by nearest
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+          // Auto-switch to nearest sort if user hasn't manually picked a sort
+          setSortBy(prev => prev === "newest" ? "nearest" : prev)
+        },
+        () => {} // Silently fail if denied
+      )
+    }
+  }, [])
 
   const categories = ["All", "Construction", "Furniture", "Packaging", "Electronics", "Industrial", "Textiles", "Metals", "Wood"]
   const conditions = ["All", "new", "like_new", "good", "fair", "salvage"]
@@ -57,14 +74,44 @@ export default function MarketplacePage() {
 
   const activeFilterCount = [selectedCity, selectedCondition, selectedListingType].filter(v => v !== "All").length
 
-  const filteredMaterials = materials.filter(m => {
-    const matchesSearch = (m.title + m.description + m.tags).toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = selectedCategory === "All" || m.category?.name === selectedCategory
-    const matchesCity = selectedCity === "All" || m.city === selectedCity
-    const matchesCondition = selectedCondition === "All" || m.condition === selectedCondition
-    const matchesListingType = selectedListingType === "All" || m.listingType === selectedListingType
-    return matchesSearch && matchesCategory && matchesCity && matchesCondition && matchesListingType
-  })
+  const filteredMaterials = (() => {
+    // Word-level search: every word in query must match somewhere in title/description/tags
+    const searchWords = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0)
+
+    const filtered = materials.filter(m => {
+      const searchable = (m.title + " " + m.description + " " + m.tags).toLowerCase()
+      const matchesSearch = searchWords.length === 0 || searchWords.every(word => searchable.includes(word))
+      const matchesCategory = selectedCategory === "All" || m.category?.name === selectedCategory
+      const matchesCity = selectedCity === "All" || m.city === selectedCity
+      const matchesCondition = selectedCondition === "All" || m.condition === selectedCondition
+      const matchesListingType = selectedListingType === "All" || m.listingType === selectedListingType
+      return matchesSearch && matchesCategory && matchesCity && matchesCondition && matchesListingType
+    })
+
+    // Sort
+    const sorted = [...filtered]
+    if (sortBy === "nearest" && userLocation) {
+      sorted.sort((a, b) => {
+        const distA = haversineDistance(userLocation.lat, userLocation.lng, a.locationLat, a.locationLng)
+        const distB = haversineDistance(userLocation.lat, userLocation.lng, b.locationLat, b.locationLng)
+        return distA - distB
+      })
+    } else if (sortBy === "price_low") {
+      sorted.sort((a, b) => a.price - b.price)
+    } else if (sortBy === "price_high") {
+      sorted.sort((a, b) => b.price - a.price)
+    } else if (sortBy === "relevance" && searchWords.length > 0) {
+      // Relevance: more word hits in title = higher rank
+      sorted.sort((a, b) => {
+        const scoreA = searchWords.filter(w => a.title.toLowerCase().includes(w)).length
+        const scoreB = searchWords.filter(w => b.title.toLowerCase().includes(w)).length
+        return scoreB - scoreA
+      })
+    }
+    // "newest" keeps the default createdAt desc order from API
+
+    return sorted
+  })()
 
   // Trigger supplier discovery when search yields 0 results
   useEffect(() => {
@@ -124,6 +171,38 @@ export default function MarketplacePage() {
                 >
                   {city === "All" ? "All Cities" : city}
                   {selectedCity === city && <Check className="w-4 h-4 text-emerald-600" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sort Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className={`h-12 rounded-xl flex gap-2 ${
+                sortBy !== "newest" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-gray-200"
+              }`}>
+                <ArrowUpDown className="w-4 h-4" />
+                {sortBy === "newest" ? "Sort" : sortBy === "nearest" ? "Nearest" : sortBy === "price_low" ? "Cheapest" : sortBy === "price_high" ? "Priciest" : "Relevant"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {([
+                { value: "newest", label: "Newest First" },
+                { value: "nearest", label: "Nearest to Me", disabled: !userLocation },
+                { value: "price_low", label: "Price: Low → High" },
+                { value: "price_high", label: "Price: High → Low" },
+                { value: "relevance", label: "Most Relevant", disabled: !searchQuery },
+              ] as const).map(opt => (
+                <DropdownMenuItem
+                  key={opt.value}
+                  onClick={() => !opt.disabled && setSortBy(opt.value)}
+                  className={`flex items-center justify-between cursor-pointer ${opt.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                >
+                  {opt.label}
+                  {sortBy === opt.value && <Check className="w-4 h-4 text-emerald-600" />}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -331,7 +410,17 @@ export default function MarketplacePage() {
                         <CardTitle className="text-lg font-bold text-gray-800 line-clamp-1">{material.title}</CardTitle>
                       </div>
                       <CardDescription className="flex items-center gap-1 text-xs font-medium">
-                        <MapPin className="w-3 h-3" /> {material.city}
+                        <MapPin className="w-3 h-3" />
+                        <span className="truncate">{material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}</span>
+                        {userLocation && material.locationLat && (() => {
+                          const dist = haversineDistance(userLocation.lat, userLocation.lng, material.locationLat, material.locationLng)
+                          const isApprox = !material.address || material.address === material.city || material.address === "Default Address"
+                          return (
+                            <span className="text-emerald-600 font-bold whitespace-nowrap ml-1">
+                              · {isApprox ? "~" : ""}{dist.toFixed(1)} km
+                            </span>
+                          )
+                        })()}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0 space-y-3">
@@ -357,10 +446,17 @@ export default function MarketplacePage() {
 
                       {/* Impact Metrics */}
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded-lg">
-                          <Leaf className="w-3.5 h-3.5" />
-                          <span>{material.co2SavedKg || (material.quantity * 0.5).toFixed(1)}kg CO₂</span>
-                        </div>
+                        {material.co2SavedKg > 0 ? (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded-lg">
+                            <Leaf className="w-3.5 h-3.5" />
+                            <span>{material.co2SavedKg}kg CO₂</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 p-1.5 rounded-lg">
+                            <Leaf className="w-3.5 h-3.5" />
+                            <span>CO₂ TBD</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 p-1.5 rounded-lg">
                           <Recycle className="w-3.5 h-3.5" />
                           <span className="capitalize">{material.category?.name || "Material"}</span>

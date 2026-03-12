@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -21,10 +21,17 @@ const VEHICLE_TYPES = [
 ]
 
 export default function TransporterRegisterPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const user = session?.user as any
   const isVolunteer = user?.role === "volunteer"
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/transporters/register")
+    }
+  }, [status, router])
 
   const [form, setForm] = useState({
     vehicle_type: "",
