@@ -213,6 +213,35 @@ export default function BargainInboxPage() {
   // Scroll on new messages
   useEffect(() => { scrollToBottom() }, [thread?.messages])
 
+  // Polling: keep conversations and active thread in sync for both buyer and seller
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      fetchConversations()
+      // Silently refresh active thread (e.g. seller sees status change)
+      if (activeSessionId && !sending) {
+        try {
+          const res = await fetch(`/api/bargain/${activeSessionId}`)
+          if (res.ok) {
+            const data: ThreadData = await res.json()
+            setThread((prev) => {
+              if (!prev) return data
+              // Only update if status, messages, or agreedPrice changed
+              if (
+                prev.status !== data.status ||
+                prev.messages.length !== data.messages.length ||
+                prev.agreedPrice !== data.agreedPrice
+              ) {
+                return data
+              }
+              return prev
+            })
+          }
+        } catch { /* silent */ }
+      }
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [activeSessionId, sending, fetchConversations])
+
   // Send message (buyer only, active sessions only)
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input.trim()
@@ -253,8 +282,19 @@ export default function BargainInboxPage() {
         return updated
       })
 
-      // Refresh sidebar
-      fetchConversations()
+      // Optimistically update sidebar conversation status
+      if (data.status && data.status !== "negotiating") {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.sessionId === activeSessionId
+              ? { ...c, status: data.status, agreedPrice: data.currentOffer || c.agreedPrice }
+              : c
+          )
+        )
+      }
+
+      // Refresh sidebar from server for confirmation
+      await fetchConversations()
     } catch {
       setError("Network error")
     } finally {

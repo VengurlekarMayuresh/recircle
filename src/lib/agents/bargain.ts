@@ -214,16 +214,22 @@ export async function runBargainAgent(
   // Add current buyer message
   conversationMessages.push({ role: "user", content: buyerMessage })
 
-  // Call OpenAI
-  const response = await openai.chat.completions.create({
-    model: "openai/gpt-4o-mini",
-    messages: conversationMessages,
-    max_tokens: 500,
-    temperature: 0.7,
-    response_format: { type: "json_object" },
-  })
-
-  const content = response.choices[0].message.content || ""
+  // Call OpenAI with error handling
+  let content = ""
+  try {
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: conversationMessages,
+      max_tokens: 500,
+      temperature: 0.7,
+      response_format: { type: "json_object" },
+    })
+    content = response.choices[0]?.message?.content || ""
+  } catch (apiError: any) {
+    console.error("[Bargain Agent] OpenRouter API error:", apiError?.message || apiError)
+    // Fallback to rule-based response when API is unavailable
+    return generateFallbackResponse(buyerMessage, session)
+  }
 
   // Parse response
   let result: BargainResponse
@@ -238,11 +244,36 @@ export async function runBargainAgent(
       tactic: parsed.tactic || "concession",
     }
   } catch {
-    result = {
-      message: "Sorry, I had trouble processing that. Could you rephrase your offer?",
-      currentOffer: null,
-      status: "negotiating",
-      tactic: "concession",
+    // If AI returned non-JSON, fallback to rule-based
+    return generateFallbackResponse(buyerMessage, session)
+  }
+
+  // If AI agreed but didn't specify a price, derive it from context
+  if (result.status === "agreed" && result.currentOffer === null) {
+    // Try to extract price from buyer's latest message
+    const priceMatch = buyerMessage.match(/₹?\s?([\d,]+)/)
+    const buyerOffer = priceMatch ? parseInt(priceMatch[1].replace(/,/g, "")) : null
+
+    if (buyerOffer && buyerOffer >= session.floorPrice) {
+      result.currentOffer = buyerOffer
+    } else {
+      // Find last counter-offer from conversation history
+      for (let i = session.messages.length - 1; i >= 0; i--) {
+        const msg = session.messages[i]
+        if (msg.role === "assistant" && msg.metadata) {
+          try {
+            const meta = JSON.parse(msg.metadata)
+            if (typeof meta.currentOffer === "number" && meta.currentOffer > 0) {
+              result.currentOffer = meta.currentOffer
+              break
+            }
+          } catch {}
+        }
+      }
+      // Final fallback: use asking price
+      if (result.currentOffer === null) {
+        result.currentOffer = session.askingPrice
+      }
     }
   }
 
@@ -356,4 +387,85 @@ export async function runBargainAgent(
   }).catch(() => {})
 
   return result
+}
+
+/**
+ * Rule-based fallback when AI API is unavailable.
+ * Parses the buyer's offer from their message and generates a reasonable counter-offer.
+ */
+function generateFallbackResponse(
+  buyerMessage: string,
+  session: {
+    askingPrice: number
+    floorPrice: number
+    negotiationStyle: string
+    messageCount: number
+    material: { title: string }
+  }
+): BargainResponse {
+  // Try to extract a price from the buyer's message
+  const priceMatch = buyerMessage.match(/₹?\s?([\d,]+)/)
+  const buyerOffer = priceMatch ? parseInt(priceMatch[1].replace(/,/g, "")) : null
+
+  const { askingPrice, floorPrice, negotiationStyle, messageCount } = session
+
+  // If buyer didn't mention a price
+  if (!buyerOffer) {
+    return {
+      message: `Thanks for your interest in **${session.material.title}**! The listed price is ₹${askingPrice.toLocaleString()}. What price did you have in mind?`,
+      currentOffer: askingPrice,
+      status: "negotiating",
+      tactic: "anchoring",
+    }
+  }
+
+  // If offer is at or above asking price, accept
+  if (buyerOffer >= askingPrice) {
+    return {
+      message: `That works perfectly! 🎉 Deal confirmed at ₹${buyerOffer.toLocaleString()}. Thank you!`,
+      currentOffer: buyerOffer,
+      status: "agreed",
+      tactic: "acceptance",
+    }
+  }
+
+  // If offer is at or above floor price, consider accepting or counter slightly
+  if (buyerOffer >= floorPrice) {
+    // Accept if close to asking or many messages exchanged
+    if (buyerOffer >= askingPrice * 0.85 || messageCount >= 8) {
+      return {
+        message: `You know what, that's a fair offer. Deal at ₹${buyerOffer.toLocaleString()}! 🤝`,
+        currentOffer: buyerOffer,
+        status: "agreed",
+        tactic: "acceptance",
+      }
+    }
+    // Counter-offer: split the difference
+    const counter = Math.round((buyerOffer + askingPrice) / 2)
+    const finalCounter = Math.max(counter, floorPrice)
+    return {
+      message: `I appreciate the offer of ₹${buyerOffer.toLocaleString()}, but the lowest I can go is ₹${finalCounter.toLocaleString()}. This item is in great condition and priced fairly. How about we meet at ₹${finalCounter.toLocaleString()}?`,
+      currentOffer: finalCounter,
+      status: "negotiating",
+      tactic: "concession",
+    }
+  }
+
+  // Below floor price: reject gently with a counter near the floor
+  const safeCounter = Math.round(floorPrice * 1.1)
+  if (buyerOffer < askingPrice * 0.3) {
+    return {
+      message: `₹${buyerOffer.toLocaleString()} is quite far from what I can accept for this item. The lowest I could consider is ₹${safeCounter.toLocaleString()}. This is a quality item that's worth the price. 🙏`,
+      currentOffer: safeCounter,
+      status: "negotiating",
+      tactic: "education",
+    }
+  }
+
+  return {
+    message: `Thanks for the offer of ₹${buyerOffer.toLocaleString()}. I can't go quite that low, but I can do ₹${safeCounter.toLocaleString()}. That's a fair price considering the condition and market value. What do you think?`,
+    currentOffer: safeCounter,
+    status: "negotiating",
+    tactic: "value_justification",
+  }
 }

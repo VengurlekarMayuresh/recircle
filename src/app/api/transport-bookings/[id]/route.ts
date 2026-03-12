@@ -2,19 +2,90 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
-import { calculateVolunteerDeliveryPoints } from "@/lib/green-points"
+import { calculateVolunteerDeliveryPoints, getLevelFromPoints } from "@/lib/green-points"
+
+// Valid status transitions to prevent arbitrary jumps
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  requested: ["accepted", "cancelled"],
+  pending_approval: ["cancelled"], // accepted handled by /volunteer/confirm
+  accepted: ["pickup_scheduled", "collected", "cancelled"],
+  pickup_scheduled: ["collected", "cancelled"],
+  collected: ["in_transit", "delivered", "cancelled"],
+  in_transit: ["delivered", "cancelled"],
+  delivered: ["completed", "cancelled"],
+}
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+    const userId = session.user.id
     const { id } = await params
     const bookingId = parseInt(id)
     if (isNaN(bookingId)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 })
 
+    // Fetch booking first for authorization + validation
+    const existing = await prisma.transportBooking.findUnique({
+      where: { id: bookingId },
+      include: { transporter: true, transaction: true },
+    })
+    if (!existing) return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+
+    // Authorization: only supplier, receiver, or assigned transporter can update
+    const isTransporter = existing.transporter.userId === userId
+    const isReceiver = existing.receiverId === userId
+    const isSupplier = existing.transaction.supplierId === userId
+    if (!isTransporter && !isReceiver && !isSupplier) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const body = await req.json()
     const { status, transporter_rating, actual_cost } = body
+
+    // Validate status transition
+    if (status) {
+      const allowed = VALID_TRANSITIONS[existing.status]
+      if (!allowed || !allowed.includes(status)) {
+        return NextResponse.json(
+          { error: `Cannot transition from '${existing.status}' to '${status}'` },
+          { status: 400 }
+        )
+      }
+      // Only receiver can mark as completed
+      if (status === "completed" && !isReceiver) {
+        return NextResponse.json({ error: "Only the receiver can confirm delivery" }, { status: 403 })
+      }
+    }
+
+    // Handle volunteer cancellation: delete booking so delivery returns to pool
+    if (status === "cancelled" && existing.transporter.isVolunteer) {
+      await prisma.transportBooking.delete({ where: { id: bookingId } })
+
+      // Notify both parties
+      await Promise.all([
+        prisma.notification.create({
+          data: {
+            userId: existing.transaction.supplierId,
+            type: "volunteer_cancelled",
+            title: "Volunteer delivery cancelled",
+            body: "The volunteer has cancelled. The delivery is back in the available pool.",
+            data: JSON.stringify({ transactionId: existing.transactionId }),
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            userId: existing.transaction.receiverId,
+            type: "volunteer_cancelled",
+            title: "Volunteer delivery cancelled",
+            body: "The volunteer has cancelled. The delivery is back in the available pool.",
+            data: JSON.stringify({ transactionId: existing.transactionId }),
+          },
+        }),
+      ]).catch(() => {})
+
+      return NextResponse.json({ message: "Booking cancelled, delivery returned to available pool" })
+    }
 
     const booking = await prisma.transportBooking.update({
       where: { id: bookingId },
@@ -33,7 +104,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         data: { status: "delivered" },
       }).catch(() => {})
     }
+
     if (status === "completed") {
+      // Sync transaction to confirmed + set completedAt
+      await prisma.transaction.update({
+        where: { id: booking.transactionId },
+        data: { status: "confirmed", completedAt: new Date() },
+      }).catch(() => {})
+
       // Increment delivery count
       await prisma.transporter.update({
         where: { id: booking.transporterId },
@@ -67,10 +145,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             recentCount
           )
 
-          await prisma.user.update({
+          // Award points + update level atomically
+          const updatedUser = await prisma.user.update({
             where: { id: transporter.userId },
             data: { greenPoints: { increment: points } },
           })
+          const newLevel = getLevelFromPoints(updatedUser.greenPoints)
+          if (newLevel !== updatedUser.level) {
+            await prisma.user.update({
+              where: { id: transporter.userId },
+              data: { level: newLevel },
+            })
+          }
 
           // Notify volunteer of points earned
           await prisma.notification.create({

@@ -282,6 +282,15 @@ export default function TrackingPage() {
                         <span>{Number(volunteer.avgRating).toFixed(1)} ({volunteer.totalRatings} reviews)</span>
                       </div>
                     )}
+                    {volunteer?.user?.phone && (isSupplier || isReceiver) && (
+                      <a
+                        href={`tel:${volunteer.user.phone}`}
+                        className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>{volunteer.user.phone}</span>
+                      </a>
+                    )}
                   </div>
                 </>
               )}
@@ -303,6 +312,42 @@ export default function TrackingPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Supplier & Receiver Contact (visible after confirmation) */}
+          {booking.status !== "pending_approval" && (
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Phone className="w-5 h-5" /> Contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {tx?.supplier && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase font-bold">Supplier</p>
+                    <p className="font-semibold text-gray-700">{tx.supplier.name}</p>
+                    {tx.supplier.phone && (
+                      <a href={`tel:${tx.supplier.phone}`} className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3" /> {tx.supplier.phone}
+                      </a>
+                    )}
+                  </div>
+                )}
+                <Separator />
+                {tx?.receiver && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase font-bold">Receiver</p>
+                    <p className="font-semibold text-gray-700">{tx.receiver.name}</p>
+                    {tx.receiver.phone && (
+                      <a href={`tel:${tx.receiver.phone}`} className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3" /> {tx.receiver.phone}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Route Info */}
           <Card className="border-gray-100">
