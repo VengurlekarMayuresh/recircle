@@ -76,14 +76,14 @@ export async function GET(req: Request) {
     )
 
     // Communities impacted — distinct receiver cities
-    const communitiesImpacted = [...new Set(
+    const communitiesImpacted = Array.from(new Set(
       supplierTxns.map(t => t.receiver?.city).filter(Boolean)
-    )].length
+    )).length
 
     // Organizations served
-    const orgsServed = [...new Set(
+    const orgsServed = Array.from(new Set(
       supplierTxns.map(t => t.receiver?.orgName).filter(Boolean)
-    )].length
+    )).length
 
     // Category breakdown
     const categoryMap = new Map<string, { name: string; count: number; kgDiverted: number; co2Saved: number; rupeesSaved: number }>()
