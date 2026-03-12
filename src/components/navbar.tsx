@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Menu, X, Leaf, MessageSquare } from "lucide-react"
+import { Menu, X, Leaf, MessageSquare } from "lucide-react"
 import { useState } from "react"
+import NotificationBell from "@/components/NotificationBell"
 
 export default function Navbar() {
   const { data: session, status } = useSession()
@@ -118,10 +119,7 @@ export default function Navbar() {
                     <MessageSquare className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Button variant="ghost" size="icon" className="relative text-gray-500">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </Button>
+                <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
