@@ -1,0 +1,779 @@
+node.exe : 
+Browserslist: 
+caniuse-lite is 
+outdated. Please run:
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Users\Neha\AppData\
+Roaming\n ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Browserslist:   
+  c...ed. Please ru    
+n::String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  npx update-browsersli
+st-db@latest
+  Why you should do it 
+regularly: https://gith
+ub.com/browserslist/upd
+ate-db#readme
+
+Rebuilding...
+CssSyntaxError: 
+tailwindcss: M:\Neha\De
+sktop\Shree\recircle\sr
+c\app\globals.css:3:1: 
+The `outline-ring/50` 
+class does not exist. 
+If `outline-ring/50` 
+is a custom class, 
+make sure it is 
+defined within a 
+`@layer` directive.
+    at Input.error (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\postc
+ss\lib\input.js:135:16)
+    at AtRule.error (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\post
+css\lib\node.js:146:32)
+    at processApply (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\tail
+windcss\lib\lib\expandA
+pplyAtRules.js:380:29)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\tailwindcss\lib\li
+b\expandApplyAtRules.js
+:551:9
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\tailwindcss\lib\pr
+ocessTailwindFeatures.j
+s:55:50
+    at async 
+Object.Once (M:\Neha\De
+sktop\Shree\recircle\no
+de_modules\tailwindcss\
+lib\cli\build\plugin.js
+:248:17)
+    at async 
+LazyResult.runAsync (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\post
+css\lib\lazy-result.js:
+293:11)
+    at async build (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\tailw
+indcss\lib\cli\build\in
+dex.js:49:9) {
+  reason: 'The 
+`outline-ring/50` 
+class does not exist. 
+If `outline-ring/50` 
+is a custom class, 
+make sure it is 
+defined within a 
+`@layer` directive.',
+  file: 'M:\\Neha\\Desk
+top\\Shree\\recircle\\s
+rc\\app\\globals.css',
+  source: '@import 
+"tw-animate-css";\r\n' 
++
+    '@import "shadcn/di
+st/tailwind.css";\r\n' 
++
+    '@tailwind 
+base;\r\n' +
+    '@tailwind 
+components;\r\n' +
+    '@tailwind 
+utilities;\r\n' +
+    '\r\n' +
+    'html {\r\n' +
+    '  
+scroll-behavior: 
+smooth;\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    'body {\r\n' +
+    '  -webkit-tap-high
+light-color: 
+transparent;\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    '@layer utilities 
+{\r\n' +
+    '  .text-balance 
+{\r\n' +
+    '    text-wrap: 
+balance;\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  /* Hide 
+scrollbar on 
+overflow-x-auto 
+carousels */\r\n' +
+    '  .scrollbar-hide:
+:-webkit-scrollbar 
+{\r\n' +
+    '    display: 
+none;\r\n' +
+    '  }\r\n' +
+    '  .scrollbar-hide 
+{\r\n' +
+    '    
+-ms-overflow-style: 
+none;\r\n' +
+    '    
+scrollbar-width: 
+none;\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  /* Responsive 
+text utilities */\r\n' 
++
+    '  
+.text-responsive 
+{\r\n' +
+    '    font-size: 
+clamp(0.875rem, 2.5vw, 
+1rem);\r\n' +
+    '  }\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    '/* Print-friendly 
+styles for ESG reports 
+*/\r\n' +
+    '@media print 
+{\r\n' +
+    '  nav,\r\n' +
+    '  .no-print 
+{\r\n' +
+    '    display: none 
+!important;\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  body {\r\n' +
+    '    background: 
+white !important;\r\n' 
++
+    '    color: black 
+!important;\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '  
+.print\\:shadow-none 
+{\r\n' +
+    '    box-shadow: 
+none !important;\r\n' +
+    '  }\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    '@layer base 
+{\r\n' +
+    '  :root {\r\n' +
+    '    --background: 
+oklch(1 0 0);\r\n' +
+    '    --foreground: 
+oklch(0.145 0 0);\r\n' 
++
+    '    --card: 
+oklch(1 0 0);\r\n' +
+    '    
+--card-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+    '    --popover: 
+oklch(1 0 0);\r\n' +
+    '    
+--popover-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+    '    --primary: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--primary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    --secondary: 
+oklch(0.97 0 0);\r\n' +
+    '    --secondary-fo
+reground: oklch(0.205 
+0 0);\r\n' +
+    '    --muted: 
+oklch(0.97 0 0);\r\n' +
+    '    
+--muted-foreground: 
+oklch(0.556 0 0);\r\n' 
++
+    '    --accent: 
+oklch(0.97 0 0);\r\n' +
+    '    
+--accent-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--destructive: 
+oklch(0.577 0.245 
+27.325);\r\n' +
+    '    --border: 
+oklch(0.922 0 0);\r\n' 
++
+    '    --input: 
+oklch(0.922 0 0);\r\n' 
++
+    '    --ring: 
+oklch(0.708 0 0);\r\n' 
++
+    '    --chart-1: 
+oklch(0.809 0.105 
+251.813);\r\n' +
+    '    --chart-2: 
+oklch(0.623 0.214 
+259.815);\r\n' +
+    '    --chart-3: 
+oklch(0.546 0.245 
+262.881);\r\n' +
+    '    --chart-4: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+    '    --chart-5: 
+oklch(0.424 0.199 
+265.638);\r\n' +
+    '    --radius: 
+0.625rem;\r\n' +
+    '    --sidebar: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--sidebar-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+    '    
+--sidebar-primary: 
+oklch(0.205 0 0);\r\n' 
++
+    '    --sidebar-prim
+ary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--sidebar-accent: 
+oklch(0.97 0 0);\r\n' +
+    '    --sidebar-acce
+nt-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--sidebar-border: 
+oklch(0.922 0 0);\r\n' 
++
+    '    
+--sidebar-ring: 
+oklch(0.708 0 0);\r\n' 
++
+    '  }\r\n' +
+    '  .dark {\r\n' +
+    '    --background: 
+oklch(0.145 0 0);\r\n' 
++
+    '    --foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    --card: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--card-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    --popover: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--popover-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    --primary: 
+oklch(0.922 0 0);\r\n' 
++
+    '    
+--primary-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+    '    --secondary: 
+oklch(0.269 0 0);\r\n' 
++
+    '    --secondary-fo
+reground: oklch(0.985 
+0 0);\r\n' +
+    '    --muted: 
+oklch(0.269 0 0);\r\n' 
++
+    '    
+--muted-foreground: 
+oklch(0.708 0 0);\r\n' 
++
+    '    --accent: 
+oklch(0.269 0 0);\r\n' 
++
+    '    
+--accent-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--destructive: 
+oklch(0.704 0.191 
+22.216);\r\n' +
+    '    --border: 
+oklch(1 0 0 / 
+10%);\r\n' +
+    '    --input: 
+oklch(1 0 0 / 
+15%);\r\n' +
+    '    --ring: 
+oklch(0.556 0 0);\r\n' 
++
+    '    --chart-1: 
+oklch(0.809 0.105 
+251.813);\r\n' +
+    '    --chart-2: 
+oklch(0.623 0.214 
+259.815);\r\n' +
+    '    --chart-3: 
+oklch(0.546 0.245 
+262.881);\r\n' +
+    '    --chart-4: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+    '    --chart-5: 
+oklch(0.424 0.199 
+265.638);\r\n' +
+    '    --sidebar: 
+oklch(0.205 0 0);\r\n' 
++
+    '    
+--sidebar-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--sidebar-primary: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+    '    --sidebar-prim
+ary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--sidebar-accent: 
+oklch(0.269 0 0);\r\n' 
++
+    '    --sidebar-acce
+nt-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+    '    
+--sidebar-border: 
+oklch(1 0 0 / 
+10%);\r\n' +
+    '    
+--sidebar-ring: 
+oklch(0.556 0 0);\r\n' 
++
+    '  }\r\n' +
+    '  .theme {\r\n' +
+    '    --font-sans: 
+var(--font-sans);\r\n' 
++
+    '  }\r\n' +
+    '  * {\r\n' +
+    '    @apply 
+border-border 
+outline-ring/50;\r\n' +
+    '  }\r\n' +
+    '  body {\r\n' +
+    '    @apply 
+bg-background 
+text-foreground;\r\n' +
+    '  }\r\n' +
+    '  html {\r\n' +
+    '    @apply 
+font-sans;\r\n' +
+    '  }\r\n' +
+    '}',
+  line: 3,
+  column: 1,
+  endLine: 3,
+  endColumn: 16,
+  input: {
+    column: 1,
+    endColumn: 16,
+    endLine: 3,
+    endOffset: 79,
+    line: 3,
+    offset: 64,
+    source: '@import 
+"tw-animate-css";\r\n' 
++
+      '@import "shadcn/
+dist/tailwind.css";\r\n
+' +
+      '@tailwind 
+base;\r\n' +
+      '@tailwind 
+components;\r\n' +
+      '@tailwind 
+utilities;\r\n' +
+      '\r\n' +
+      'html {\r\n' +
+      '  
+scroll-behavior: 
+smooth;\r\n' +
+      '}\r\n' +
+      '\r\n' +
+      'body {\r\n' +
+      '  -webkit-tap-hi
+ghlight-color: 
+transparent;\r\n' +
+      '}\r\n' +
+      '\r\n' +
+      '@layer 
+utilities {\r\n' +
+      '  .text-balance 
+{\r\n' +
+      '    text-wrap: 
+balance;\r\n' +
+      '  }\r\n' +
+      '\r\n' +
+      '  /* Hide 
+scrollbar on 
+overflow-x-auto 
+carousels */\r\n' +
+      '  .scrollbar-hid
+e::-webkit-scrollbar 
+{\r\n' +
+      '    display: 
+none;\r\n' +
+      '  }\r\n' +
+      '  
+.scrollbar-hide {\r\n' 
++
+      '    
+-ms-overflow-style: 
+none;\r\n' +
+      '    
+scrollbar-width: 
+none;\r\n' +
+      '  }\r\n' +
+      '\r\n' +
+      '  /* Responsive 
+text utilities */\r\n' 
++
+      '  
+.text-responsive 
+{\r\n' +
+      '    font-size: 
+clamp(0.875rem, 2.5vw, 
+1rem);\r\n' +
+      '  }\r\n' +
+      '}\r\n' +
+      '\r\n' +
+      '/* 
+Print-friendly styles 
+for ESG reports 
+*/\r\n' +
+      '@media print 
+{\r\n' +
+      '  nav,\r\n' +
+      '  .no-print 
+{\r\n' +
+      '    display: 
+none !important;\r\n' +
+      '  }\r\n' +
+      '\r\n' +
+      '  body {\r\n' +
+      '    background: 
+white !important;\r\n' 
++
+      '    color: 
+black !important;\r\n' 
++
+      '  }\r\n' +
+      '\r\n' +
+      '  
+.print\\:shadow-none 
+{\r\n' +
+      '    box-shadow: 
+none !important;\r\n' +
+      '  }\r\n' +
+      '}\r\n' +
+      '\r\n' +
+      '@layer base 
+{\r\n' +
+      '  :root {\r\n' +
+      '    
+--background: oklch(1 
+0 0);\r\n' +
+      '    
+--foreground: 
+oklch(0.145 0 0);\r\n' 
++
+      '    --card: 
+oklch(1 0 0);\r\n' +
+      '    
+--card-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+      '    --popover: 
+oklch(1 0 0);\r\n' +
+      '    
+--popover-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+      '    --primary: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--primary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--secondary: 
+oklch(0.97 0 0);\r\n' +
+      '    --secondary-
+foreground: 
+oklch(0.205 0 0);\r\n' 
++
+      '    --muted: 
+oklch(0.97 0 0);\r\n' +
+      '    
+--muted-foreground: 
+oklch(0.556 0 0);\r\n' 
++
+      '    --accent: 
+oklch(0.97 0 0);\r\n' +
+      '    
+--accent-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--destructive: 
+oklch(0.577 0.245 
+27.325);\r\n' +
+      '    --border: 
+oklch(0.922 0 0);\r\n' 
++
+      '    --input: 
+oklch(0.922 0 0);\r\n' 
++
+      '    --ring: 
+oklch(0.708 0 0);\r\n' 
++
+      '    --chart-1: 
+oklch(0.809 0.105 
+251.813);\r\n' +
+      '    --chart-2: 
+oklch(0.623 0.214 
+259.815);\r\n' +
+      '    --chart-3: 
+oklch(0.546 0.245 
+262.881);\r\n' +
+      '    --chart-4: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+      '    --chart-5: 
+oklch(0.424 0.199 
+265.638);\r\n' +
+      '    --radius: 
+0.625rem;\r\n' +
+      '    --sidebar: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--sidebar-foreground: 
+oklch(0.145 0 0);\r\n' 
++
+      '    
+--sidebar-primary: 
+oklch(0.205 0 0);\r\n' 
++
+      '    --sidebar-pr
+imary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--sidebar-accent: 
+oklch(0.97 0 0);\r\n' +
+      '    --sidebar-ac
+cent-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--sidebar-border: 
+oklch(0.922 0 0);\r\n' 
++
+      '    
+--sidebar-ring: 
+oklch(0.708 0 0);\r\n' 
++
+      '  }\r\n' +
+      '  .dark {\r\n' +
+      '    
+--background: 
+oklch(0.145 0 0);\r\n' 
++
+      '    
+--foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    --card: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--card-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    --popover: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--popover-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    --primary: 
+oklch(0.922 0 0);\r\n' 
++
+      '    
+--primary-foreground: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--secondary: 
+oklch(0.269 0 0);\r\n' 
++
+      '    --secondary-
+foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    --muted: 
+oklch(0.269 0 0);\r\n' 
++
+      '    
+--muted-foreground: 
+oklch(0.708 0 0);\r\n' 
++
+      '    --accent: 
+oklch(0.269 0 0);\r\n' 
++
+      '    
+--accent-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--destructive: 
+oklch(0.704 0.191 
+22.216);\r\n' +
+      '    --border: 
+oklch(1 0 0 / 
+10%);\r\n' +
+      '    --input: 
+oklch(1 0 0 / 
+15%);\r\n' +
+      '    --ring: 
+oklch(0.556 0 0);\r\n' 
++
+      '    --chart-1: 
+oklch(0.809 0.105 
+251.813);\r\n' +
+      '    --chart-2: 
+oklch(0.623 0.214 
+259.815);\r\n' +
+      '    --chart-3: 
+oklch(0.546 0.245 
+262.881);\r\n' +
+      '    --chart-4: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+      '    --chart-5: 
+oklch(0.424 0.199 
+265.638);\r\n' +
+      '    --sidebar: 
+oklch(0.205 0 0);\r\n' 
++
+      '    
+--sidebar-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--sidebar-primary: 
+oklch(0.488 0.243 
+264.376);\r\n' +
+      '    --sidebar-pr
+imary-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--sidebar-accent: 
+oklch(0.269 0 0);\r\n' 
++
+      '    --sidebar-ac
+cent-foreground: 
+oklch(0.985 0 0);\r\n' 
++
+      '    
+--sidebar-border: 
+oklch(1 0 0 / 
+10%);\r\n' +
+      '    
+--sidebar-ring: 
+oklch(0.556 0 0);\r\n' 
++
+      '  }\r\n' +
+      '  .theme {\r\n' 
++
+      '    
+--font-sans: 
+var(--font-sans);\r\n' 
++
+      '  }\r\n' +
+      '  * {\r\n' +
+      '    @apply 
+border-border 
+outline-ring/50;\r\n' +
+      '  }\r\n' +
+      '  body {\r\n' +
+      '    @apply 
+bg-background 
+text-foreground;\r\n' +
+      '  }\r\n' +
+      '  html {\r\n' +
+      '    @apply 
+font-sans;\r\n' +
+      '  }\r\n' +
+      '}',
+    url: 'file:///M:/Ne
+ha/Desktop/Shree/recirc
+le/src/app/globals.css'
+,
+    file: 'M:\\Neha\\De
+sktop\\Shree\\recircle\
+\src\\app\\globals.css'
+  },
+  plugin: 'tailwindcss'
+}

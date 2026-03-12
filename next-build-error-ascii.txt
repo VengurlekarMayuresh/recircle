@@ -1,0 +1,408 @@
+  ??? Next.js 14.2.35
+  - Environments: .env
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Users\Neha\AppData\
+Roaming\n ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : 
+NotSpecified: (Fai    
+led to compile.:String 
+   ) [], 
+RemoteException
+    + 
+FullyQualifiedErrorI   
+ d : NativeCommandError
+ 
+
+./src/app/globals.css.w
+ebpack[javascript/auto]
+!=!./node_modules/next/
+dist/build/webpack/load
+ers/css-loader/src/inde
+x.js??ruleSet[1].rules[
+14].oneOf[12].use[2]!./
+node_modules/next/dist/
+build/webpack/loaders/p
+ostcss-loader/src/index
+.js??ruleSet[1].rules[1
+4].oneOf[12].use[3]!./s
+rc/app/globals.css
+Error: Package path 
+./dist/tailwind.css is 
+not exported from 
+package M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\shadcn (see 
+exports field in M:\Neh
+a\Desktop\Shree\recircl
+e\node_modules\shadcn\p
+ackage.json)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+80261
+    at Hook.eval [as 
+callAsync] (eval at 
+create (M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\next\dist\compile
+d\webpack\bundle5.js:13
+:28858), 
+<anonymous>:22:1)
+    at Hook.CALL_ASYNC_
+DELEGATE [as 
+_callAsync] (M:\Neha\De
+sktop\Shree\recircle\no
+de_modules\next\dist\co
+mpiled\webpack\bundle5.
+js:13:26012)
+    at 
+Resolver.doResolve (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\next\
+dist\compiled\webpack\b
+undle5.js:1:194006)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+76744
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+77928
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:2
+09682
+    at onJson (M:\Neha\
+Desktop\Shree\recircle\
+node_modules\next\dist\
+compiled\webpack\bundle
+5.js:1:177847)
+    at 
+Array.<anonymous> (M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\compiled\webpack\bu
+ndle5.js:1:177384)
+    at runCallbacks (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\next
+\dist\compiled\webpack\
+bundle5.js:1:167958)
+
+Import trace for 
+requested module:
+./src/app/globals.css.w
+ebpack[javascript/auto]
+!=!./node_modules/next/
+dist/build/webpack/load
+ers/css-loader/src/inde
+x.js??ruleSet[1].rules[
+14].oneOf[12].use[2]!./
+node_modules/next/dist/
+build/webpack/loaders/p
+ostcss-loader/src/index
+.js??ruleSet[1].rules[1
+4].oneOf[12].use[3]!./s
+rc/app/globals.css
+./src/app/globals.css
+
+./src/app/globals.css
+Error: Package path 
+./dist/tailwind.css is 
+not exported from 
+package M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\shadcn (see 
+exports field in M:\Neh
+a\Desktop\Shree\recircl
+e\node_modules\shadcn\p
+ackage.json)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+80261
+    at Hook.eval [as 
+callAsync] (eval at 
+create (M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\next\dist\compile
+d\webpack\bundle5.js:13
+:28858), 
+<anonymous>:22:1)
+    at 
+Resolver.doResolve (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\next\
+dist\compiled\webpack\b
+undle5.js:1:194006)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+76744
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+77928
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:2
+09682
+    at onJson (M:\Neha\
+Desktop\Shree\recircle\
+node_modules\next\dist\
+compiled\webpack\bundle
+5.js:1:177847)
+    at 
+Array.<anonymous> (M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\compiled\webpack\bu
+ndle5.js:1:177384)
+    at runCallbacks (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\next
+\dist\compiled\webpack\
+bundle5.js:1:167958)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+70085
+    at 
+tryRunOrWebpackError (M
+:\Neha\Desktop\Shree\re
+circle\node_modules\nex
+t\dist\compiled\webpack
+\bundle5.js:28:312989)
+    at __webpack_requir
+e_module__ (M:\Neha\Des
+ktop\Shree\recircle\nod
+e_modules\next\dist\com
+piled\webpack\bundle5.j
+s:28:131165)
+    at __nested_webpack
+_require_153728__ (M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\compiled\webpack\bu
+ndle5.js:28:130607)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:28:
+131454
+    at symbolIterator (
+M:\Neha\Desktop\Shree\r
+ecircle\node_modules\ne
+xt\dist\compiled\neo-as
+ync\async.js:1:14444)
+    at done (M:\Neha\De
+sktop\Shree\recircle\no
+de_modules\next\dist\co
+mpiled\neo-async\async.
+js:1:14824)
+    at Hook.eval [as 
+callAsync] (eval at 
+create (M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\next\dist\compile
+d\webpack\bundle5.js:13
+:28858), 
+<anonymous>:15:1)
+    at Hook.CALL_ASYNC_
+DELEGATE [as 
+_callAsync] (M:\Neha\De
+sktop\Shree\recircle\no
+de_modules\next\dist\co
+mpiled\webpack\bundle5.
+js:13:26012)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:28:
+130328
+    at symbolIterator (
+M:\Neha\Desktop\Shree\r
+ecircle\node_modules\ne
+xt\dist\compiled\neo-as
+ync\async.js:1:14402)
+-- inner error --
+Error: Package path 
+./dist/tailwind.css is 
+not exported from 
+package M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\shadcn (see 
+exports field in M:\Neh
+a\Desktop\Shree\recircl
+e\node_modules\shadcn\p
+ackage.json)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+80261
+    at Hook.eval [as 
+callAsync] (eval at 
+create (M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\next\dist\compile
+d\webpack\bundle5.js:13
+:28858), 
+<anonymous>:22:1)
+    at 
+Resolver.doResolve (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\next\
+dist\compiled\webpack\b
+undle5.js:1:194006)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+76744
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+77928
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:2
+09682
+    at onJson (M:\Neha\
+Desktop\Shree\recircle\
+node_modules\next\dist\
+compiled\webpack\bundle
+5.js:1:177847)
+    at 
+Array.<anonymous> (M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\compiled\webpack\bu
+ndle5.js:1:177384)
+    at runCallbacks (M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\next
+\dist\compiled\webpack\
+bundle5.js:1:167958)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:1:1
+70085
+    at 
+Object.<anonymous> (M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\next\
+dist\build\webpack\load
+ers\css-loader\src\inde
+x.js??ruleSet[1].rules[
+14].oneOf[12].use[2]!M:
+\Neha\Desktop\Shree\rec
+ircle\node_modules\next
+\dist\build\webpack\loa
+ders\postcss-loader\src
+\index.js??ruleSet[1].r
+ules[14].oneOf[12].use[
+3]!M:\Neha\Desktop\Shre
+e\recircle\src\app\glob
+als.css:1:7)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:28:
+922493
+    at Hook.eval [as 
+call] (eval at create (
+M:\Neha\Desktop\Shree\r
+ecircle\node_modules\ne
+xt\dist\compiled\webpac
+k\bundle5.js:13:28636),
+ <anonymous>:7:1)
+    at 
+Hook.CALL_DELEGATE [as 
+_call] (M:\Neha\Desktop
+\Shree\recircle\node_mo
+dules\next\dist\compile
+d\webpack\bundle5.js:13
+:25906)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:28:
+131198
+    at 
+tryRunOrWebpackError (M
+:\Neha\Desktop\Shree\re
+circle\node_modules\nex
+t\dist\compiled\webpack
+\bundle5.js:28:312943)
+    at __webpack_requir
+e_module__ (M:\Neha\Des
+ktop\Shree\recircle\nod
+e_modules\next\dist\com
+piled\webpack\bundle5.j
+s:28:131165)
+    at __nested_webpack
+_require_153728__ (M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\compiled\webpack\bu
+ndle5.js:28:130607)
+    at M:\Neha\Desktop\
+Shree\recircle\node_mod
+ules\next\dist\compiled
+\webpack\bundle5.js:28:
+131454
+    at symbolIterator (
+M:\Neha\Desktop\Shree\r
+ecircle\node_modules\ne
+xt\dist\compiled\neo-as
+ync\async.js:1:14444)
+
+Generated code for M:\N
+eha\Desktop\Shree\recir
+cle\node_modules\next\d
+ist\build\webpack\loade
+rs\css-loader\src\index
+.js??ruleSet[1].rules[1
+4].oneOf[12].use[2]!M:\
+Neha\Desktop\Shree\reci
+rcle\node_modules\next\
+dist\build\webpack\load
+ers\postcss-loader\src\
+index.js??ruleSet[1].ru
+les[14].oneOf[12].use[3
+]!M:\Neha\Desktop\Shree
+\recircle\src\app\globa
+ls.css
+
+Import trace for 
+requested module:
+./src/app/globals.css
+
+
+> Build failed because 
+of webpack errors
