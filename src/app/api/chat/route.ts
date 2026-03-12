@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
       }))
     }
 
-    const { reply, toolsUsed } = await runAdvisorAgent(message, userId, history)
+    const { reply, toolsUsed, materials } = await runAdvisorAgent(message, userId, history)
 
-    return NextResponse.json({ reply, tools_used: toolsUsed })
+    return NextResponse.json({ reply, tools_used: toolsUsed, materials })
   } catch (err) {
     console.error("Chat API error:", err)
     return NextResponse.json(
