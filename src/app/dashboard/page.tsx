@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Leaf, TrendingUp, Package, IndianRupee, Bot, Download,
-  Zap, Activity, Users, BarChart3, RefreshCw
+  Zap, Activity, Users, BarChart3, RefreshCw, Droplets, Recycle,
+  Trophy, MapPin, ArrowUpRight
 } from "lucide-react"
 import { SankeyDiagram } from "@/components/sankey-diagram"
 import { toast } from "@/components/ui/use-toast"
@@ -60,6 +61,10 @@ export default function DashboardPage() {
       ["kg Diverted", stats.kg_diverted],
       ["CO2 Saved (kg)", stats.co2_saved],
       ["Rupees Saved", stats.rupees_saved],
+      ["Water Saved (Liters)", stats.water_saved_liters],
+      ["Landfill Cost Saved (INR)", stats.landfill_cost_saved],
+      ["Materials Reused 2+ Times", stats.reuse_multiple_count],
+      ["Total Redistribution Cycles", stats.total_reuse_cycles],
     ]
     const csv = rows.map(r => r.join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
@@ -82,8 +87,10 @@ export default function DashboardPage() {
   const heroStats = [
     { label: "Materials Listed", value: stats?.total_materials ?? 0, icon: <Package className="w-6 h-6" />, color: "from-emerald-500 to-teal-600" },
     { label: "Exchanges Completed", value: stats?.total_transactions ?? 0, icon: <Activity className="w-6 h-6" />, color: "from-blue-500 to-indigo-600" },
-    { label: "kg Diverted", value: `${stats?.kg_diverted ?? 0}`, icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-600" },
-    { label: "CO₂ Saved (kg)", value: `${stats?.co2_saved ?? 0}`, icon: <Leaf className="w-6 h-6" />, color: "from-green-500 to-emerald-700" },
+    { label: "kg Diverted", value: `${(stats?.kg_diverted ?? 0).toLocaleString()}`, icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-600" },
+    { label: "CO₂ Saved (kg)", value: `${(stats?.co2_saved ?? 0).toLocaleString()}`, icon: <Leaf className="w-6 h-6" />, color: "from-green-500 to-emerald-700" },
+    { label: "Rupees Saved", value: `₹${(stats?.rupees_saved ?? 0).toLocaleString()}`, icon: <IndianRupee className="w-6 h-6" />, color: "from-amber-500 to-orange-600" },
+    { label: "Water Saved (L)", value: `${(stats?.water_saved_liters ?? 0).toLocaleString()}`, icon: <Droplets className="w-6 h-6" />, color: "from-cyan-500 to-blue-600" },
   ]
 
   const cumulativeData = (stats?.monthly_trend ?? []).map((m: any, i: number, arr: any[]) => ({
@@ -112,7 +119,7 @@ export default function DashboardPage() {
 
       {/* Hero stats */}
       <motion.div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-3 gap-4"
         initial="hidden"
         animate="visible"
         variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
@@ -139,11 +146,13 @@ export default function DashboardPage() {
         ))}
       </motion.div>
 
-      {/* Weekly platform health */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Weekly platform health + reuse tracking */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "New Users This Week", value: stats?.weekly_new_users ?? 0, icon: <Users className="w-5 h-5 text-blue-500" /> },
           { label: "New Listings This Week", value: stats?.weekly_new_listings ?? 0, icon: <BarChart3 className="w-5 h-5 text-emerald-500" /> },
+          { label: "Materials Reused 2+ Times", value: stats?.reuse_multiple_count ?? 0, icon: <Recycle className="w-5 h-5 text-purple-500" /> },
+          { label: "Total Redistribution Cycles", value: stats?.total_reuse_cycles ?? 0, icon: <RefreshCw className="w-5 h-5 text-teal-500" /> },
         ].map(({ label, value, icon }) => (
           <Card key={label} className="border-none shadow-sm bg-white">
             <CardContent className="p-4 flex items-center gap-3">
@@ -159,8 +168,9 @@ export default function DashboardPage() {
 
       {/* Charts grid */}
       <Tabs defaultValue="overview">
-        <TabsList className="bg-gray-100 p-1 rounded-xl mb-6">
+        <TabsList className="bg-gray-100 p-1 rounded-xl mb-6 flex-wrap">
           <TabsTrigger value="overview" className="rounded-lg px-4">Overview</TabsTrigger>
+          <TabsTrigger value="community" className="rounded-lg px-4">Community</TabsTrigger>
           <TabsTrigger value="categories" className="rounded-lg px-4">Categories</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-lg px-4">Material Flow</TabsTrigger>
           <TabsTrigger value="agents" className="rounded-lg px-4">Agent Activity</TabsTrigger>
@@ -212,6 +222,111 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Community / City Participation Tab */}
+        <TabsContent value="community" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* City participation bar chart */}
+            <Card className="border-none shadow-md">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold text-gray-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-500" /> City / Community Participation
+                </CardTitle>
+                <p className="text-xs text-gray-500">Listings and completed transactions per city</p>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats?.city_participation ?? []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="city" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="listings" name="Listings" fill="#10b981" radius={[4,4,0,0]} />
+                    <Bar dataKey="transactions" name="Transactions" fill="#3b82f6" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Top contributors leaderboard */}
+            <Card className="border-none shadow-md">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold text-gray-700 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-500" /> Top Contributors
+                </CardTitle>
+                <p className="text-xs text-gray-500">Most active suppliers and receivers by confirmed exchanges</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Top Suppliers */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-1">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" /> Top Suppliers
+                  </h4>
+                  {(stats?.top_suppliers ?? []).length === 0 ? (
+                    <p className="text-xs text-gray-400">No confirmed transactions yet</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {(stats?.top_suppliers ?? []).map((s: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
+                          <span className="text-sm font-bold text-emerald-600 w-5">{i + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
+                            <p className="text-xs text-gray-400">{s.city} &middot; {s.role}</p>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">{s.count} exchanges</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Top Receivers */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-1">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-blue-500 rotate-180" /> Top Receivers
+                  </h4>
+                  {(stats?.top_receivers ?? []).length === 0 ? (
+                    <p className="text-xs text-gray-400">No confirmed transactions yet</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {(stats?.top_receivers ?? []).map((r: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
+                          <span className="text-sm font-bold text-blue-600 w-5">{i + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">{r.name}</p>
+                            <p className="text-xs text-gray-400">{r.city} &middot; {r.role}</p>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">{r.count} exchanges</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* City impact details */}
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold text-gray-700">City-wise Environmental Impact</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={stats?.city_participation ?? []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="city" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="co2Saved" name="CO₂ Saved (kg)" fill="#22c55e" radius={[4,4,0,0]} />
+                  <Bar dataKey="kgDiverted" name="kg Diverted" fill="#8b5cf6" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-6">
@@ -321,15 +436,18 @@ export default function DashboardPage() {
       <Card className="border-none shadow-md bg-gradient-to-br from-emerald-900 to-teal-800 text-white">
         <CardContent className="p-6">
           <h3 className="text-lg font-bold mb-4">🌍 Platform Impact = …</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             {[
-              { emoji: "🌳", label: "Trees Planted", value: Math.round((stats?.co2_saved ?? 0) / 22) },
+              { emoji: "🌳", label: "Trees Planted Equiv.", value: Math.round((stats?.co2_saved ?? 0) / 22) },
+              { emoji: "💧", label: "Buckets of Water Saved", value: Math.round((stats?.water_saved_liters ?? 0) / 20) },
               { emoji: "🏠", label: "Households Powered", value: Math.round((stats?.co2_saved ?? 0) / 500) },
-              { emoji: "🛺", label: "Auto Trips Offset", value: Math.round((stats?.co2_saved ?? 0) / 1200) },
+              { emoji: "🗑️", label: "Landfill Cost Saved (₹)", value: stats?.landfill_cost_saved ?? 0 },
+              { emoji: "♻️", label: "Scrap Diverted (kg)", value: stats?.kg_diverted ?? 0 },
+              { emoji: "🔄", label: "Reuse Cycles", value: stats?.total_reuse_cycles ?? 0 },
             ].map(({ emoji, label, value }) => (
               <div key={label} className="text-center">
                 <div className="text-4xl mb-1">{emoji}</div>
-                <p className="text-2xl font-black">{value.toLocaleString()}</p>
+                <p className="text-2xl font-black">{(value ?? 0).toLocaleString()}</p>
                 <p className="text-sm text-emerald-300">{label}</p>
               </div>
             ))}
