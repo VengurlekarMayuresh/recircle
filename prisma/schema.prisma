@@ -9,178 +9,174 @@ datasource db {
 }
 
 model User {
-  id                 String            @id @default(uuid())
-  name               String
-  email              String            @unique
-  passwordHash      String            @map("password_hash")
-  phone              String
-  role               String            // individual, business, ngo, volunteer, transporter, admin
-  orgName            String?           @map("org_name")
-  bio                String?
-  avatarUrl          String?           @map("avatar_url")
-  locationLat        Float?            @map("location_lat")
-  locationLng        Float?            @map("location_lng")
-  address            String?
-  city               String
-  greenPoints        Int               @default(0) @map("green_points")
-  level              String            @default("seedling") // seedling, sprout, sapling, tree, forest
-  trustScore         Int               @default(0) @map("trust_score")
-  verificationLevel  String            @default("unverified") @map("verification_level") // unverified, basic, verified, trusted
-  idVerified         Boolean           @default(false) @map("id_verified")
-  avgRating          Float             @default(0) @map("avg_rating")
-  totalRatings       Int               @default(0) @map("total_ratings")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-
-  materials          Material[]
-  wantRequests       WantRequest[]
-  directRequests     DirectRequest[]
-  matches            Match[]
-  suppliedTransactions Transaction[]    @relation("SupplierRelation")
-  receivedTransactions Transaction[]    @relation("ReceiverRelation")
-  transporterProfile Transporter?
-  transportBookings  TransportBooking[]
-  sentMessages       Message[]         @relation("SenderRelation")
-  receivedReviews    Review[]          @relation("RevieweeRelation")
-  givenReviews       Review[]          @relation("ReviewerRelation")
-  raisedDisputes     Dispute[]         @relation("DisputeRaiser")
-  resolvedDisputes   Dispute[]         @relation("DisputeResolver")
-  notifications      Notification[]
-  badges             UserBadge[]
-  chatHistory        ChatHistory[]
-  agentLogs          AgentLog[]
-  fraudFlags         FraudFlag[]       @relation("UserFraudFlags")
-  reviewedFlags      FraudFlag[]       @relation("FraudReviewer")
-  savedMaterials     SavedMaterial[]
-  bargainSessions    BargainSession[]
+  id                   String             @id @default(uuid())
+  name                 String
+  email                String             @unique
+  passwordHash         String             @map("password_hash")
+  phone                String
+  role                 String
+  orgName              String?            @map("org_name")
+  bio                  String?
+  avatarUrl            String?            @map("avatar_url")
+  locationLat          Float?             @map("location_lat")
+  locationLng          Float?             @map("location_lng")
+  address              String?
+  city                 String
+  greenPoints          Int                @default(0) @map("green_points")
+  level                String             @default("seedling")
+  trustScore           Int                @default(0) @map("trust_score")
+  verificationLevel    String             @default("unverified") @map("verification_level")
+  idVerified           Boolean            @default(false) @map("id_verified")
+  avgRating            Float              @default(0) @map("avg_rating")
+  totalRatings         Int                @default(0) @map("total_ratings")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  agentLogs            AgentLog[]
+  bargainSessions      BargainSession[]
+  businessWasteStreams BusinessWasteStream[]
+  chatHistory          ChatHistory[]
+  directRequests       DirectRequest[]
+  raisedDisputes       Dispute[]          @relation("DisputeRaiser")
+  resolvedDisputes     Dispute[]          @relation("DisputeResolver")
+  reviewedFlags        FraudFlag[]        @relation("FraudReviewer")
+  fraudFlags           FraudFlag[]        @relation("UserFraudFlags")
+  matches              Match[]
+  materials            Material[]
+  sentMessages         Message[]          @relation("SenderRelation")
+  notifications        Notification[]
+  receivedReviews      Review[]           @relation("RevieweeRelation")
+  givenReviews         Review[]           @relation("ReviewerRelation")
+  savedMaterials       SavedMaterial[]
+  receivedTransactions Transaction[]      @relation("ReceiverRelation")
+  suppliedTransactions Transaction[]      @relation("SupplierRelation")
+  transportBookings    TransportBooking[]
+  transporterProfile   Transporter?
+  badges               UserBadge[]
+  wantRequests         WantRequest[]
 
   @@map("users")
 }
 
 model Category {
-  id                     Int      @id @default(autoincrement())
-  name                   String
-  slug                   String   @unique
-  icon                   String
-  co2FactorKg            Float    @map("co2_factor_kg")
-  waterFactorLiters      Float    @default(0) @map("water_factor_liters")
-  landfillCostInrPerTonne Float    @map("landfill_cost_inr_per_tonne")
-  newCostInrPerUnit       Float    @map("new_cost_inr_per_unit")
-  decompositionYears     Int      @map("decomposition_years")
-  peakMonths             String   @map("peak_months") 
-  description            String
-
-  materials              Material[]
-  wantRequests           WantRequest[]
-  demandHistory          DemandHistory[]
+  id                      Int             @id @default(autoincrement())
+  name                    String
+  slug                    String          @unique
+  icon                    String
+  co2FactorKg             Float           @map("co2_factor_kg")
+  waterFactorLiters       Float                 @default(0) @map("water_factor_liters")
+  landfillCostInrPerTonne Float                 @map("landfill_cost_inr_per_tonne")
+  newCostInrPerUnit       Float                 @map("new_cost_inr_per_unit")
+  decompositionYears      Int                   @map("decomposition_years")
+  peakMonths              String                @map("peak_months")
+  description             String
+  demandHistory           DemandHistory[]
+  businessWasteStreams    BusinessWasteStream[]
+  materials               Material[]
+  wantRequests            WantRequest[]
 
   @@map("categories")
 }
 
 model Material {
-  id                   Int           @id @default(autoincrement())
-  userId               String        @map("user_id")
-  categoryId           Int?          @map("category_id")
-  title                String
-  description          String
-  condition            String        // new, like_new, good, fair, salvage
-  quantity             Int           @default(1)
-  unit                 String        @default("pieces")
-  weightKg             Float?        @map("weight_kg")
-  listingType          String        @map("listing_type") // donate, sell, exchange
-  price                Float         @default(0)
-  status               String        @default("available") @map("status") // available, reserved, claimed, archived, future
-  locationLat          Float         @map("location_lat")
-  locationLng          Float         @map("location_lng")
-  address              String
-  city                 String
-  images               String        @map("images")
-  tags                 String        @map("tags")
-  availableFromDate    DateTime?     @map("available_from_date")
-  aiDetectedType       String?       @map("ai_detected_type")
-  reusePotentialScore  Int?          @map("reuse_potential_score")
-  aiUseCases           String?       @map("ai_use_cases")
-  aiRouteRecommendation String?      @map("ai_route_recommendation") // reuse, repair, recycle, dispose
-  co2SavedKg           Float         @default(0) @map("co2_saved_kg")
-  rupeesSaved          Float         @default(0) @map("rupees_saved")
-  fraudRiskScore       Int           @default(0) @map("fraud_risk_score")
-  viewsCount           Int           @default(0) @map("views_count")
-  reuseCount           Int           @default(0) @map("reuse_count")
-  floorPrice           Float?        @map("floor_price")
-  bargainEnabled       Boolean       @default(false) @map("bargain_enabled")
-  negotiationStyle     String        @default("moderate") @map("negotiation_style") // firm, moderate, flexible
-  autoAcceptPrice      Float?        @map("auto_accept_price")
-  dealSweeteners       String?       @map("deal_sweeteners") // JSON string
-  createdAt            DateTime      @default(now()) @map("created_at")
-  updatedAt            DateTime      @updatedAt @map("updated_at")
-
-  user                 User          @relation(fields: [userId], references: [id])
-  category             Category?     @relation(fields: [categoryId], references: [id])
-  directRequests       DirectRequest[]
-  matches              Match[]
-  transactions         Transaction[]
-  agentLogs            AgentLog[]
-  fraudFlags           FraudFlag[]
-  savedSubscribers     SavedMaterial[]
-  bargainSessions      BargainSession[]
+  id                    Int              @id @default(autoincrement())
+  userId                String           @map("user_id")
+  categoryId            Int?             @map("category_id")
+  title                 String
+  description           String
+  condition             String
+  quantity              Int              @default(1)
+  unit                  String           @default("pieces")
+  weightKg              Float?           @map("weight_kg")
+  listingType           String           @map("listing_type")
+  price                 Float            @default(0)
+  status                String           @default("available") @map("status")
+  locationLat           Float            @map("location_lat")
+  locationLng           Float            @map("location_lng")
+  address               String
+  city                  String
+  images                String           @map("images")
+  tags                  String           @map("tags")
+  availableFromDate     DateTime?        @map("available_from_date")
+  aiDetectedType        String?          @map("ai_detected_type")
+  reusePotentialScore   Int?             @map("reuse_potential_score")
+  aiUseCases            String?          @map("ai_use_cases")
+  aiRouteRecommendation String?          @map("ai_route_recommendation")
+  co2SavedKg            Float            @default(0) @map("co2_saved_kg")
+  rupeesSaved           Float            @default(0) @map("rupees_saved")
+  fraudRiskScore        Int              @default(0) @map("fraud_risk_score")
+  viewsCount            Int              @default(0) @map("views_count")
+  reuseCount            Int              @default(0) @map("reuse_count")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  autoAcceptPrice       Float?           @map("auto_accept_price")
+  bargainEnabled        Boolean          @default(false) @map("bargain_enabled")
+  dealSweeteners        String?          @map("deal_sweeteners")
+  floorPrice            Float?           @map("floor_price")
+  negotiationStyle      String           @default("moderate") @map("negotiation_style")
+  agentLogs             AgentLog[]
+  bargainSessions       BargainSession[]
+  directRequests        DirectRequest[]
+  fraudFlags            FraudFlag[]
+  matches               Match[]
+  category              Category?        @relation(fields: [categoryId], references: [id])
+  user                  User             @relation(fields: [userId], references: [id])
+  savedSubscribers      SavedMaterial[]
+  transactions          Transaction[]
 
   @@map("materials")
 }
 
 model WantRequest {
-  id             Int        @id @default(autoincrement())
-  userId         String     @map("user_id")
-  categoryId     Int        @map("category_id")
+  id             Int      @id @default(autoincrement())
+  userId         String   @map("user_id")
+  categoryId     Int      @map("category_id")
   title          String
   description    String
   keywords       String
-  quantityNeeded Int        @map("quantity_needed")
-  locationLat    Float      @map("location_lat")
-  locationLng    Float      @map("location_lng")
-  radiusKm       Int        @default(10) @map("radius_km")
-  urgency        String     // low, medium, high
-  status         String     @default("open") // open, fulfilled, expired
-  createdAt      DateTime   @default(now()) @map("created_at")
-
-  user           User       @relation(fields: [userId], references: [id])
-  category       Category   @relation(fields: [categoryId], references: [id])
+  quantityNeeded Int      @map("quantity_needed")
+  locationLat    Float    @map("location_lat")
+  locationLng    Float    @map("location_lng")
+  radiusKm       Int      @default(10) @map("radius_km")
+  urgency        String
+  status         String   @default("open")
+  createdAt      DateTime @default(now()) @map("created_at")
   matches        Match[]
+  category       Category @relation(fields: [categoryId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
 
   @@map("want_requests")
 }
 
 model DirectRequest {
-  id                 Int               @id @default(autoincrement())
-  materialId         Int               @map("material_id")
-  receiverId         String            @map("receiver_id")
-  quantityRequested  Int               @map("quantity_requested")
+  id                 Int       @id @default(autoincrement())
+  materialId         Int       @map("material_id")
+  receiverId         String    @map("receiver_id")
+  quantityRequested  Int       @map("quantity_requested")
   message            String
-  preferredTransport String            @map("preferred_transport") // self_pickup, supplier_delivery, platform_transporter
-  status             String            @default("pending") // pending, accepted, rejected
-  responseMessage    String?           @map("response_message")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  respondedAt        DateTime?         @map("responded_at")
-
-  material           Material          @relation(fields: [materialId], references: [id])
-  receiver           User              @relation(fields: [receiverId], references: [id])
+  preferredTransport String    @map("preferred_transport")
+  status             String    @default("pending")
+  responseMessage    String?   @map("response_message")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  respondedAt        DateTime? @map("responded_at")
+  material           Material  @relation(fields: [materialId], references: [id])
+  receiver           User      @relation(fields: [receiverId], references: [id])
 
   @@map("direct_requests")
 }
 
 model Match {
-  id             Int         @id @default(autoincrement())
-  materialId     Int         @map("material_id")
-  wantRequestId  Int?        @map("want_request_id")
-  userId         String      @map("user_id")
-  score          Float
-  reason         String
-  status         String      @default("pending") // pending, accepted, rejected
-  notified       Boolean     @default(false)
-  createdAt      DateTime    @default(now()) @map("created_at")
-
-  material       Material    @relation(fields: [materialId], references: [id])
-  wantRequest    WantRequest? @relation(fields: [wantRequestId], references: [id])
-  user           User        @relation(fields: [userId], references: [id])
+  id            Int          @id @default(autoincrement())
+  materialId    Int          @map("material_id")
+  wantRequestId Int?         @map("want_request_id")
+  userId        String       @map("user_id")
+  score         Float
+  reason        String
+  status        String       @default("pending")
+  notified      Boolean      @default(false)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  material      Material     @relation(fields: [materialId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  wantRequest   WantRequest? @relation(fields: [wantRequestId], references: [id])
 
   @@map("matches")
 }
@@ -191,8 +187,8 @@ model Transaction {
   supplierId        String            @map("supplier_id")
   receiverId        String            @map("receiver_id")
   quantity          Int
-  transportMethod   String            @map("transport_method") // self_pickup, supplier_delivery, platform_transporter
-  status            String            @default("negotiating") // negotiating, scheduled, in_transit, delivered, confirmed, cancelled
+  transportMethod   String            @map("transport_method")
+  status            String            @default("negotiating")
   pickupDate        DateTime?         @map("pickup_date")
   pickupAddress     String            @map("pickup_address")
   deliveryAddress   String            @map("delivery_address")
@@ -203,75 +199,72 @@ model Transaction {
   qualityMatchScore Int?              @map("quality_match_score")
   createdAt         DateTime          @default(now()) @map("created_at")
   completedAt       DateTime?         @map("completed_at")
-
-  material          Material          @relation(fields: [materialId], references: [id])
-  supplier          User              @relation("SupplierRelation", fields: [supplierId], references: [id])
-  receiver          User              @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  disputes          Dispute[]
   messages          Message[]
   reviews           Review[]
-  disputes          Dispute[]
+  material          Material          @relation(fields: [materialId], references: [id])
+  receiver          User              @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  supplier          User              @relation("SupplierRelation", fields: [supplierId], references: [id])
   transportBooking  TransportBooking?
 
   @@map("transactions")
 }
 
 model Transporter {
-  id                 Int               @id @default(autoincrement())
-  userId             String            @unique @map("user_id")
-  vehicleType        String            @map("vehicle_type") // mini_truck, pickup_van, tempo, autorickshaw, bike, other
-  vehicleCapacityKg  Float             @map("vehicle_capacity_kg")
-  vehicleCapacityCbm Float?            @map("vehicle_capacity_cbm")
-  vehiclePhoto       String?           @map("vehicle_photo")
-  serviceAreaCity    String            @map("service_area_city")
-  serviceRadiusKm    Int               @map("service_radius_km")
-  pricePerKm         Float             @map("price_per_km")
-  baseRate           Float             @map("base_rate")
-  availabilityStatus String            @default("available") @map("availability_status") // available, busy, offline
-  totalDeliveries    Int               @default(0) @map("total_deliveries")
-  avgRating          Float             @default(0) @map("avg_rating")
-  totalRatings       Int               @default(0) @map("total_ratings")
-  isVolunteer        Boolean           @default(false) @map("is_volunteer")
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-
-  user               User              @relation(fields: [userId], references: [id])
+  id                 Int                    @id @default(autoincrement())
+  userId             String                 @unique @map("user_id")
+  vehicleType        String                 @map("vehicle_type")
+  vehicleCapacityKg  Float                  @map("vehicle_capacity_kg")
+  vehicleCapacityCbm Float?                 @map("vehicle_capacity_cbm")
+  vehiclePhoto       String?                @map("vehicle_photo")
+  serviceAreaCity    String                 @map("service_area_city")
+  serviceRadiusKm    Int                    @map("service_radius_km")
+  pricePerKm         Float                  @map("price_per_km")
+  baseRate           Float                  @map("base_rate")
+  availabilityStatus String                 @default("available") @map("availability_status")
+  totalDeliveries    Int                    @default(0) @map("total_deliveries")
+  avgRating          Float                  @default(0) @map("avg_rating")
+  totalRatings       Int                    @default(0) @map("total_ratings")
+  isVolunteer        Boolean                @default(false) @map("is_volunteer")
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
   bookings           TransportBooking[]
+  user               User                   @relation(fields: [userId], references: [id])
   verification       VolunteerVerification?
 
   @@map("transporters")
 }
 
 model TransportBooking {
-  id                Int           @id @default(autoincrement())
-  transactionId     String        @unique @map("transaction_id")
-  transporterId     Int           @map("transporter_id")
-  receiverId        String        @map("receiver_id")
-  pickupAddress     String        @map("pickup_address")
-  pickupLat         Float         @map("pickup_lat")
-  pickupLng         Float         @map("pickup_lng")
-  deliveryAddress   String        @map("delivery_address")
-  deliveryLat       Float         @map("delivery_lat")
-  deliveryLng       Float         @map("delivery_lng")
-  distanceKm        Float         @map("distance_km")
-  estimatedCost     Float         @map("estimated_cost")
-  actualCost        Float?        @map("actual_cost")
-  status            String        @default("requested") // requested, pending_approval, accepted, pickup_scheduled, collected, in_transit, delivered, completed, cancelled, rejected
-  scheduledDate     DateTime?     @map("scheduled_date")
-  transporterRating Int?          @map("transporter_rating")
-  notes             String?
-  pickupPhotoUrl    String?       @map("pickup_photo_url")
-  deliveryPhotoUrl  String?       @map("delivery_photo_url")
-  volunteerLat      Float?        @map("volunteer_lat")
-  volunteerLng      Float?        @map("volunteer_lng")
-  volunteerLocationUpdatedAt DateTime? @map("volunteer_location_updated_at")
-  receiverConfirmed  Boolean      @default(false) @map("receiver_confirmed")
-  supplierConfirmed  Boolean      @default(false) @map("supplier_confirmed")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt          DateTime      @updatedAt @map("updated_at")
-
-  transaction       Transaction   @relation(fields: [transactionId], references: [id])
-  transporter       Transporter   @relation(fields: [transporterId], references: [id])
-  receiver          User          @relation(fields: [receiverId], references: [id])
+  id                         Int         @id @default(autoincrement())
+  transactionId              String      @unique @map("transaction_id")
+  transporterId              Int         @map("transporter_id")
+  receiverId                 String      @map("receiver_id")
+  pickupAddress              String      @map("pickup_address")
+  pickupLat                  Float       @map("pickup_lat")
+  pickupLng                  Float       @map("pickup_lng")
+  deliveryAddress            String      @map("delivery_address")
+  deliveryLat                Float       @map("delivery_lat")
+  deliveryLng                Float       @map("delivery_lng")
+  distanceKm                 Float       @map("distance_km")
+  estimatedCost              Float       @map("estimated_cost")
+  actualCost                 Float?      @map("actual_cost")
+  status                     String      @default("requested")
+  scheduledDate              DateTime?   @map("scheduled_date")
+  transporterRating          Int?        @map("transporter_rating")
+  notes                      String?
+  createdAt                  DateTime    @default(now()) @map("created_at")
+  updatedAt                  DateTime    @updatedAt @map("updated_at")
+  deliveryPhotoUrl           String?     @map("delivery_photo_url")
+  pickupPhotoUrl             String?     @map("pickup_photo_url")
+  receiverConfirmed          Boolean     @default(false) @map("receiver_confirmed")
+  supplierConfirmed          Boolean     @default(false) @map("supplier_confirmed")
+  volunteerLat               Float?      @map("volunteer_lat")
+  volunteerLng               Float?      @map("volunteer_lng")
+  volunteerLocationUpdatedAt DateTime?   @map("volunteer_location_updated_at")
+  receiver                   User        @relation(fields: [receiverId], references: [id])
+  transaction                Transaction @relation(fields: [transactionId], references: [id])
+  transporter                Transporter @relation(fields: [transporterId], references: [id])
 
   @@map("transport_bookings")
 }
@@ -284,9 +277,8 @@ model Message {
   imageUrl      String?     @map("image_url")
   read          Boolean     @default(false)
   createdAt     DateTime    @default(now()) @map("created_at")
-
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
   sender        User        @relation("SenderRelation", fields: [senderId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
 
   @@map("messages")
 }
@@ -298,31 +290,29 @@ model Review {
   revieweeId    String      @map("reviewee_id")
   rating        Int
   comment       String?
-  reviewType    String      @map("review_type") // supplier_review, receiver_review, transporter_review
+  reviewType    String      @map("review_type")
   createdAt     DateTime    @default(now()) @map("created_at")
-
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  reviewer      User        @relation("ReviewerRelation", fields: [reviewerId], references: [id])
   reviewee      User        @relation("RevieweeRelation", fields: [revieweeId], references: [id])
+  reviewer      User        @relation("ReviewerRelation", fields: [reviewerId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
 
   @@map("reviews")
 }
 
 model Dispute {
-  id             Int           @id @default(autoincrement())
-  transactionId  String        @map("transaction_id")
-  raisedBy       String        @map("raised_by")
+  id             Int         @id @default(autoincrement())
+  transactionId  String      @map("transaction_id")
+  raisedBy       String      @map("raised_by")
   reason         String
-  evidenceImages String        @map("evidence_images")
-  status         String        @default("open") // open, reviewing, resolved
+  evidenceImages String      @map("evidence_images")
+  status         String      @default("open")
   resolution     String?
-  resolvedBy     String?       @map("resolved_by")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  resolvedAt     DateTime?     @map("resolved_at")
-
-  transaction    Transaction   @relation(fields: [transactionId], references: [id])
-  raiser         User          @relation("DisputeRaiser", fields: [raisedBy], references: [id])
-  resolver       User?         @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+  resolvedBy     String?     @map("resolved_by")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  resolvedAt     DateTime?   @map("resolved_at")
+  raiser         User        @relation("DisputeRaiser", fields: [raisedBy], references: [id])
+  resolver       User?       @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
 
   @@map("disputes")
 }
@@ -336,34 +326,31 @@ model Notification {
   data      String   @default("{}")
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
-
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("notifications")
 }
 
 model Badge {
-  id               Int          @id @default(autoincrement())
+  id               Int         @id @default(autoincrement())
   name             String
-  slug             String       @unique
+  slug             String      @unique
   description      String
   icon             String
-  requirementType  String       @map("requirement_type")
-  requirementValue Int          @map("requirement_value")
-
+  requirementType  String      @map("requirement_type")
+  requirementValue Int         @map("requirement_value")
   userBadges       UserBadge[]
 
   @@map("badges")
 }
 
 model UserBadge {
-  id        Int      @id @default(autoincrement())
-  userId    String   @map("user_id")
-  badgeId   Int      @map("badge_id")
-  earnedAt  DateTime @default(now()) @map("earned_at")
-
-  user      User     @relation(fields: [userId], references: [id])
-  badge     Badge    @relation(fields: [badgeId], references: [id])
+  id       Int      @id @default(autoincrement())
+  userId   String   @map("user_id")
+  badgeId  Int      @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@map("user_badges")
 }
@@ -371,40 +358,38 @@ model UserBadge {
 model ChatHistory {
   id        Int      @id @default(autoincrement())
   userId    String   @map("user_id")
-  role      String 
+  role      String
   content   String
   toolCalls String?  @map("tool_calls")
   createdAt DateTime @default(now()) @map("created_at")
-
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("chat_history")
 }
 
 model RepairHub {
-  id          Int           @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
-  type        String        // workshop, makerspace, event
+  type        String
   address     String
-  locationLat Float         @map("location_lat")
-  locationLng Float         @map("location_lng")
-  categories  String        @map("categories")
+  locationLat Float    @map("location_lat")
+  locationLng Float    @map("location_lng")
+  categories  String   @map("categories")
   website     String?
   hours       String?
-  createdAt   DateTime      @default(now()) @map("created_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("repair_hubs")
 }
 
 model AgentLog {
   id         Int       @id @default(autoincrement())
-  agentName  String    @map("agent_name") // scout, advisor, quality, sentinel
+  agentName  String    @map("agent_name")
   action     String
   materialId Int?      @map("material_id")
   userId     String?   @map("user_id")
   details    String    @default("{}")
   createdAt  DateTime  @default(now()) @map("created_at")
-
   material   Material? @relation(fields: [materialId], references: [id])
   user       User?     @relation(fields: [userId], references: [id])
 
@@ -420,25 +405,23 @@ model DemandHistory {
   listingCount     Int      @default(0) @map("listing_count")
   transactionCount Int      @default(0) @map("transaction_count")
   createdAt        DateTime @default(now()) @map("created_at")
-
   category         Category @relation(fields: [categoryId], references: [id])
 
   @@map("demand_history")
 }
 
 model FraudFlag {
-  id          Int         @id @default(autoincrement())
-  materialId  Int?        @map("material_id")
-  userId      String?     @map("user_id")
-  riskScore   Int         @map("risk_score")
-  reasons     String      @map("reasons")
-  status      String      @default("pending") // pending, reviewed, cleared, banned
-  reviewedBy  String?     @map("reviewed_by")
-  createdAt   DateTime    @default(now()) @map("created_at")
-
-  material    Material?   @relation(fields: [materialId], references: [id])
-  user        User?       @relation("UserFraudFlags", fields: [userId], references: [id])
-  reviewer    User?       @relation("FraudReviewer", fields: [reviewedBy], references: [id])
+  id         Int       @id @default(autoincrement())
+  materialId Int?      @map("material_id")
+  userId     String?   @map("user_id")
+  riskScore  Int       @map("risk_score")
+  reasons    String    @map("reasons")
+  status     String    @default("pending")
+  reviewedBy String?   @map("reviewed_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  material   Material? @relation(fields: [materialId], references: [id])
+  reviewer   User?     @relation("FraudReviewer", fields: [reviewedBy], references: [id])
+  user       User?     @relation("UserFraudFlags", fields: [userId], references: [id])
 
   @@map("fraud_flags")
 }
@@ -448,9 +431,8 @@ model SavedMaterial {
   userId     String   @map("user_id")
   materialId Int      @map("material_id")
   createdAt  DateTime @default(now()) @map("created_at")
-
-  user       User     @relation(fields: [userId], references: [id])
   material   Material @relation(fields: [materialId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, materialId])
   @@map("saved_materials")
@@ -460,7 +442,7 @@ model BargainSession {
   id               String           @id @default(uuid())
   materialId       Int              @map("material_id")
   buyerId          String           @map("buyer_id")
-  status           String           @default("active") // active, agreed, rejected, expired
+  status           String           @default("active")
   askingPrice      Float            @map("asking_price")
   floorPrice       Float            @map("floor_price")
   agreedPrice      Float?           @map("agreed_price")
@@ -468,10 +450,9 @@ model BargainSession {
   messageCount     Int              @default(0) @map("message_count")
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
-
-  material         Material         @relation(fields: [materialId], references: [id])
-  buyer            User             @relation(fields: [buyerId], references: [id])
   messages         BargainMessage[]
+  buyer            User             @relation(fields: [buyerId], references: [id])
+  material         Material         @relation(fields: [materialId], references: [id])
 
   @@map("bargain_sessions")
 }
@@ -483,10 +464,9 @@ model VolunteerVerification {
   idProofUrl      String      @map("id_proof_url")
   vehiclePhotoUrl String      @map("vehicle_photo_url")
   addressProofUrl String?     @map("address_proof_url")
-  status          String      @default("pending") // pending, verified, rejected
+  status          String      @default("pending")
   reviewedAt      DateTime?   @map("reviewed_at")
   createdAt       DateTime    @default(now()) @map("created_at")
-
   transporter     Transporter @relation(fields: [transporterId], references: [id])
 
   @@map("volunteer_verifications")
@@ -495,12 +475,29 @@ model VolunteerVerification {
 model BargainMessage {
   id        Int            @id @default(autoincrement())
   sessionId String         @map("session_id")
-  role      String         // buyer, assistant
+  role      String
   content   String
-  metadata  String?        // JSON: { offeredPrice, counterPrice, tactic }
+  metadata  String?
   createdAt DateTime       @default(now()) @map("created_at")
-
   session   BargainSession @relation(fields: [sessionId], references: [id])
 
   @@map("bargain_messages")
+}
+
+model BusinessWasteStream {
+  id                   Int       @id @default(autoincrement())
+  userId               String    @map("user_id")
+  categoryId           Int       @map("category_id")
+  title                String?
+  description          String?
+  tags                 String?   @map("tags")
+  monthlyVolumeKg      Float?    @map("monthly_volume_kg")
+  unit                 String?   @default("kg")
+  status               String    @default("active") // active, inactive
+  lastUpdated          DateTime  @default(now()) @map("last_updated")
+
+  user                 User      @relation(fields: [userId], references: [id])
+  category             Category  @relation(fields: [categoryId], references: [id])
+
+  @@map("business_waste_streams")
 }
