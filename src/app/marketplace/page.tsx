@@ -40,7 +40,7 @@ export default function MarketplacePage() {
         const res = await fetch("/api/materials")
         if (!res.ok) throw new Error("Failed to load materials")
         const data = await res.json()
-        setMaterials(data)
+        setMaterials(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error("Failed to fetch materials:", err)
         toast({

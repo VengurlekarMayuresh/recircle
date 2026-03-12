@@ -42,14 +42,21 @@ export default function SupplierDashboard() {
     try {
       const [lRes, rRes, nRes] = await Promise.all([
         fetch("/api/materials?own=true"),
-        fetch("/api/material-requests?as=supplier"),
+        fetch("/api/material-requests?type=received"),
         fetch("/api/notifications?type=supplier_discovery&limit=20"),
       ])
-      if (lRes.ok) setListings(await lRes.json())
-      if (rRes.ok) setRequests(await rRes.json())
+      if (lRes.ok) {
+        const lData = await lRes.json()
+        setListings(Array.isArray(lData) ? lData : [])
+      }
+      if (rRes.ok) {
+        const rData = await rRes.json()
+        setRequests(Array.isArray(rData) ? rData : [])
+      }
       if (nRes.ok) {
         const nData = await nRes.json()
-        setDiscoveryNotifs((nData.notifications || nData || []).filter((n: any) => n.type === 'supplier_discovery'))
+        const notifs = Array.isArray(nData) ? nData : nData.notifications || []
+        setDiscoveryNotifs(notifs.filter((n: any) => n.type === 'supplier_discovery'))
       }
     } catch (err) {
       console.error(err)
