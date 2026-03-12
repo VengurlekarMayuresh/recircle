@@ -1,56 +1,101 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || (session.user as any).role !== "admin")
-    return null
-  return session
-}
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
-  const session = await requireAdmin()
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
-  const { searchParams } = new URL(req.url)
-  const role   = searchParams.get("role")
-  const city   = searchParams.get("city")
-  const search = searchParams.get("search")
+    const searchParams = new URL(req.url).searchParams;
+    const role = searchParams.get("role");
+    const city = searchParams.get("city");
+    const verificationLevel = searchParams.get("verificationLevel");
+    const search = searchParams.get("search");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const skip = (page - 1) * limit;
 
-  const where: any = {}
-  if (role)   where.role = role
-  if (city)   where.city = city
-  if (search) where.OR = [
-    { name:  { contains: search } },
-    { email: { contains: search } },
-  ]
+    const where: any = {};
+    if (role && role !== "all") where.role = role;
+    if (city) where.city = city;
+    if (verificationLevel && verificationLevel !== "all") where.verificationLevel = verificationLevel;
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
-  const users = await prisma.user.findMany({
-    where,
-    select: {
-      id: true, name: true, email: true, role: true, city: true,
-      trustScore: true, verificationLevel: true, greenPoints: true,
-      avgRating: true, totalRatings: true, createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  })
-  return NextResponse.json(users)
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          city: true,
+          trustScore: true,
+          verificationLevel: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return NextResponse.json({ users, total, page, limit });
+  } catch (error: any) {
+    console.error("Admin users GET error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
 }
 
-export async function PUT(req: Request) {
-  const session = await requireAdmin()
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
-  const { id, role, verificationLevel, trustScore } = await req.json()
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
+    const body = await req.json();
+    const { userId, role, verification_level } = body;
 
-  const data: any = {}
-  if (role)              data.role = role
-  if (verificationLevel) data.verificationLevel = verificationLevel
-  if (trustScore != null) data.trustScore = trustScore
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    }
 
-  const user = await prisma.user.update({ where: { id }, data })
-  return NextResponse.json(user)
+    const dataToUpdate: any = {};
+    if (role) dataToUpdate.role = role;
+    if (verification_level) dataToUpdate.verificationLevel = verification_level;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        verificationLevel: true,
+      },
+    });
+
+    return NextResponse.json(updatedUser);
+  } catch (error: any) {
+    console.error("Admin user PATCH error:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
+      { status: 500 }
+    );
+  }
 }

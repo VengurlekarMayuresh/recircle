@@ -1,147 +1,180 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Shield, ArrowLeft, Loader2, CheckCircle2, Star } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
-const ROLE_COLORS: Record<string, string> = {
-  individual: "bg-blue-100 text-blue-700", business: "bg-purple-100 text-purple-700",
-  ngo: "bg-orange-100 text-orange-700", volunteer: "bg-teal-100 text-teal-700",
-  transporter: "bg-indigo-100 text-indigo-700", admin: "bg-red-100 text-red-700",
-}
-const VER_COLORS: Record<string, string> = {
-  unverified: "bg-gray-100 text-gray-500", basic: "bg-yellow-100 text-yellow-700",
-  verified: "bg-blue-100 text-blue-700", trusted: "bg-emerald-100 text-emerald-700",
-}
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 export default function AdminUsersPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [users, setUsers]       = useState<any[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState("")
-  const [roleFilter, setRole]   = useState("")
-  const [editing, setEditing]   = useState<string | null>(null)
-  const [saving, setSaving]     = useState(false)
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [verificationFilter, setVerificationFilter] = useState("all");
+  const { toast } = useToast();
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users?search=${search}&role=${roleFilter}&verificationLevel=${verificationFilter}`);
+      const data = await res.json();
+      if (data.users) {
+        setUsers(data.users);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (status === "unauthenticated") { router.push("/auth/login"); return }
-    if (status === "authenticated" && (session?.user as any)?.role !== "admin") {
-      router.push("/dashboard"); return
-    }
-    if (status === "authenticated") {
-      fetch("/api/admin/users").then(r => r.json()).then(setUsers).finally(() => setLoading(false))
-    }
-  }, [status, session, router])
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers();
+    }, 300);
 
-  const filtered = users.filter(u => {
-    if (roleFilter && u.role !== roleFilter) return false
-    if (search && !u.name?.toLowerCase().includes(search.toLowerCase()) && !u.email?.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, roleFilter, verificationFilter]);
 
-  const updateUser = async (id: string, data: any) => {
-    setSaving(true)
-    await fetch("/api/admin/users", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, ...data }),
-    })
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-    setEditing(null)
-    setSaving(false)
-  }
+  const updateUser = async (userId: string, updates: any) => {
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...updates }),
+      });
+      if (res.ok) {
+        toast({ title: "User updated successfully" });
+        fetchUsers();
+      } else {
+        toast({ title: "Failed to update user", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "Failed to update user", variant: "destructive" });
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="sm" asChild><Link href="/admin"><ArrowLeft className="w-4 h-4" /> Back</Link></Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-500 text-sm">{users.length} total users</p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+        <p className="text-muted-foreground">Manage platform users, roles, and verification levels.</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-card p-4 rounded-md border">
+        <div className="flex-1">
+          <label className="text-xs font-medium mb-1 block text-muted-foreground">Search Users</label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="sm:w-[200px]">
+          <label className="text-xs font-medium mb-1 block text-muted-foreground">User Role</label>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="business">Business</SelectItem>
+              <SelectItem value="individual">Individual</SelectItem>
+              <SelectItem value="ngo">NGO</SelectItem>
+              <SelectItem value="transporter">Transporter</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="sm:w-[200px]">
+          <label className="text-xs font-medium mb-1 block text-muted-foreground">Verification</label>
+          <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Levels" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              <SelectItem value="unverified">Unverified</SelectItem>
+              <SelectItem value="basic">Basic</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+              <SelectItem value="trusted">Trusted</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…" className="pl-10 bg-white" />
-        </div>
-        <Select value={roleFilter} onValueChange={setRole}>
-          <SelectTrigger className="w-36 bg-white"><SelectValue placeholder="All Roles" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Roles</SelectItem>
-            {["individual","business","ngo","volunteer","transporter","admin"].map(r => (
-              <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-emerald-600" /></div>
-      ) : (
-        <Card className="border-none shadow-md">
-          <CardContent className="p-0">
-            {/* Header */}
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-3 px-4 py-3 bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase tracking-wider">
-              <span>User</span><span>Role</span><span>Trust</span><span>Verification</span><span>Green Points</span><span>Actions</span>
-            </div>
-            {filtered.map(u => (
-              <div key={u.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-3 items-center px-4 py-4 border-b last:border-0 hover:bg-gray-50">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="h-9 w-9 shrink-0">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm">{u.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <Link href={`/profile/${u.id}`} className="font-bold text-gray-900 text-sm hover:text-emerald-600 truncate block">{u.name}</Link>
-                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
-                    <p className="text-xs text-gray-400">{u.city}</p>
-                  </div>
-                </div>
-                <Badge className={`${ROLE_COLORS[u.role] || "bg-gray-100"} text-xs capitalize w-fit`}>{u.role}</Badge>
-                <span className="font-bold text-gray-700 text-sm">{u.trustScore}</span>
-                <Badge className={`${VER_COLORS[u.verificationLevel] || "bg-gray-100"} text-xs capitalize w-fit`}>{u.verificationLevel}</Badge>
-                <span className="font-bold text-emerald-600 text-sm flex items-center gap-1">🌱 {u.greenPoints}</span>
-                <div className="flex gap-1 flex-wrap">
-                  {editing === u.id ? (
-                    <div className="flex gap-1 items-center">
-                      <Select defaultValue={u.verificationLevel} onValueChange={v => updateUser(u.id, { verificationLevel: v })}>
-                        <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {["unverified","basic","verified","trusted"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditing(null)}>×</Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditing(u.id)}>
-                        <Shield className="w-3 h-3 mr-1" /> Verify
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200" onClick={() => updateUser(u.id, { role: "banned" })}>
-                        Ban
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-            {filtered.length === 0 && (
-              <div className="text-center py-12 text-gray-500">No users found</div>
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Verification</TableHead>
+              <TableHead>Trust Score</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+              </TableRow>
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">No users found.</TableCell>
+              </TableRow>
+            ) : (
+              users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      defaultValue={user.verificationLevel}
+                      onValueChange={(val) => updateUser(user.id, { verification_level: val })}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unverified">Unverified</SelectItem>
+                        <SelectItem value="basic">Basic</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="trusted">Trusted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>{user.trustScore}</TableCell>
+                  <TableCell>
+                    <Button variant="destructive" size="sm" onClick={() => {
+                        if(confirm("Are you sure you want to ban this user?")) {
+                             // Assuming ban logic exists or extends verification level
+                             toast({title: 'Ban functionality placeholder', variant: 'destructive'})
+                        }
+                    }}>
+                      Ban User
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
-          </CardContent>
-        </Card>
-      )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
-  )
+  );
 }

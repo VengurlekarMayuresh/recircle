@@ -1,126 +1,174 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Users, Package, ArrowRight, Shield, AlertTriangle, Leaf,
-  TrendingUp, Activity, CheckCircle2, Loader2
-} from "lucide-react"
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Package, ArrowLeftRight, Settings, AlertTriangle, ShieldAlert, Activity, LayoutDashboard, Truck } from "lucide-react";
+import Link from "next/link";
 
-export default function AdminPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [stats, setStats]         = useState<any>(null)
-  const [loading, setLoading]     = useState(true)
-
-  useEffect(() => {
-    if (status === "unauthenticated") { router.push("/auth/login"); return }
-    if (status === "authenticated" && (session?.user as any)?.role !== "admin") {
-      router.push("/dashboard"); return
-    }
-    if (status === "authenticated") {
-      Promise.all([
-        fetch("/api/dashboard/stats").then(r => r.json()),
-        fetch("/api/dashboard/impact").then(r => r.json()),
-      ]).then(([statsData, impactData]) => {
-        setStats({ ...statsData, ...impactData })
-        setLoading(false)
-      }).catch(() => setLoading(false))
-    }
-  }, [status, session, router])
-
-  if (loading || status === "loading") return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
-    </div>
-  )
-
-  const STAT_CARDS = [
-    { label: "Total Materials",    value: stats?.total_materials    ?? "—", icon: <Package className="w-5 h-5" />,    color: "bg-purple-50 text-purple-600" },
-    { label: "Total Transactions", value: stats?.total_transactions ?? "—", icon: <CheckCircle2 className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-    { label: "CO₂ Saved",          value: `${stats?.co2_saved ?? 0} kg`,   icon: <Leaf className="w-5 h-5" />,       color: "bg-teal-50 text-teal-600" },
-    { label: "₹ Saved",           value: `₹${(stats?.rupees_saved ?? 0).toLocaleString("en-IN")}`, icon: <TrendingUp className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
-    { label: "New Users (7d)",     value: stats?.weekly_new_users ?? "—",   icon: <Users className="w-5 h-5" />,      color: "bg-indigo-50 text-indigo-600" },
-    { label: "New Listings (7d)",  value: stats?.weekly_new_listings ?? "—", icon: <Shield className="w-5 h-5" />,   color: "bg-orange-50 text-orange-600" },
-  ]
-
-  const QUICK_LINKS = [
-    { href: "/admin/users",    label: "Manage Users",      icon: <Users className="w-4 h-4" />,         color: "bg-blue-600 hover:bg-blue-700" },
-    { href: "/admin/flagged",  label: "Review Flagged",    icon: <Shield className="w-4 h-4" />,        color: "bg-orange-600 hover:bg-orange-700" },
-    { href: "/admin/disputes", label: "Resolve Disputes",  icon: <AlertTriangle className="w-4 h-4" />, color: "bg-red-600 hover:bg-red-700" },
-    { href: "/dashboard",      label: "Impact Dashboard",  icon: <TrendingUp className="w-4 h-4" />,    color: "bg-emerald-600 hover:bg-emerald-700" },
-  ]
-
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs font-bold mb-2">
-          <Shield className="w-3 h-3" /> Admin Panel
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900">Platform Overview</h1>
-        <p className="text-gray-500">ReCircle admin control center</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        {STAT_CARDS.map(card => (
-          <Card key={card.label} className="border-none shadow-md">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className={`${card.color} p-3 rounded-xl`}>{card.icon}</div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">{card.label}</p>
-                  <p className="text-2xl font-black text-gray-900">{card.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        {QUICK_LINKS.map(link => (
-          <Button key={link.href} asChild className={`${link.color} rounded-xl h-12 gap-2 text-white`}>
-            <Link href={link.href}>
-              {link.icon} {link.label}
-            </Link>
-          </Button>
-        ))}
-      </div>
-
-      {/* Platform Health */}
-      {stats && (
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-600" /> Platform Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <HealthMetric label="Materials Listed"   value={stats.total_materials    ?? 0} />
-              <HealthMetric label="Transactions"       value={stats.total_transactions ?? 0} />
-              <HealthMetric label="kg Diverted"        value={`${stats.kg_diverted ?? 0} kg`} />
-              <HealthMetric label="₹ Value Saved"     value={`₹${(stats.rupees_saved ?? 0).toLocaleString("en-IN")}`} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
+interface AdminStats {
+  totalUsers: number;
+  totalActiveListings: number;
+  totalTransactions: number;
+  totalCo2Saved: number;
+  openDisputes: number;
+  flaggedListings: number;
 }
 
-function HealthMetric({ label, value }: { label: string; value: string | number }) {
+export default function AdminOverviewPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/admin/stats");
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.stats);
+          setRecentActivity(data.recentActivity || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin stats", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-10">Loading Admin Dashboard...</div>;
+  }
+
   return (
-    <div className="text-center p-4 bg-gray-50 rounded-xl">
-      <p className="text-2xl font-black text-emerald-600">{value}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
-    </div>
-  )
+    <>
+      <div className="flex items-center justify-between space-y-2 mb-6">
+        <h2 className="text-3xl font-bold tracking-tight">Admin Overview</h2>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Link href="/admin/users" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-blue-900">👥 Total Users</CardTitle>
+              <Users className="h-4 w-4 text-blue-900" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900">{stats?.totalUsers || 0}</div>
+              <p className="text-xs text-blue-900 font-medium mt-1">Manage all platform users</p>
+            </CardContent>
+          </Card>
+        </Link>
+        
+        <Link href="/admin/materials" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-emerald-900">📦 All Listings</CardTitle>
+              <Package className="h-4 w-4 text-emerald-900" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-900">{stats?.totalActiveListings || 0}</div>
+              <p className="text-xs text-emerald-900 font-medium mt-1">View and manage materials</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/transactions" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-purple-900">🤝 All Transactions</CardTitle>
+              <ArrowLeftRight className="h-4 w-4 text-purple-900" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900">{stats?.totalTransactions || 0}</div>
+              <p className="text-xs text-purple-900 font-medium mt-1">View platform transactions</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+        <Link href="/dashboard" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-green-500/10 to-lime-500/10 hover:from-green-500/20 hover:to-lime-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-green-900">🌱 CO₂ Saved (kg)</CardTitle>
+              <Activity className="h-4 w-4 text-green-900" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900">{stats?.totalCo2Saved?.toFixed(2) || '0.00'}</div>
+              <p className="text-xs text-green-900 font-medium mt-1">View impact dashboard</p>
+            </CardContent>
+          </Card>
+        </Link>
+        
+        <Link href="/admin/flagged" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-rose-500/10 to-red-500/10 hover:from-rose-500/20 hover:to-red-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-rose-900">🚩 Flagged Listings</CardTitle>
+              <AlertTriangle className={stats?.flaggedListings ? "h-4 w-4 text-rose-800 animate-pulse" : "h-4 w-4 text-rose-900/30"} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold ${stats?.flaggedListings ? "text-rose-900" : "text-rose-900/40"}`}>
+                {stats?.flaggedListings || 0}
+              </div>
+              {stats && stats.flaggedListings > 0 ? (
+                <p className="text-xs text-rose-900 mt-1 font-black">Requires review</p>
+              ) : (
+                <p className="text-xs text-rose-900 font-medium mt-1">Manage flagged items</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/disputes" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-amber-900">⚖️ Open Disputes</CardTitle>
+              <ShieldAlert className={stats?.openDisputes ? "h-4 w-4 text-amber-800 animate-pulse" : "h-4 w-4 text-amber-900/30"} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold ${stats?.openDisputes ? "text-amber-900" : "text-amber-900/40"}`}>
+                {stats?.openDisputes || 0}
+              </div>
+              {stats && stats.openDisputes > 0 ? (
+                <p className="text-xs text-amber-900 mt-1 font-black">Requires resolution</p>
+              ) : (
+                <p className="text-xs text-amber-900 font-medium mt-1">Manage open disputes</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium mb-4">Recent Agent Activity</h3>
+        <Card>
+          <CardContent className="p-0">
+            {recentActivity.length > 0 ? (
+              <div className="divide-y">
+                {recentActivity.map((log) => (
+                  <div key={log.id} className="p-4 flex items-center justify-between">
+                    <div>
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-muted rounded mr-2">
+                        {log.agentName}
+                      </span>
+                      <span className="text-sm font-medium">{log.action}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(log.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">
+                No recent agent activity.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
 }

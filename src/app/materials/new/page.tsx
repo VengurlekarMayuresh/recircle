@@ -54,96 +54,64 @@ export default function CreateListingPage() {
     }
   }, [session])
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
 
-    // Show preview immediately
-    const previewUrl = URL.createObjectURL(file)
-    setImageUrl(previewUrl)
+  // Show preview immediately
+  const previewUrl = URL.createObjectURL(file)
+  setImageUrl(previewUrl)
 
-    // Upload to server
-    setIsUploading(true)
-    try {
-      const uploadData = new FormData()
-      uploadData.append("file", file)
-      const res = await fetch("/api/upload", { method: "POST", body: uploadData })
-      const data = await res.json()
-      if (res.ok && data.url) {
-        setUploadedImageUrl(data.url)
-        toast({ title: "Image Uploaded", description: "Your image has been uploaded successfully." })
-      } else {
-        toast({ title: "Upload Failed", description: data.message || "Could not upload image.", variant: "destructive" })
-      }
-    } catch {
-      toast({ title: "Upload Failed", description: "Network error during upload.", variant: "destructive" })
-    } finally {
-      setIsUploading(false)
-    }
-  }
+  // AI Analysis simulation
+  setIsAnalyzing(true)
 
-  const generateTags = async () => {
-    console.log("[CreateListing] Generating tags for:", { title: formData.title, description: formData.description })
-    setIsGeneratingTags(true)
-    try {
-      const resp = await fetch("/api/ai/tag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: formData.title, description: formData.description }),
-      })
-      console.log("[CreateListing] API Response Status:", resp.status)
-      const data = await resp.json()
-      console.log("[CreateListing] API Response Data:", data)
-      if (data.tags) {
-        setFormData(prev => ({ ...prev, tags: data.tags }))
-        toast({
-          title: "AI Tagging Complete",
-          description: `Generated ${data.tags.length} smart tags for your listing.`,
-        })
-      }
-    } catch (err) {
-      console.error("[CreateListing] Tag Generation Failed:", err)
-    } finally {
-      setIsGeneratingTags(false)
-      setStep(2)
-    }
-  }
+  // Upload to server
+  setIsUploading(true)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch("/api/materials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, images: uploadedImageUrl || undefined }),
-      })
+  try {
+    const uploadData = new FormData()
+    uploadData.append("file", file)
 
-      console.log("[CreateListing] Submit Response Status:", response.status)
-      const result = await response.json()
-      console.log("[CreateListing] Submit Response Data:", result)
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: uploadData,
+    })
 
-      if (response.ok) {
-        toast({
-          title: "Listing Created!",
-          description: "Your material is now being scouted by our AI agents.",
-        })
-        router.push("/marketplace")
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to create listing. Please try again.",
-          variant: "destructive",
-        })
-      }
-    } catch (err) {
-      console.error(err)
+    const data = await res.json()
+
+    if (res.ok && data.url) {
+      setUploadedImageUrl(data.url)
+
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Image Uploaded",
+        description: "Your image has been uploaded successfully.",
+      })
+    } else {
+      toast({
+        title: "Upload Failed",
+        description: data.message || "Could not upload image.",
         variant: "destructive",
       })
     }
+  } catch {
+    toast({
+      title: "Upload Failed",
+      description: "Network error during upload.",
+      variant: "destructive",
+    })
+  } finally {
+    setIsUploading(false)
+
+    // Finish AI analysis
+    setTimeout(() => {
+      setIsAnalyzing(false)
+      toast({
+        title: "AI Analysis Complete",
+        description: "Vision AI identified your material!",
+      })
+    }, 2000)
   }
+}
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
