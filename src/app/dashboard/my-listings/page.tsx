@@ -109,7 +109,7 @@ export default function SupplierDashboard() {
   }
 
   // Calculate live stats
-  const totalCo2 = listings.reduce((acc, curr) => acc + (curr.co2SavedKg || curr.co2_saved_kg || curr.quantity * 0.5), 0).toFixed(0)
+  const totalCo2 = listings.reduce((acc, curr) => acc + (curr.co2SavedKg || curr.quantity * 0.5), 0).toFixed(0)
   const totalValue = listings.reduce((acc, curr) => acc + (curr.price || 0), 0).toLocaleString()
   const activeCount = listings.filter(l => l.status === 'available').length
   const pendingRequests = requests.filter(r => r.status === 'pending').length
@@ -203,7 +203,7 @@ export default function SupplierDashboard() {
                       </div>
                       <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
                         <div className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
-                          <Leaf className="w-3 h-3" /> {listing.co2SavedKg || listing.co2_saved_kg || (listing.quantity * 0.5).toFixed(1)} kg CO₂
+                          <Leaf className="w-3 h-3" /> {listing.co2SavedKg || (listing.quantity * 0.5).toFixed(1)} kg CO₂
                         </div>
                         <div className="flex gap-2">
                           <Link href={`/materials/${listing.id}`}>

@@ -44,7 +44,7 @@ export default function MaterialDetailPage() {
   const [requestOpen, setRequestOpen] = useState(false)
   const [requestQty, setRequestQty] = useState(1)
   const [requestMsg, setRequestMsg] = useState("")
-  const [requestTransport, setRequestTransport] = useState("flexible")
+  const [requestTransport, setRequestTransport] = useState("self_pickup")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -548,8 +548,8 @@ export default function MaterialDetailPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="self_pickup">Self Pickup (I'll come to supplier)</SelectItem>
-                          <SelectItem value="need_delivery">Need Delivery (supplier delivers)</SelectItem>
-                          <SelectItem value="flexible">Flexible (we'll decide)</SelectItem>
+                          <SelectItem value="supplier_delivery">Need Delivery (supplier delivers)</SelectItem>
+                          <SelectItem value="platform_transporter">Platform Transporter (we arrange)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

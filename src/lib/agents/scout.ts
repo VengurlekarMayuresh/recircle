@@ -200,7 +200,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
           type: "match_found",
           title: "New Match Found! 🎯",
           body: `A material matching your request "${match.request.title}" was just listed.`,
-          data: { materialId, matchScore: match.score }
+          data: JSON.stringify({ materialId, matchScore: match.score })
         }
       }).catch(() => {})
     }
@@ -226,7 +226,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
         action: "process_listing",
         materialId,
         userId: material.userId,
-        details: { ...logData, durationMs: Date.now() - startTime }
+        details: JSON.stringify({ ...logData, durationMs: Date.now() - startTime })
       }
     }).catch(() => {})
 
@@ -238,7 +238,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
         agentName: "scout",
         action: "error",
         materialId,
-        details: { error: String(error), durationMs: Date.now() - startTime }
+        details: JSON.stringify({ error: String(error), durationMs: Date.now() - startTime })
       }
     }).catch(() => {})
   }

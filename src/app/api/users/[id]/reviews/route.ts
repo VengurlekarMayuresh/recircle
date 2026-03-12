@@ -3,15 +3,16 @@ import prisma from "@/lib/prisma"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const reviews = await prisma.review.findMany({
-      where: { reviewee_id: params.id },
+      where: { revieweeId: id },
       include: {
-        reviewer: { select: { id: true, name: true, avatar_url: true, role: true } },
+        reviewer: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 20,
     })
     return NextResponse.json(reviews)

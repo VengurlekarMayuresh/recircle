@@ -7,14 +7,11 @@ import { runScoutAgent } from "@/lib/agents/scout"
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    console.log("[Material API] Session:", session ? `User ${session.user.id}` : "No Session")
-    
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
-    console.log("[Material API] Body:", body)
 
     const { 
       title, 
@@ -51,14 +48,12 @@ export async function POST(req: Request) {
         locationLat: 19.076,
         locationLng: 72.877,
         tags: Array.isArray(tags) ? tags.join(",") : tags || "",
-        images: images || "https://images.unsplash.com/photo-1590069324154-04663e9f4577",
+        images: (Array.isArray(images) ? images.filter(Boolean).join(",") : images) || "https://images.unsplash.com/photo-1590069324154-04663e9f4577",
         status: "available",
       }
     })
 
-    console.log("[Material API] Success:", material.id)
-
-    // Trigger Scout Agent asynchronously (non-blocking)
+    // Trigger Scout Agent
     runScoutAgent(material.id).catch(err => console.error("[Scout] Failed:", err))
 
     return NextResponse.json(material, { status: 201 })
@@ -71,21 +66,32 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const own = searchParams.get("own") === "true"
-    
-    let where = {}
-    
+    const own     = searchParams.get("own") === "true"
+    const userId  = searchParams.get("userId")
+    const status  = searchParams.get("status")
+    const limit   = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined
+
+    const where: any = {}
+
     if (own) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.id) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
       }
-      where = { userId: session.user.id }
+      where.userId = session.user.id
+      // own=true shows all statuses so seller can manage their listings
+    } else if (userId) {
+      where.userId = userId
+      where.status = status || "available"
+    } else {
+      // Public marketplace — only show available materials
+      where.status = status || "available"
     }
 
     const materials = await prisma.material.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      ...(limit ? { take: limit } : {}),
       include: {
         user: { select: { id: true, name: true, email: true, role: true, city: true, avatarUrl: true, trustScore: true, verificationLevel: true, avgRating: true, totalRatings: true, greenPoints: true, level: true, orgName: true } },
         category: true

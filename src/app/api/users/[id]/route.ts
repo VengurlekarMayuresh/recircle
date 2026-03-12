@@ -3,11 +3,12 @@ import prisma from "@/lib/prisma"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         badges: { include: { badge: true } },
         transporterProfile: true,
@@ -26,7 +27,7 @@ export async function GET(
 
     // Calculate co2_saved from their materials
     const materialImpact = await prisma.material.aggregate({
-      where: { userId: params.id },
+      where: { userId: id },
       _sum: { co2SavedKg: true },
     })
 

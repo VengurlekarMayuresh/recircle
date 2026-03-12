@@ -51,8 +51,11 @@ function RequestCard({ req, type, onAction }: { req: any; type: "sent" | "receiv
   }
 
   const images = (() => {
-    try { return typeof req.material?.images === "string" ? JSON.parse(req.material.images) : (req.material?.images || []) }
-    catch { return [] }
+    const raw = req.material?.images
+    if (!raw) return []
+    // Images are stored as comma-separated URLs
+    if (typeof raw === "string") return raw.split(",").map((s: string) => s.trim()).filter(Boolean)
+    return Array.isArray(raw) ? raw : []
   })()
 
   return (

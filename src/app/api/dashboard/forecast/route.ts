@@ -9,6 +9,7 @@ const SEASONS: Record<number, string> = {
 }
 
 export async function GET(req: Request) {
+  try {
   const { searchParams } = new URL(req.url)
   const city     = searchParams.get("city") || ""
   const catSlug  = searchParams.get("category") || ""
@@ -91,4 +92,8 @@ export async function GET(req: Request) {
   }))
 
   return NextResponse.json({ city, month, year, data: result })
+  } catch (error) {
+    console.error("[Forecast GET]", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
 }

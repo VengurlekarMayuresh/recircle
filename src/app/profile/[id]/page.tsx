@@ -94,8 +94,8 @@ export default function PublicProfilePage() {
     )
   }
 
-  const verificationLabel = profile.verification_level
-    ? profile.verification_level.charAt(0).toUpperCase() + profile.verification_level.slice(1)
+  const verificationLabel = profile.verificationLevel
+    ? profile.verificationLevel.charAt(0).toUpperCase() + profile.verificationLevel.slice(1)
     : "Unverified"
   const levelLabel = profile.level
     ? profile.level.charAt(0).toUpperCase() + profile.level.slice(1)
@@ -113,15 +113,15 @@ export default function PublicProfilePage() {
           <CardContent className="px-8 pb-8 pt-0 relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-16">
               <Avatar className="h-28 w-28 border-4 border-white shadow-lg shrink-0">
-                <AvatarImage src={profile.avatar_url} />
+                <AvatarImage src={profile.avatarUrl} />
                 <AvatarFallback className="text-3xl bg-emerald-100 text-emerald-700">
                   {profile.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 pb-1">
                 <h1 className="text-2xl font-bold text-gray-900 mt-2 sm:mt-0">{profile.name}</h1>
-                {profile.org_name && (
-                  <p className="text-gray-500 text-sm mt-0.5">{profile.org_name}</p>
+                {profile.orgName && (
+                  <p className="text-gray-500 text-sm mt-0.5">{profile.orgName}</p>
                 )}
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="outline" className="capitalize gap-1">
@@ -132,7 +132,7 @@ export default function PublicProfilePage() {
                       <MapPin className="w-3 h-3" /> {profile.city}
                     </Badge>
                   )}
-                  <Badge className={VERIFICATION_COLORS[profile.verification_level || "unverified"]}>
+                  <Badge className={VERIFICATION_COLORS[profile.verificationLevel || "unverified"]}>
                     <Shield className="w-3 h-3 mr-1" /> {verificationLabel}
                   </Badge>
                   <Badge className={LEVEL_COLORS[profile.level || "seedling"]}>
@@ -158,25 +158,25 @@ export default function PublicProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Trust Score</span>
-                  <span className="font-bold text-emerald-700">{profile.trust_score ?? 0}/100</span>
+                  <span className="font-bold text-emerald-700">{profile.trustScore ?? 0}/100</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div
                     className="bg-emerald-500 h-2 rounded-full"
-                    style={{ width: `${profile.trust_score ?? 0}%` }}
+                    style={{ width: `${profile.trustScore ?? 0}%` }}
                   />
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Green Points</span>
-                  <span className="font-bold text-green-700">🌱 {profile.green_points ?? 0} GP</span>
+                  <span className="font-bold text-green-700">🌱 {profile.greenPoints ?? 0} GP</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Avg Rating</span>
                   <span className="font-bold flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
-                    {profile.avg_rating ? Number(profile.avg_rating).toFixed(1) : "N/A"}
-                    <span className="text-gray-400 text-xs">({profile.total_ratings ?? 0})</span>
+                    {profile.avgRating ? Number(profile.avgRating).toFixed(1) : "N/A"}
+                    <span className="text-gray-400 text-xs">({profile.totalRatings ?? 0})</span>
                   </span>
                 </div>
               </CardContent>
@@ -212,21 +212,21 @@ export default function PublicProfilePage() {
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Vehicle</span>
-                    <span className="capitalize font-medium">{profile.transporter.vehicle_type?.replace(/_/g, " ")}</span>
+                    <span className="capitalize font-medium">{profile.transporter.vehicleType?.replace(/_/g, " ")}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Capacity</span>
-                    <span className="font-medium">{profile.transporter.vehicle_capacity_kg} kg</span>
+                    <span className="font-medium">{profile.transporter.vehicleCapacityKg} kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Rate</span>
                     <span className="font-medium">
-                      {profile.transporter.is_volunteer ? "FREE (Volunteer)" : `₹${profile.transporter.price_per_km}/km`}
+                      {profile.transporter.isVolunteer ? "FREE (Volunteer)" : `₹${profile.transporter.pricePerKm}/km`}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Deliveries</span>
-                    <span className="font-medium">{profile.transporter.total_deliveries}</span>
+                    <span className="font-medium">{profile.transporter.totalDeliveries}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -275,7 +275,7 @@ export default function PublicProfilePage() {
                         <div className="h-36 overflow-hidden bg-gray-100">
                           {m.images?.[0] ? (
                             <img
-                              src={m.images[0]}
+                          src={m.images?.split(",")[0]}
                               alt={m.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             />
@@ -318,7 +318,7 @@ export default function PublicProfilePage() {
                       <CardContent className="p-5">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-9 w-9">
-                            <AvatarImage src={r.reviewer?.avatar_url} />
+                            <AvatarImage src={r.reviewer?.avatarUrl} />
                             <AvatarFallback className="text-sm bg-emerald-100 text-emerald-700">
                               {r.reviewer?.name?.charAt(0)}
                             </AvatarFallback>
@@ -327,7 +327,7 @@ export default function PublicProfilePage() {
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-sm text-gray-900">{r.reviewer?.name}</span>
                               <span className="text-xs text-gray-400">
-                                {new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </span>
                             </div>
                             <div className="flex gap-0.5 mt-1">

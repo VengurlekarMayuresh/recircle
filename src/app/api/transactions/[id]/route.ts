@@ -5,14 +5,15 @@ import { NextResponse } from "next/server"
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
+    const { id } = await params
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         material: { include: { category: true } },
         supplier: { select: { id: true, name: true, avatarUrl: true, city: true, trustScore: true, avgRating: true, verificationLevel: true } },
@@ -37,13 +38,14 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
-    const transaction = await prisma.transaction.findUnique({ where: { id: params.id } })
+    const { id } = await params
+    const transaction = await prisma.transaction.findUnique({ where: { id } })
     if (!transaction) return NextResponse.json({ message: "Not found" }, { status: 404 })
     if (transaction.supplierId !== session.user.id && transaction.receiverId !== session.user.id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
@@ -51,7 +53,7 @@ export async function PUT(
 
     const body = await req.json()
     const updated = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...body,
         ...(body.status === "confirmed" ? { completedAt: new Date() } : {})
@@ -66,7 +68,7 @@ export async function PUT(
         type: "transaction_update",
         title: "Transaction Updated",
         body: `Transaction status changed to: ${body.status || "updated"}`,
-        data: { transactionId: params.id }
+        data: JSON.stringify({ transactionId: id })
       }
     }).catch(() => {})
 

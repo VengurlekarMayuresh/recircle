@@ -58,10 +58,11 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
+      const { confirmPassword: _cp, ...registerData } = formData
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(registerData),
       })
 
       const data = await response.json()

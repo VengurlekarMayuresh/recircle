@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         receiverId: session.user.id,
         quantityRequested: parseInt(quantityRequested),
         message: message || "",
-        preferredTransport: preferredTransport || "flexible",
+        preferredTransport: preferredTransport || "self_pickup",
         status: "pending"
       }
     })
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
         type: "new_request",
         title: "New Material Request",
         body: `Someone wants your listing: ${material.title}`,
-        data: { requestId: request.id, materialId: material.id }
+        data: JSON.stringify({ requestId: request.id, materialId: material.id })
       }
     }).catch(() => {})
 

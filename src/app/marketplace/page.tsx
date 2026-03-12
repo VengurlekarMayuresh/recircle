@@ -318,8 +318,8 @@ export default function MarketplacePage() {
                         }}
                       />
                       <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge className={material.listingType === "giveaway" ? "bg-emerald-500" : "bg-blue-500"}>
-                          {material.listingType === "giveaway" || material.listingType === "donate" ? "Free" : "For Sale"}
+                        <Badge className={material.listingType === "donate" ? "bg-emerald-500" : material.listingType === "exchange" ? "bg-purple-500" : "bg-blue-500"}>
+                          {material.listingType === "donate" ? "Free" : material.listingType === "exchange" ? "Exchange" : "For Sale"}
                         </Badge>
                         <Badge variant="outline" className="bg-white/80 backdrop-blur-sm border-none text-gray-800 capitalize">
                           {material.condition}

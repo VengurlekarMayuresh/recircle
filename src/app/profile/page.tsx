@@ -43,7 +43,7 @@ export default function ProfilePage() {
   const [reviews, setReviews] = useState<any[]>([])
   const [impact, setImpact] = useState<any>(null)
   const [form, setForm] = useState({
-    name: "", phone: "", bio: "", org_name: "", address: "", city: "",
+    name: "", phone: "", bio: "", orgName: "", address: "", city: "",
   })
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function ProfilePage() {
         name: user.name || "",
         phone: user.phone || "",
         bio: user.bio || "",
-        org_name: user.orgName || user.org_name || "",
+        orgName: user.orgName || "",
         address: user.address || "",
         city: user.city || "",
       })
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                     <div><Label className="text-xs">City</Label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
                     <div><Label className="text-xs">Address</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
                     {(user?.role === "business" || user?.role === "ngo") && (
-                      <div><Label className="text-xs">Organisation</Label><Input value={form.org_name} onChange={e => setForm({ ...form, org_name: e.target.value })} /></div>
+                    <div><Label className="text-xs">Organisation</Label><Input value={form.orgName} onChange={e => setForm({ ...form, orgName: e.target.value })} /></div>
                     )}
                     <div><Label className="text-xs">Bio</Label><Textarea rows={3} value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} placeholder="Tell us about yourself…" /></div>
                   </div>

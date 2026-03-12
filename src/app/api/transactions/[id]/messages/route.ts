@@ -5,13 +5,14 @@ import { NextResponse } from "next/server"
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
-    const transaction = await prisma.transaction.findUnique({ where: { id: params.id } })
+    const { id } = await params
+    const transaction = await prisma.transaction.findUnique({ where: { id } })
     if (!transaction) return NextResponse.json({ message: "Not found" }, { status: 404 })
     if (transaction.supplierId !== session.user.id && transaction.receiverId !== session.user.id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
@@ -24,7 +25,7 @@ export async function POST(
 
     const message = await prisma.message.create({
       data: {
-        transactionId: params.id,
+        transactionId: id,
         senderId: session.user.id,
         content: content.trim(),
         imageUrl: imageUrl || null

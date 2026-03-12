@@ -114,7 +114,6 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 }
 
   const generateTags = async () => {
-    console.log("[CreateListing] Generating tags for:", { title: formData.title, description: formData.description })
     setIsGeneratingTags(true)
     try {
       const resp = await fetch("/api/ai/tag", {
@@ -122,9 +121,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: formData.title, description: formData.description }),
       })
-      console.log("[CreateListing] API Response Status:", resp.status)
       const data = await resp.json()
-      console.log("[CreateListing] API Response Data:", data)
       if (data.tags) {
         setFormData(prev => ({ ...prev, tags: data.tags }))
         toast({
@@ -133,7 +130,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         })
       }
     } catch (err) {
-      console.error("[CreateListing] Tag Generation Failed:", err)
+      console.error("[CreateListing] Tag generation error:", err)
     } finally {
       setIsGeneratingTags(false)
       setStep(2)
@@ -153,9 +150,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         body: JSON.stringify(payload),
       })
 
-      console.log("[CreateListing] Submit Response Status:", response.status)
       const result = await response.json()
-      console.log("[CreateListing] Submit Response Data:", result)
 
       if (response.ok) {
         toast({
@@ -166,7 +161,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to create listing. Please try again.",
+          description: result.message || "Failed to create listing. Please try again.",
           variant: "destructive",
         })
       }

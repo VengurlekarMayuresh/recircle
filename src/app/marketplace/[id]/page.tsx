@@ -182,7 +182,7 @@ export default function MaterialDetailPage() {
                   <ShieldCheck className="w-6 h-6 text-emerald-600" /> Digital Material Passport
                 </h2>
                 <span className="text-xs font-mono font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full uppercase">
-                  ID: RC-{material.id.substring(0, 8).toUpperCase()}
+                  ID: RC-{String(material.id).padStart(8, '0').toUpperCase()}
                 </span>
               </div>
               
@@ -217,7 +217,7 @@ export default function MaterialDetailPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Type</span>
-                      <span className="font-bold">{material.listingType === 'giveaway' ? 'Donation' : 'Resale'}</span>
+                    <span className="font-bold">{material.listingType === 'donate' ? 'Donation' : material.listingType === 'exchange' ? 'Exchange' : 'Resale'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Recyclability</span>
@@ -295,14 +295,16 @@ export default function MaterialDetailPage() {
                   </h4>
                   <div className="flex items-center gap-1 text-sm text-amber-500 font-bold">
                     <span>★</span>
-                    <span>4.9</span>
-                    <span className="text-gray-400 font-medium ml-1">Rating</span>
+                    <span>{material.user?.avgRating ? Number(material.user.avgRating).toFixed(1) : "N/A"}</span>
+                    <span className="text-gray-400 font-medium ml-1">({material.user?.totalRatings ?? 0} ratings)</span>
                   </div>
                 </div>
               </div>
-              <Button variant="ghost" className="w-full mt-4 text-emerald-600 font-bold rounded-xl border border-emerald-50 hover:bg-emerald-50">
-                View Profile
-              </Button>
+              <Link href={`/profile/${material.user?.id}`}>
+                <Button variant="ghost" className="w-full mt-4 text-emerald-600 font-bold rounded-xl border border-emerald-50 hover:bg-emerald-50">
+                  View Profile
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

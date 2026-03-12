@@ -7,14 +7,12 @@ import { NextResponse } from "next/server"
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const city = searchParams.get("city")
     const categoryId = searchParams.get("categoryId")
     const status = searchParams.get("status") || "open"
     const mine = searchParams.get("mine")
     const session = await getServerSession(authOptions)
 
     const where: any = { status }
-    if (city) where.city = city
     if (categoryId) where.categoryId = parseInt(categoryId)
     if (mine === "true" && session?.user?.id) where.userId = session.user.id
 

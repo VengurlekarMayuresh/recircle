@@ -6,13 +6,14 @@ import { NextResponse } from "next/server"
 // PUT /api/material-requests/[id] — accept or reject a request
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
-    const id = parseInt(params.id)
+    const { id: rawId } = await params
+    const id = parseInt(rawId)
     if (isNaN(id)) return NextResponse.json({ message: "Invalid ID" }, { status: 400 })
 
     const body = await req.json()
@@ -49,7 +50,7 @@ export async function PUT(
           type: "request_rejected",
           title: "Request Declined",
           body: `Your request for "${request.material.title}" was declined.`,
-          data: { requestId: id, materialId: request.materialId }
+          data: JSON.stringify({ requestId: id, materialId: request.materialId })
         }
       }).catch(() => {})
 
@@ -72,7 +73,8 @@ export async function PUT(
           receiverId: request.receiverId,
           quantity: request.quantityRequested,
           transportMethod: request.preferredTransport === "self_pickup" ? "self_pickup"
-            : request.preferredTransport === "need_delivery" ? "supplier_delivery"
+            : request.preferredTransport === "supplier_delivery" ? "supplier_delivery"
+            : request.preferredTransport === "platform_transporter" ? "platform_transporter"
             : "self_pickup",
           status: "negotiating",
           pickupAddress: request.material.address || "",
@@ -99,7 +101,7 @@ export async function PUT(
         type: "request_accepted",
         title: "Request Accepted! 🎉",
         body: `Your request for "${request.material.title}" was accepted. Proceed to transaction.`,
-        data: { transactionId: transaction.id, requestId: id, materialId: request.materialId }
+        data: JSON.stringify({ transactionId: transaction.id, requestId: id, materialId: request.materialId })
       }
     }).catch(() => {})
 
@@ -113,13 +115,14 @@ export async function PUT(
 // GET /api/material-requests/[id] — get single request
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
-    const id = parseInt(params.id)
+    const { id: rawId } = await params
+    const id = parseInt(rawId)
     if (isNaN(id)) return NextResponse.json({ message: "Invalid ID" }, { status: 400 })
 
     const request = await prisma.directRequest.findUnique({
