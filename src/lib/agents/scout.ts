@@ -2,31 +2,29 @@ import { prisma } from "@/lib/prisma"
 import { routeMaterial } from "@/lib/material-router"
 import { haversineDistance } from "@/lib/haversine"
 
-const OPENROUTER_KEY = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || ""
-const OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+import { GoogleGenerativeAI } from "@google/generative-ai"
+
+const GEMINI_KEY = process.env.GEMINI_API_KEY || ""
+const genAI = new GoogleGenerativeAI(GEMINI_KEY)
 
 async function callAI(messages: any[]): Promise<string> {
-  if (!OPENROUTER_KEY) return ""
+  if (!GEMINI_KEY) return ""
   try {
-    const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENROUTER_KEY}`,
-        "HTTP-Referer": "https://recircle.in",
-        "X-Title": "ReCircle"
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages,
-        max_tokens: 500,
-        temperature: 0.7
-      })
+    const systemInstruction = messages.find(m => m.role === "system")?.content || ""
+    const userPrompt = messages.find(m => m.role === "user")?.content || ""
+
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      systemInstruction
     })
-    if (!res.ok) return ""
-    const data = await res.json()
-    return data.choices?.[0]?.message?.content || ""
-  } catch {
+    
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }]
+    })
+    
+    return result.response.text()
+  } catch (error) {
+    console.error("Scout AI Error:", error)
     return ""
   }
 }
