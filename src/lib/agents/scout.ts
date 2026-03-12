@@ -13,15 +13,15 @@ async function callAI(messages: any[]): Promise<string> {
     const systemInstruction = messages.find(m => m.role === "system")?.content || ""
     const userPrompt = messages.find(m => m.role === "user")?.content || ""
 
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction
     })
-    
+
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: userPrompt }] }]
     })
-    
+
     return result.response.text()
   } catch (error) {
     console.error("Scout AI Error:", error)

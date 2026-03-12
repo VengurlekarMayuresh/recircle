@@ -118,27 +118,39 @@ async function executeTool(name: string, args: any): Promise<string> {
     case "search_materials": {
       const where: any = { status: "available" }
       if (args.city) where.city = { contains: args.city, mode: "insensitive" }
-      if (args.query) where.title = { contains: args.query, mode: "insensitive" }
+      if (args.query) {
+        where.OR = [
+          { title: { contains: args.query, mode: "insensitive" } },
+          { description: { contains: args.query, mode: "insensitive" } },
+          { tags: { contains: args.query, mode: "insensitive" } },
+        ]
+      }
+      if (args.category) {
+        where.category = { name: { contains: args.category, mode: "insensitive" } }
+      }
       const mats = await prisma.material.findMany({
         where,
-        take: 5,
+        take: 6,
         include: { category: true, user: { select: { name: true, city: true } } },
         orderBy: { createdAt: "desc" },
       })
       if (mats.length === 0) return "No materials found matching your criteria."
-      return JSON.stringify(mats.map(m => ({
-        id: m.id,
-        title: m.title,
-        condition: m.condition,
-        quantity: m.quantity,
-        unit: m.unit,
-        listing_type: m.listingType,
-        price: m.price,
-        city: m.city,
-        category: m.category?.name,
-        supplier: m.user.name,
-        co2_saved: m.co2SavedKg,
-      })))
+        // Store materials for frontend
+        ; (executeTool as any).__lastMaterials = mats.map(m => ({
+          id: m.id,
+          title: m.title,
+          condition: m.condition,
+          quantity: m.quantity,
+          unit: m.unit,
+          listing_type: m.listingType,
+          price: m.price,
+          city: m.city,
+          category: m.category?.name,
+          supplier: m.user.name,
+          co2_saved: m.co2SavedKg,
+          image: (m as any).images?.split(',')[0] || null,
+        }))
+      return JSON.stringify((executeTool as any).__lastMaterials)
     }
 
     case "get_impact_estimate": {
@@ -260,7 +272,7 @@ export async function runAdvisorAgent(
   userMessage: string,
   userId: string,
   history: AdvisorMessage[]
-): Promise<{ reply: string; toolsUsed: string[] }> {
+): Promise<{ reply: string; toolsUsed: string[]; materials: any[] }> {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction: SYSTEM_PROMPT,
@@ -268,6 +280,8 @@ export async function runAdvisorAgent(
   })
 
   const toolsUsed: string[] = []
+    // Reset collected materials
+    ; (executeTool as any).__lastMaterials = null
 
   const geminiHistory: { role: string; parts: { text: string }[] }[] = []
   for (const m of history) {
@@ -299,7 +313,6 @@ export async function runAdvisorAgent(
 
       const functionResponses = []
       for (const call of toolCalls) {
-        // Handle object arguments parsing explicitly if needed by Gemini wrapper though it is usually an object already
         const args = call.args
         const resultArgs = await executeTool(call.name, args)
         toolsUsed.push(call.name)
@@ -323,6 +336,7 @@ export async function runAdvisorAgent(
   }
 
   const reply = responseText || "I'm sorry, I couldn't generate a response."
+  const collectedMaterials = (executeTool as any).__lastMaterials || []
 
   // Save to chat history
   try {
@@ -332,7 +346,6 @@ export async function runAdvisorAgent(
         { userId, role: "assistant", content: reply, toolCalls: toolsUsed.length > 0 ? JSON.stringify(toolsUsed) : null },
       ],
     })
-    // Log to agent_logs
     await prisma.agentLog.create({
       data: {
         agentName: "advisor",
@@ -343,5 +356,5 @@ export async function runAdvisorAgent(
     })
   } catch (_) { }
 
-  return { reply, toolsUsed }
+  return { reply, toolsUsed, materials: collectedMaterials }
 }

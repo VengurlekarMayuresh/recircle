@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,9 @@ import {
 import { haversineDistance } from "@/lib/haversine"
 
 export default function MarketplacePage() {
+  const { data: session } = useSession()
+  const userCity = (session?.user as any)?.city || null
+  
   const [materials, setMaterials] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -123,6 +127,10 @@ export default function MarketplacePage() {
 
     return sorted
   })()
+
+  // Partition materials based on user city
+  const localMaterials = userCity ? filteredMaterials.filter(m => m.city?.toLowerCase() === userCity.toLowerCase()) : []
+  const otherMaterials = userCity ? filteredMaterials.filter(m => m.city?.toLowerCase() !== userCity.toLowerCase()) : filteredMaterials
 
   // Trigger supplier discovery when search yields 0 results
   useEffect(() => {
@@ -388,118 +396,152 @@ export default function MarketplacePage() {
               )}
             </div>
           ) : (
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.05 } },
-              }}
-            >
-              {filteredMaterials.map((material) => (
-                <motion.div
-                  key={material.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 16 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
-                  }}
-                >
-                <Link href={`/materials/${material.id}`}>
-                  <Card className="group overflow-hidden rounded-2xl border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white">
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <img 
-                        src={material.images?.split(',')[0]} 
-                        alt={material.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"
-                        }}
-                      />
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge className={material.listingType === "donate" ? "bg-emerald-500" : material.listingType === "exchange" ? "bg-purple-500" : "bg-blue-500"}>
-                          {material.listingType === "donate" ? "Free" : material.listingType === "exchange" ? "Exchange" : "For Sale"}
-                        </Badge>
-                        <Badge variant="outline" className="bg-white/80 backdrop-blur-sm border-none text-gray-800 capitalize">
-                          {material.condition}
-                        </Badge>
-                      </div>
-                    </div>
-                    <CardHeader className="p-4 pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg font-bold text-gray-800 line-clamp-1">{material.title}</CardTitle>
-                      </div>
-                      <CardDescription className="flex items-center gap-1 text-xs font-medium">
-                        <MapPin className="w-3 h-3" />
-                        <span className="truncate">{material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}</span>
-                        {userLocation && material.locationLat && (() => {
-                          const dist = haversineDistance(userLocation.lat, userLocation.lng, material.locationLat, material.locationLng)
-                          const isApprox = !material.address || material.address === material.city || material.address === "Default Address"
-                          return (
-                            <span className="text-emerald-600 font-bold whitespace-nowrap ml-1">
-                              · {isApprox ? "~" : ""}{dist.toFixed(1)} km
-                            </span>
-                          )
-                        })()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-3">
-                      <div className="flex items-end justify-between">
-                        <span className="text-2xl font-black text-emerald-600">
-                          {material.price === 0 ? "FREE" : `₹${material.price}`}
-                        </span>
-                        <span className="text-sm text-gray-500 font-medium">
-                          {material.quantity} {material.unit}
-                        </span>
-                      </div>
-                      
-                      {/* Tags Preview */}
-                      {material.tags && (
-                        <div className="flex flex-wrap gap-1">
-                          {material.tags.split(',').slice(0, 3).map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0">
-                              #{tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+            <div className="space-y-12">
+              {/* Local Materials Section */}
+              {userCity && localMaterials.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-800">Available Within {userCity}</h2>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Local</Badge>
+                  </div>
+                  <motion.div
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.05 } },
+                    }}
+                  >
+                    {localMaterials.map((material) => (
+                      <MaterialCard key={`local-${material.id}`} material={material} userLocation={userLocation} />
+                    ))}
+                  </motion.div>
+                </div>
+              )}
 
-                      {/* Impact Metrics */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
-                        {material.co2SavedKg > 0 ? (
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded-lg">
-                            <Leaf className="w-3.5 h-3.5" />
-                            <span>{material.co2SavedKg}kg CO₂</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 p-1.5 rounded-lg">
-                            <Leaf className="w-3.5 h-3.5" />
-                            <span>CO₂ TBD</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 p-1.5 rounded-lg">
-                          <Recycle className="w-3.5 h-3.5" />
-                          <span className="capitalize">{material.category?.name || "Material"}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex items-center justify-between text-xs text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(material.createdAt).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1 font-semibold text-emerald-600">
-                        View Details <ArrowRight className="w-3 h-3" />
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </Link>
-                </motion.div>
-              ))}
-            </motion.div>
+              {/* Other Materials Section */}
+              {otherMaterials.length > 0 && (
+                <div className="space-y-4">
+                  {userCity && localMaterials.length > 0 && (
+                    <h2 className="text-2xl font-bold text-gray-800">Available Outside {userCity}</h2>
+                  )}
+                  <motion.div
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.05 } },
+                    }}
+                  >
+                    {otherMaterials.map((material) => (
+                      <MaterialCard key={`other-${material.id}`} material={material} userLocation={userLocation} />
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+            </div>
           )}
         </>
       )}
     </div>
+  )
+}
+
+function MaterialCard({ material, userLocation }: { material: any, userLocation: { lat: number; lng: number } | null }) {
+  return (
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, y: 16 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+      }}
+    >
+      <Link href={`/materials/${material.id}`}>
+        <Card className="group overflow-hidden rounded-2xl border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white">
+          <div className="relative h-48 w-full overflow-hidden">
+            <img 
+              src={material.images?.split(',')[0]} 
+              alt={material.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"
+              }}
+            />
+            <div className="absolute top-3 left-3 flex gap-2">
+              <Badge className={material.listingType === "donate" ? "bg-emerald-500" : material.listingType === "exchange" ? "bg-purple-500" : "bg-blue-500"}>
+                {material.listingType === "donate" ? "Free" : material.listingType === "exchange" ? "Exchange" : "For Sale"}
+              </Badge>
+              <Badge variant="outline" className="bg-white/80 backdrop-blur-sm border-none text-gray-800 capitalize">
+                {material.condition}
+              </Badge>
+            </div>
+          </div>
+          <CardHeader className="p-4 pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-lg font-bold text-gray-800 line-clamp-1">{material.title}</CardTitle>
+            </div>
+            <CardDescription className="flex items-center gap-1 text-xs font-medium">
+              <MapPin className="w-3 h-3" />
+              <span className="truncate">{material.address && material.address !== material.city && material.address !== "Default Address" ? material.address : material.city}</span>
+              {userLocation && material.locationLat && (() => {
+                const dist = haversineDistance(userLocation.lat, userLocation.lng, material.locationLat, material.locationLng)
+                const isApprox = !material.address || material.address === material.city || material.address === "Default Address"
+                return (
+                  <span className="text-emerald-600 font-bold whitespace-nowrap ml-1">
+                    · {isApprox ? "~" : ""}{dist.toFixed(1)} km
+                  </span>
+                )
+              })()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 space-y-3">
+            <div className="flex items-end justify-between">
+              <span className="text-2xl font-black text-emerald-600">
+                {material.price === 0 ? "FREE" : `₹${material.price}`}
+              </span>
+              <span className="text-sm text-gray-500 font-medium">
+                {material.quantity} {material.unit}
+              </span>
+            </div>
+            {material.tags && (
+              <div className="flex flex-wrap gap-1">
+                {material.tags.split(',').slice(0, 3).map((tag: string) => (
+                  <Badge key={tag} variant="secondary" className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
+              {material.co2SavedKg > 0 ? (
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded-lg">
+                  <Leaf className="w-3.5 h-3.5" />
+                  <span>{material.co2SavedKg}kg CO₂</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 p-1.5 rounded-lg">
+                  <Leaf className="w-3.5 h-3.5" />
+                  <span>CO₂ TBD</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 p-1.5 rounded-lg">
+                <Recycle className="w-3.5 h-3.5" />
+                <span className="capitalize">{material.category?.name || "Material"}</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="p-4 pt-0 flex items-center justify-between text-xs text-gray-400">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {new Date(material.createdAt).toLocaleDateString()}
+            </div>
+            <div className="flex items-center gap-1 font-semibold text-emerald-600">
+              View Details <ArrowRight className="w-3 h-3" />
+            </div>
+          </CardFooter>
+        </Card>
+      </Link>
+    </motion.div>
   )
 }
