@@ -86,7 +86,10 @@ export async function GET(req: Request) {
     const materials = await prisma.material.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      include: { user: true }
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true, city: true, avatarUrl: true, trustScore: true, verificationLevel: true, avgRating: true, totalRatings: true, greenPoints: true, level: true, orgName: true } },
+        category: true
+      }
     })
     return NextResponse.json(materials)
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,16 +11,27 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
-import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart } from "lucide-react"
+import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart, MapPin } from "lucide-react"
+import { useSession } from "next-auth/react"
 
-const conditions = ["New", "Good", "Fair", "Salvageable"]
+const conditionOptions = [
+  { value: "new", label: "New" },
+  { value: "like_new", label: "Like New" },
+  { value: "good", label: "Good" },
+  { value: "fair", label: "Fair" },
+  { value: "salvage", label: "Salvage" },
+]
 const units = ["kg", "tonnes", "pieces", "meters", "sq ft", "liters"]
+const cities = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Surat", "Nagpur", "Indore", "Bhopal", "Chandigarh", "Kochi"]
 
 export default function CreateListingPage() {
+  const { data: session } = useSession()
   const [step, setStep] = useState(1)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isGeneratingTags, setIsGeneratingTags] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -29,92 +40,78 @@ export default function CreateListingPage() {
     unit: "kg",
     price: "",
     listingType: "sell",
-    city: "Mumbai",
+    city: "",
     tags: [] as string[],
   })
 
   const { toast } = useToast()
   const router = useRouter()
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setImageUrl(url)
-      
-      setIsAnalyzing(true)
-      setTimeout(() => {
-        setIsAnalyzing(false)
-        toast({
-          title: "AI Analysis Complete",
-          description: "Vison AI identified your material!",
-        })
-      }, 3000)
+  // Default city from session
+  useEffect(() => {
+    if (session?.user?.city && !formData.city) {
+      setFormData(prev => ({ ...prev, city: (session.user as any).city }))
     }
-  }
+  }, [session])
 
-  const generateTags = async () => {
-    console.log("[CreateListing] Generating tags for:", { title: formData.title, description: formData.description })
-    setIsGeneratingTags(true)
-    try {
-      const resp = await fetch("/api/ai/tag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: formData.title, description: formData.description }),
-      })
-      console.log("[CreateListing] API Response Status:", resp.status)
-      const data = await resp.json()
-      console.log("[CreateListing] API Response Data:", data)
-      if (data.tags) {
-        setFormData(prev => ({ ...prev, tags: data.tags }))
-        toast({
-          title: "AI Tagging Complete",
-          description: `Generated ${data.tags.length} smart tags for your listing.`,
-        })
-      }
-    } catch (err) {
-      console.error("[CreateListing] Tag Generation Failed:", err)
-    } finally {
-      setIsGeneratingTags(false)
-      setStep(2)
-    }
-  }
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch("/api/materials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+  // Show preview immediately
+  const previewUrl = URL.createObjectURL(file)
+  setImageUrl(previewUrl)
 
-      console.log("[CreateListing] Submit Response Status:", response.status)
-      const result = await response.json()
-      console.log("[CreateListing] Submit Response Data:", result)
+  // AI Analysis simulation
+  setIsAnalyzing(true)
 
-      if (response.ok) {
-        toast({
-          title: "Listing Created!",
-          description: "Your material is now being scouted by our AI agents.",
-        })
-        router.push("/marketplace")
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to create listing. Please try again.",
-          variant: "destructive",
-        })
-      }
-    } catch (err) {
-      console.error(err)
+  // Upload to server
+  setIsUploading(true)
+
+  try {
+    const uploadData = new FormData()
+    uploadData.append("file", file)
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: uploadData,
+    })
+
+    const data = await res.json()
+
+    if (res.ok && data.url) {
+      setUploadedImageUrl(data.url)
+
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Image Uploaded",
+        description: "Your image has been uploaded successfully.",
+      })
+    } else {
+      toast({
+        title: "Upload Failed",
+        description: data.message || "Could not upload image.",
         variant: "destructive",
       })
     }
+  } catch {
+    toast({
+      title: "Upload Failed",
+      description: "Network error during upload.",
+      variant: "destructive",
+    })
+  } finally {
+    setIsUploading(false)
+
+    // Finish AI analysis
+    setTimeout(() => {
+      setIsAnalyzing(false)
+      toast({
+        title: "AI Analysis Complete",
+        description: "Vision AI identified your material!",
+      })
+    }, 2000)
   }
+}
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -154,14 +151,14 @@ export default function CreateListingPage() {
                   {imageUrl ? (
                     <div className="relative group">
                       <img src={imageUrl} alt="Uploaded material" className="max-h-64 mx-auto rounded-2xl shadow-md" />
-                      {isAnalyzing && (
+                      {(isAnalyzing || isUploading) && (
                         <div className="absolute inset-0 bg-white/60 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2">
                           <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-                          <span className="font-bold text-emerald-800">Scout AI is analyzing...</span>
+                          <span className="font-bold text-emerald-800">{isUploading ? "Uploading image..." : "Scout AI is analyzing..."}</span>
                         </div>
                       )}
                       <button 
-                        onClick={() => setImageUrl(null)}
+                        onClick={() => { setImageUrl(null); setUploadedImageUrl(null) }}
                         className="absolute -top-2 -right-2 bg-white p-2 rounded-full shadow-lg text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -254,7 +251,18 @@ export default function CreateListingPage() {
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        {conditions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {conditionOptions.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>City / Location</Label>
+                    <Select value={formData.city} onValueChange={(v) => setFormData({...formData, city: v})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your city" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -292,9 +300,9 @@ export default function CreateListingPage() {
                       <span className="font-bold">Sell</span>
                     </button>
                     <button 
-                      onClick={() => setFormData({...formData, listingType: "giveaway"})}
+                      onClick={() => setFormData({...formData, listingType: "donate"})}
                       className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                        formData.listingType === "giveaway" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500 bg-gray-50/50"
+                        formData.listingType === "donate" ? "border-emerald-500 bg-white shadow-md text-emerald-700" : "border-transparent text-gray-500 bg-gray-50/50"
                       }`}
                     >
                       <Heart className="w-6 h-6" />

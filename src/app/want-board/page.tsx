@@ -41,7 +41,11 @@ export default function WantBoardPage() {
     }).catch(() => setLoading(false))
   }, [])
 
+  const currentUserId = (session?.user as any)?.id
+
   const filtered = requests.filter(r => {
+    // Hide the current user's own want requests
+    if (currentUserId && r.user?.id === currentUserId) return false
     const matchSearch = !search ||
       r.title?.toLowerCase().includes(search.toLowerCase()) ||
       r.description?.toLowerCase().includes(search.toLowerCase()) ||

@@ -7,19 +7,32 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, MapPin, Filter, Recycle, Leaf, Clock, ArrowRight, Sparkles, Star, TrendingUp } from "lucide-react"
+import { Search, MapPin, Filter, Recycle, Leaf, Clock, ArrowRight, Sparkles, Star, TrendingUp, Check, X } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { MarketplaceGridSkeleton } from "@/components/skeleton-card"
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu"
 
 export default function MarketplacePage() {
   const [materials, setMaterials] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedCity, setSelectedCity] = useState("All")
+  const [selectedCondition, setSelectedCondition] = useState("All")
+  const [selectedListingType, setSelectedListingType] = useState("All")
   const [discoveredSuppliers, setDiscoveredSuppliers] = useState<any[]>([])
   const [isDiscovering, setIsDiscovering] = useState(false)
 
   const categories = ["All", "Construction", "Furniture", "Packaging", "Electronics", "Industrial", "Textiles", "Metals", "Wood"]
+  const conditions = ["All", "new", "like_new", "good", "fair", "salvage"]
+  const conditionLabels: Record<string, string> = { All: "All Conditions", new: "New", like_new: "Like New", good: "Good", fair: "Fair", salvage: "Salvage" }
+  const listingTypes = ["All", "sell", "donate", "exchange"]
+  const listingTypeLabels: Record<string, string> = { All: "All Types", sell: "For Sale", donate: "Free / Donate", exchange: "Exchange" }
+
+  const cities = ["All", ...Array.from(new Set(materials.map(m => m.city).filter(Boolean))).sort()]
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -27,7 +40,7 @@ export default function MarketplacePage() {
         const res = await fetch("/api/materials")
         if (!res.ok) throw new Error("Failed to load materials")
         const data = await res.json()
-        setMaterials(data)
+        setMaterials(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error("Failed to fetch materials:", err)
         toast({
@@ -42,10 +55,15 @@ export default function MarketplacePage() {
     fetchMaterials()
   }, [])
 
+  const activeFilterCount = [selectedCity, selectedCondition, selectedListingType].filter(v => v !== "All").length
+
   const filteredMaterials = materials.filter(m => {
     const matchesSearch = (m.title + m.description + m.tags).toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === "All" || m.category?.name === selectedCategory
-    return matchesSearch && matchesCategory
+    const matchesCity = selectedCity === "All" || m.city === selectedCity
+    const matchesCondition = selectedCondition === "All" || m.condition === selectedCondition
+    const matchesListingType = selectedListingType === "All" || m.listingType === selectedListingType
+    return matchesSearch && matchesCategory && matchesCity && matchesCondition && matchesListingType
   })
 
   // Trigger supplier discovery when search yields 0 results
@@ -82,12 +100,89 @@ export default function MarketplacePage() {
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="h-12 rounded-xl border-gray-200 flex gap-2">
-            <MapPin className="w-5 h-5" /> City
-          </Button>
-          <Button variant="outline" className="h-12 rounded-xl border-gray-200 flex gap-2">
-            <Filter className="w-5 h-5" /> Filter
-          </Button>
+          {/* City Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className={`h-12 rounded-xl flex gap-2 ${
+                selectedCity !== "All" ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-gray-200"
+              }`}>
+                <MapPin className="w-5 h-5" />
+                {selectedCity === "All" ? "City" : selectedCity}
+                {selectedCity !== "All" && (
+                  <X className="w-3.5 h-3.5 ml-1 hover:text-red-500" onClick={(e) => { e.stopPropagation(); setSelectedCity("All") }} />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 max-h-64 overflow-y-auto">
+              <DropdownMenuLabel>Filter by City</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {cities.map(city => (
+                <DropdownMenuItem
+                  key={city}
+                  onClick={() => setSelectedCity(city)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  {city === "All" ? "All Cities" : city}
+                  {selectedCity === city && <Check className="w-4 h-4 text-emerald-600" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className={`h-12 rounded-xl flex gap-2 ${
+                activeFilterCount > 0 ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-gray-200"
+              }`}>
+                <Filter className="w-5 h-5" />
+                Filter
+                {activeFilterCount > 0 && (
+                  <span className="bg-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel>Condition</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {conditions.map(c => (
+                <DropdownMenuItem
+                  key={c}
+                  onClick={() => setSelectedCondition(c)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  {conditionLabels[c]}
+                  {selectedCondition === c && <Check className="w-4 h-4 text-emerald-600" />}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Listing Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {listingTypes.map(lt => (
+                <DropdownMenuItem
+                  key={lt}
+                  onClick={() => setSelectedListingType(lt)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  {listingTypeLabels[lt]}
+                  {selectedListingType === lt && <Check className="w-4 h-4 text-emerald-600" />}
+                </DropdownMenuItem>
+              ))}
+              {activeFilterCount > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => { setSelectedCondition("All"); setSelectedListingType("All") }}
+                    className="text-red-600 cursor-pointer font-medium"
+                  >
+                    <X className="w-4 h-4 mr-2" /> Clear Filters
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
