@@ -23,7 +23,12 @@ export async function POST(req: Request) {
       listingType, 
       city, 
       tags,
-      images
+      images,
+      floorPrice,
+      bargainEnabled,
+      negotiationStyle,
+      autoAcceptPrice,
+      dealSweeteners
     } = body
 
     // Sanitize numbers to avoid NaN
@@ -32,6 +37,12 @@ export async function POST(req: Request) {
     
     const parsedPrice = parseFloat(price)
     const finalPrice = isNaN(parsedPrice) ? 0 : parsedPrice
+
+    const parsedFloorPrice = parseFloat(floorPrice)
+    const finalFloorPrice = isNaN(parsedFloorPrice) ? null : parsedFloorPrice
+
+    const parsedAutoAccept = parseFloat(autoAcceptPrice)
+    const finalAutoAccept = isNaN(parsedAutoAccept) ? null : parsedAutoAccept
 
     const material = await prisma.material.create({
       data: {
@@ -50,6 +61,11 @@ export async function POST(req: Request) {
         tags: Array.isArray(tags) ? tags.join(",") : tags || "",
         images: (Array.isArray(images) ? images.filter(Boolean).join(",") : images) || "https://images.unsplash.com/photo-1590069324154-04663e9f4577",
         status: "available",
+        floorPrice: finalFloorPrice,
+        bargainEnabled: bargainEnabled === true,
+        negotiationStyle: ["firm", "moderate", "flexible"].includes(negotiationStyle) ? negotiationStyle : "moderate",
+        autoAcceptPrice: finalAutoAccept,
+        dealSweeteners: dealSweeteners || null,
       }
     })
 

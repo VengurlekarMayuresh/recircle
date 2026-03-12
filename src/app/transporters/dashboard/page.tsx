@@ -66,8 +66,16 @@ export default function TransporterDashboard() {
 
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/auth/login")
-    if (authStatus === "authenticated") fetchData()
-  }, [authStatus, fetchData, router])
+    if (authStatus === "authenticated") {
+      // Redirect volunteers to their dedicated dashboard
+      const role = (session as any)?.user?.role
+      if (role === "volunteer") {
+        router.replace("/volunteer/dashboard")
+        return
+      }
+      fetchData()
+    }
+  }, [authStatus, fetchData, router, session])
 
   const toggleAvailability = async () => {
     if (!profile) return

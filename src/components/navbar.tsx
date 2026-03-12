@@ -41,7 +41,18 @@ export default function Navbar() {
       )
     }
 
-    if (user?.role === "transporter" || user?.role === "volunteer") {
+    if (user?.role === "volunteer") {
+      return (
+        <>
+          <Link href="/volunteer/available" className="text-gray-600 hover:text-emerald-600 font-medium">Available Deliveries</Link>
+          <Link href="/volunteer/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">My Deliveries</Link>
+          <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
+        </>
+      )
+    }
+
+    if (user?.role === "transporter") {
       return (
         <>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
@@ -57,8 +68,8 @@ export default function Navbar() {
         <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
         <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
         <Link href="/materials/new" className="text-gray-600 hover:text-emerald-600 font-medium">Create Listing</Link>
+        <Link href="/bargain" className="text-gray-600 hover:text-emerald-600 font-medium">Negotiations</Link>
         <Link href="/dashboard/my-listings" className="text-gray-600 hover:text-emerald-600 font-medium">My Listings</Link>
-        <Link href="/my-requests" className="text-gray-600 hover:text-emerald-600 font-medium">My Requests</Link>
         <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
       </>
     )
@@ -116,6 +127,12 @@ export default function Navbar() {
                       <Link href="/dashboard/my-listings">My Listings</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link href="/bargain">Negotiations</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/my-deals">My Deals</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/dashboard/my-impact">My Impact</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -165,6 +182,8 @@ export default function Navbar() {
           {status === "authenticated" ? (
             <div className="flex flex-col space-y-4 pt-2">
               <Link href="/profile" className="text-gray-600">My Profile</Link>
+              <Link href="/bargain" className="text-gray-600">Negotiations</Link>
+              <Link href="/dashboard/my-deals" className="text-gray-600">My Deals</Link>
               <Link href="/dashboard/my-listings" className="text-gray-600">My Listings</Link>
               <Button
                 variant="outline"

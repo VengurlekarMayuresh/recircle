@@ -67,6 +67,43 @@ export function getNextLevelInfo(points: number): {
   }
 }
 
+// --------------- Volunteer Delivery Points ---------------
+
+export interface VolunteerDeliveryInput {
+  distanceKm: number
+  weightKg?: number | null
+  rating?: number | null
+}
+
+/**
+ * Calculate green points for a completed volunteer delivery.
+ *
+ * Formula:
+ *   base              = 50
+ *   + distanceKm × 5
+ *   + weightKg × 2    (if provided)
+ *   + 20 bonus        (if rating >= 4)
+ *   × 1.5 streak      (3+ deliveries in last 7 days)
+ */
+export function calculateVolunteerDeliveryPoints(
+  input: VolunteerDeliveryInput,
+  recentDeliveryCount: number
+): number {
+  let points = 50
+  points += Math.round(input.distanceKm * 5)
+  if (input.weightKg && input.weightKg > 0) {
+    points += Math.round(input.weightKg * 2)
+  }
+  if (input.rating && input.rating >= 4) {
+    points += 20
+  }
+  // Streak bonus: 3+ deliveries in last 7 days
+  if (recentDeliveryCount >= 3) {
+    points = Math.round(points * 1.5)
+  }
+  return points
+}
+
 export function calculateListingPoints(
   listingType: string,
   hasPhoto: boolean,

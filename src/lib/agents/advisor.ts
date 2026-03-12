@@ -1,7 +1,14 @@
 import OpenAI from "openai"
 import prisma from "@/lib/prisma"
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+  defaultHeaders: {
+    "HTTP-Referer": "https://recircle.in",
+    "X-Title": "ReCircle",
+  },
+})
 
 const SYSTEM_PROMPT = `You are ReCircle's AI Sustainability Advisor. You help users in India's circular economy marketplace.
 You can search for materials, find matches, estimate environmental impact, suggest reuse ideas, and more.
@@ -293,7 +300,7 @@ export async function runAdvisorAgent(
 
   // First call
   let response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "openai/gpt-4o-mini",
     messages,
     tools,
     tool_choice: "auto",
@@ -325,7 +332,7 @@ export async function runAdvisorAgent(
 
     // Continue conversation
     response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "openai/gpt-4o-mini",
       messages,
       tools,
       tool_choice: "auto",

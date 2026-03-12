@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus, Leaf, IndianRupee, Clock, BarChart3, Package, Users, Recycle,
-  CheckCircle, XCircle, Inbox, Bell, MapPin, Truck } from "lucide-react"
+  CheckCircle, XCircle, Inbox, Bell, MapPin, Truck, MessageCircle } from "lucide-react"
 
 const STATUS_COLORS: Record<string, string> = {
   pending:   "bg-yellow-100 text-yellow-700",
@@ -33,6 +33,7 @@ export default function SupplierDashboard() {
   const [listings, setListings] = useState<any[]>([])
   const [requests, setRequests] = useState<any[]>([])
   const [discoveryNotifs, setDiscoveryNotifs] = useState<any[]>([])
+  const [bargainSessions, setBargainSessions] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
   const [respondingTo, setRespondingTo] = useState<number | null>(null)
@@ -40,10 +41,11 @@ export default function SupplierDashboard() {
 
   const fetchAll = async () => {
     try {
-      const [lRes, rRes, nRes] = await Promise.all([
+      const [lRes, rRes, nRes, bRes] = await Promise.all([
         fetch("/api/materials?own=true"),
         fetch("/api/material-requests?type=received"),
         fetch("/api/notifications?type=supplier_discovery&limit=20"),
+        fetch("/api/bargain/seller"),
       ])
       if (lRes.ok) {
         const lData = await lRes.json()
@@ -57,6 +59,10 @@ export default function SupplierDashboard() {
         const nData = await nRes.json()
         const notifs = Array.isArray(nData) ? nData : nData.notifications || []
         setDiscoveryNotifs(notifs.filter((n: any) => n.type === 'supplier_discovery'))
+      }
+      if (bRes.ok) {
+        const bData = await bRes.json()
+        setBargainSessions(Array.isArray(bData) ? bData : [])
       }
     } catch (err) {
       console.error(err)
@@ -113,6 +119,7 @@ export default function SupplierDashboard() {
   const totalValue = listings.reduce((acc, curr) => acc + (curr.price || 0), 0).toLocaleString()
   const activeCount = listings.filter(l => l.status === 'available').length
   const pendingRequests = requests.filter(r => r.status === 'pending').length
+  const activeBargains = bargainSessions.filter((s: any) => s.status === 'active').length
 
   if (isLoading) {
     return (
@@ -162,6 +169,12 @@ export default function SupplierDashboard() {
             Incoming Requests
             {pendingRequests > 0 && (
               <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingRequests}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="negotiations" className="rounded-lg px-5 relative">
+            Negotiations
+            {activeBargains > 0 && (
+              <span className="ml-1.5 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeBargains}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="discovery" className="rounded-lg px-5">Discovery</TabsTrigger>
@@ -283,7 +296,83 @@ export default function SupplierDashboard() {
           )}
         </TabsContent>
 
-        {/* Tab 3: Discovery Responses */}
+        {/* Tab 3: Negotiations */}
+        <TabsContent value="negotiations" className="space-y-4">
+          {bargainSessions.length === 0 ? (
+            <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed">
+              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900">No negotiations yet</h3>
+              <p className="text-gray-500">When buyers negotiate on your listings, they'll appear here.</p>
+            </div>
+          ) : (
+            bargainSessions.map((s: any) => {
+              const statusConfig: Record<string, { bg: string; label: string }> = {
+                active:   { bg: "bg-blue-100 text-blue-700", label: "Negotiating" },
+                agreed:   { bg: "bg-emerald-100 text-emerald-700", label: "Deal Agreed" },
+                rejected: { bg: "bg-red-100 text-red-700", label: "Rejected" },
+                closed:   { bg: "bg-gray-100 text-gray-700", label: "Closed" },
+              }
+              const sc = statusConfig[s.status] || statusConfig.closed
+              return (
+                <Card key={s.sessionId} className={`border transition-all hover:shadow-md ${
+                  s.status === "agreed" ? "border-emerald-200 bg-emerald-50/30" :
+                  s.status === "active" ? "border-blue-200" : "border-gray-100"
+                }`}>
+                  <CardContent className="p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                      <div className="flex gap-4">
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarFallback className="bg-orange-100 text-orange-700">
+                            {s.buyer?.name?.charAt(0) || "B"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm">{s.buyer?.name || "Buyer"}</span>
+                            {s.buyer?.city && <span className="text-xs text-gray-400 flex items-center gap-0.5"><MapPin className="w-3 h-3" />{s.buyer.city}</span>}
+                            <Badge className={sc.bg} variant="secondary">{sc.label}</Badge>
+                          </div>
+                          <p className="text-sm font-medium text-gray-800 mt-0.5">
+                            Material: <Link href={`/materials/${s.material?.id}`} className="text-emerald-700 hover:underline">{s.material?.title}</Link>
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-2">
+                            <span className="flex items-center gap-1">
+                              <IndianRupee className="w-3 h-3" /> Listed: ₹{s.askingPrice?.toLocaleString()}
+                            </span>
+                            {s.agreedPrice && (
+                              <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                                <CheckCircle className="w-3 h-3" /> Agreed: ₹{s.agreedPrice?.toLocaleString()}
+                              </span>
+                            )}
+                            {s.discount !== null && (
+                              <span className="text-orange-600 font-medium">{s.discount}% off</span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <MessageCircle className="w-3 h-3" /> {s.messageCount} messages
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {new Date(s.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {s.status === "agreed" && (
+                        <div className="shrink-0 flex items-center">
+                          <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl text-center">
+                            <p className="text-xs font-medium">Deal Price</p>
+                            <p className="text-xl font-black">₹{s.agreedPrice?.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })
+          )}
+        </TabsContent>
+
+        {/* Tab 4: Discovery Responses */}
         <TabsContent value="discovery">
           <div className="space-y-4">
             <Card className="border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50">

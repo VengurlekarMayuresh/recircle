@@ -492,6 +492,19 @@ export default function MaterialDetailPage() {
               </Button>
             </div>
           ) : (
+            <div className="space-y-2">
+            {/* Make an Offer Button — shown when bargaining is enabled */}
+            {material.bargainEnabled && material.listingType === "sell" && material.price > 0 && (
+              <Link href={`/bargain?materialId=${material.id}`}>
+                <Button
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3 text-lg shadow-lg shadow-amber-100"
+                  disabled={material.status === "claimed" || material.status === "archived"}
+                >
+                  💬 Make an Offer
+                </Button>
+              </Link>
+            )}
+
             <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -566,6 +579,7 @@ export default function MaterialDetailPage() {
                 )}
               </DialogContent>
             </Dialog>
+            </div>
           )}
 
           {/* No Returns Banner */}

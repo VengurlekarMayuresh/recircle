@@ -52,6 +52,7 @@ model User {
   fraudFlags         FraudFlag[]       @relation("UserFraudFlags")
   reviewedFlags      FraudFlag[]       @relation("FraudReviewer")
   savedMaterials     SavedMaterial[]
+  bargainSessions    BargainSession[]
 
   @@map("users")
 }
@@ -105,6 +106,11 @@ model Material {
   fraudRiskScore       Int           @default(0) @map("fraud_risk_score")
   viewsCount           Int           @default(0) @map("views_count")
   reuseCount           Int           @default(0) @map("reuse_count")
+  floorPrice           Float?        @map("floor_price")
+  bargainEnabled       Boolean       @default(false) @map("bargain_enabled")
+  negotiationStyle     String        @default("moderate") @map("negotiation_style") // firm, moderate, flexible
+  autoAcceptPrice      Float?        @map("auto_accept_price")
+  dealSweeteners       String?       @map("deal_sweeteners") // JSON string
   createdAt            DateTime      @default(now()) @map("created_at")
   updatedAt            DateTime      @updatedAt @map("updated_at")
 
@@ -116,6 +122,7 @@ model Material {
   agentLogs            AgentLog[]
   fraudFlags           FraudFlag[]
   savedSubscribers     SavedMaterial[]
+  bargainSessions      BargainSession[]
 
   @@map("materials")
 }
@@ -229,6 +236,7 @@ model Transporter {
 
   user               User              @relation(fields: [userId], references: [id])
   bookings           TransportBooking[]
+  verification       VolunteerVerification?
 
   @@map("transporters")
 }
@@ -247,10 +255,17 @@ model TransportBooking {
   distanceKm        Float         @map("distance_km")
   estimatedCost     Float         @map("estimated_cost")
   actualCost        Float?        @map("actual_cost")
-  status            String        @default("requested") // requested, accepted, pickup_scheduled, collected, in_transit, delivered, completed, cancelled
+  status            String        @default("requested") // requested, pending_approval, accepted, pickup_scheduled, collected, in_transit, delivered, completed, cancelled, rejected
   scheduledDate     DateTime?     @map("scheduled_date")
   transporterRating Int?          @map("transporter_rating")
   notes             String?
+  pickupPhotoUrl    String?       @map("pickup_photo_url")
+  deliveryPhotoUrl  String?       @map("delivery_photo_url")
+  volunteerLat      Float?        @map("volunteer_lat")
+  volunteerLng      Float?        @map("volunteer_lng")
+  volunteerLocationUpdatedAt DateTime? @map("volunteer_location_updated_at")
+  receiverConfirmed  Boolean      @default(false) @map("receiver_confirmed")
+  supplierConfirmed  Boolean      @default(false) @map("supplier_confirmed")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
 
@@ -439,4 +454,53 @@ model SavedMaterial {
 
   @@unique([userId, materialId])
   @@map("saved_materials")
+}
+
+model BargainSession {
+  id               String           @id @default(uuid())
+  materialId       Int              @map("material_id")
+  buyerId          String           @map("buyer_id")
+  status           String           @default("active") // active, agreed, rejected, expired
+  askingPrice      Float            @map("asking_price")
+  floorPrice       Float            @map("floor_price")
+  agreedPrice      Float?           @map("agreed_price")
+  negotiationStyle String           @default("moderate") @map("negotiation_style")
+  messageCount     Int              @default(0) @map("message_count")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  material         Material         @relation(fields: [materialId], references: [id])
+  buyer            User             @relation(fields: [buyerId], references: [id])
+  messages         BargainMessage[]
+
+  @@map("bargain_sessions")
+}
+
+model VolunteerVerification {
+  id              Int         @id @default(autoincrement())
+  transporterId   Int         @unique @map("transporter_id")
+  selfieUrl       String      @map("selfie_url")
+  idProofUrl      String      @map("id_proof_url")
+  vehiclePhotoUrl String      @map("vehicle_photo_url")
+  addressProofUrl String?     @map("address_proof_url")
+  status          String      @default("pending") // pending, verified, rejected
+  reviewedAt      DateTime?   @map("reviewed_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  transporter     Transporter @relation(fields: [transporterId], references: [id])
+
+  @@map("volunteer_verifications")
+}
+
+model BargainMessage {
+  id        Int            @id @default(autoincrement())
+  sessionId String         @map("session_id")
+  role      String         // buyer, assistant
+  content   String
+  metadata  String?        // JSON: { offeredPrice, counterPrice, tactic }
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  session   BargainSession @relation(fields: [sessionId], references: [id])
+
+  @@map("bargain_messages")
 }

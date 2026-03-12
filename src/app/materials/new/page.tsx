@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
-import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart, MapPin } from "lucide-react"
+import { Camera, Upload, Loader2, Leaf, IndianRupee, Trash2, ArrowRight, Check, Heart, MapPin, MessageSquare, Shield, Zap } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 const conditionOptions = [
@@ -42,6 +42,11 @@ export default function CreateListingPage() {
     listingType: "sell",
     city: "",
     tags: [] as string[],
+    bargainEnabled: false,
+    floorPrice: "",
+    negotiationStyle: "moderate",
+    autoAcceptPrice: "",
+    dealSweeteners: "",
   })
 
   const { toast } = useToast()
@@ -373,17 +378,117 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   </div>
 
                   {formData.listingType === "sell" && (
-                    <div className="space-y-2 max-w-xs mx-auto text-center animate-in fade-in slide-in-from-top-2">
-                      <Label>Price (₹)</Label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 w-5 h-5" />
-                        <Input 
-                          type="number" 
-                          className="pl-10 text-xl font-bold h-12 border-emerald-100 focus:border-emerald-500" 
-                          placeholder="0.00"
-                          value={formData.price}
-                          onChange={(e) => setFormData({...formData, price: e.target.value})}
-                        />
+                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-2 max-w-xs mx-auto text-center">
+                        <Label>Asking Price (₹)</Label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 w-5 h-5" />
+                          <Input 
+                            type="number" 
+                            className="pl-10 text-xl font-bold h-12 border-emerald-100 focus:border-emerald-500" 
+                            placeholder="0.00"
+                            value={formData.price}
+                            onChange={(e) => setFormData({...formData, price: e.target.value})}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bargain Settings */}
+                      <Separator className="bg-emerald-100/50" />
+                      <div className="space-y-4">
+                        <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer ${formData.bargainEnabled ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-100 bg-gray-50/30 hover:border-gray-200'}`}
+                          onClick={() => setFormData({...formData, bargainEnabled: !formData.bargainEnabled})}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-xl ${formData.bargainEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
+                              <MessageSquare className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-800">Enable AI Bargaining</p>
+                              <p className="text-xs text-gray-500">Let buyers negotiate price with an AI assistant</p>
+                            </div>
+                          </div>
+                          <div className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 ${formData.bargainEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+                            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${formData.bargainEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </div>
+                        </div>
+
+                        {formData.bargainEnabled && (
+                          <div className="space-y-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50/30 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                                Floor Price (₹) <span className="text-xs text-gray-400 font-normal">— minimum you&apos;ll accept (hidden from buyers)</span>
+                              </Label>
+                              <div className="relative max-w-xs">
+                                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <Input
+                                  type="number"
+                                  className="pl-9 border-emerald-100 focus:border-emerald-500"
+                                  placeholder="e.g. 3500"
+                                  value={formData.floorPrice}
+                                  onChange={(e) => setFormData({...formData, floorPrice: e.target.value})}
+                                />
+                              </div>
+                              {formData.price && formData.floorPrice && parseFloat(formData.floorPrice) >= parseFloat(formData.price) && (
+                                <p className="text-xs text-red-500">Floor price should be less than the asking price</p>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Negotiation Style</Label>
+                              <div className="flex gap-2">
+                                {(["firm", "moderate", "flexible"] as const).map((style) => (
+                                  <button
+                                    key={style}
+                                    type="button"
+                                    onClick={() => setFormData({...formData, negotiationStyle: style})}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all border ${
+                                      formData.negotiationStyle === style
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    {style === "firm" ? "🪨 Firm" : style === "moderate" ? "⚖️ Moderate" : "🤝 Flexible"}
+                                  </button>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                {formData.negotiationStyle === "firm" ? "Small concessions (5-8% per round). Best when demand is high." :
+                                 formData.negotiationStyle === "flexible" ? "Larger concessions (12-20% per round). Great for quick sales." :
+                                 "Balanced concessions (8-15% per round). Recommended for most listings."}
+                              </p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                Auto-Accept Price (₹) <span className="text-xs text-gray-400 font-normal">— optional, instant deal if buyer offers this or more</span>
+                              </Label>
+                              <div className="relative max-w-xs">
+                                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <Input
+                                  type="number"
+                                  className="pl-9 border-gray-200"
+                                  placeholder="e.g. 4500"
+                                  value={formData.autoAcceptPrice}
+                                  onChange={(e) => setFormData({...formData, autoAcceptPrice: e.target.value})}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Deal Sweeteners <span className="text-xs text-gray-400 font-normal">— optional extras to close deals</span></Label>
+                              <Textarea
+                                className="border-gray-200 text-sm"
+                                rows={2}
+                                placeholder='e.g. "Free delivery within 5km", "Includes packaging"'
+                                value={formData.dealSweeteners}
+                                onChange={(e) => setFormData({...formData, dealSweeteners: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
