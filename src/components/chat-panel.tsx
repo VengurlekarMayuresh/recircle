@@ -1,15 +1,28 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { MessageCircle, X, Send, Bot, User, Loader2, Zap, ChevronDown } from "lucide-react"
+import { MessageCircle, X, Send, Bot, User, Loader2, Zap, ChevronDown, MapPin, ArrowRight } from "lucide-react"
+
+interface MaterialResult {
+  id: number
+  title: string
+  condition: string
+  price: number
+  city: string
+  category?: string
+  image?: string
+  listing_type?: string
+}
 
 interface Message {
   role: "user" | "assistant"
   content: string
   tools?: string[]
+  materials?: MaterialResult[]
   loading?: boolean
 }
 
@@ -83,6 +96,7 @@ export default function ChatPanel() {
           role: "assistant",
           content: data.reply || data.error || "Sorry, I couldn't process that.",
           tools: data.tools_used,
+          materials: data.materials?.length > 0 ? data.materials : undefined,
         },
       ])
     } catch {
@@ -160,6 +174,49 @@ export default function ChatPanel() {
                 >
                   {msg.content}
                 </div>
+                {/* Inline Material Cards */}
+                {msg.materials && msg.materials.length > 0 && (
+                  <div className="mt-2 overflow-x-auto pb-1">
+                    <div className="flex gap-2" style={{ minWidth: "max-content" }}>
+                      {msg.materials.map((mat) => (
+                        <Link
+                          key={mat.id}
+                          href={`/materials/${mat.id}`}
+                          className="block w-44 flex-shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                        >
+                          <div className="h-24 w-full overflow-hidden bg-gray-100">
+                            <img
+                              src={mat.image || "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"}
+                              alt={mat.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"
+                              }}
+                            />
+                          </div>
+                          <div className="p-2 space-y-1">
+                            <p className="text-xs font-bold text-gray-800 line-clamp-1">{mat.title}</p>
+                            <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span className="truncate">{mat.city}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-black text-emerald-600">
+                                {mat.price === 0 ? "FREE" : `₹${mat.price}`}
+                              </span>
+                              <Badge variant="outline" className="text-[8px] px-1 py-0 capitalize border-gray-200">
+                                {mat.condition?.replace("_", " ")}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
+                              View <ArrowRight className="w-2.5 h-2.5" />
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               {msg.role === "user" && (
                 <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-0.5">

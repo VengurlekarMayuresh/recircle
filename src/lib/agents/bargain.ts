@@ -187,7 +187,7 @@ export async function runBargainAgent(
 
   // Build conversation history for Gemini
   const history: any[] = []
-  
+
   for (const msg of session.messages) {
     let content = msg.content
     if (msg.role !== "buyer") {
