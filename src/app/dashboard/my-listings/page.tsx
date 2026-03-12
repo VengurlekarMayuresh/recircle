@@ -4,37 +4,108 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Filter, Leaf, IndianRupee, Clock, ArrowUpRight, BarChart3, Package, Users, Recycle } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Plus, Leaf, IndianRupee, Clock, BarChart3, Package, Users, Recycle,
+  CheckCircle, XCircle, Inbox, Bell, MapPin, Truck } from "lucide-react"
+
+const STATUS_COLORS: Record<string, string> = {
+  pending:   "bg-yellow-100 text-yellow-700",
+  accepted:  "bg-emerald-100 text-emerald-700",
+  rejected:  "bg-red-100 text-red-700",
+  available: "bg-blue-100 text-blue-700",
+  claimed:   "bg-gray-100 text-gray-700",
+  archived:  "bg-orange-100 text-orange-700",
+  future:    "bg-purple-100 text-purple-700",
+}
+
+const TRANSPORT_LABELS: Record<string, string> = {
+  self_pickup:          "Self Pickup",
+  supplier_delivery:    "Supplier Delivery",
+  platform_transporter: "Book Transporter",
+  flexible:             "Flexible",
+}
 
 export default function SupplierDashboard() {
   const { data: session } = useSession()
   const [listings, setListings] = useState<any[]>([])
+  const [requests, setRequests] = useState<any[]>([])
+  const [discoveryNotifs, setDiscoveryNotifs] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const [respondingTo, setRespondingTo] = useState<number | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>("")
 
-  useEffect(() => {
-    const fetchMyListings = async () => {
-      try {
-        const res = await fetch("/api/materials?own=true")
-        if (res.ok) {
-          const data = await res.json()
-          setListings(data)
-        }
-      } catch (err) {
-        console.error("Failed to fetch my listings:", err)
-      } finally {
-        setIsLoading(false)
+  const fetchAll = async () => {
+    try {
+      const [lRes, rRes, nRes] = await Promise.all([
+        fetch("/api/materials?own=true"),
+        fetch("/api/material-requests?as=supplier"),
+        fetch("/api/notifications?type=supplier_discovery&limit=20"),
+      ])
+      if (lRes.ok) setListings(await lRes.json())
+      if (rRes.ok) setRequests(await rRes.json())
+      if (nRes.ok) {
+        const nData = await nRes.json()
+        setDiscoveryNotifs((nData.notifications || nData || []).filter((n: any) => n.type === 'supplier_discovery'))
       }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
-    fetchMyListings()
-  }, [])
+  }
+
+  const handleDiscoveryResponse = async (notif: any, response: string) => {
+    setRespondingTo(notif.id)
+    try {
+      let data: any = { type: 'supplier_discovery' }
+      try { data = JSON.parse(notif.data) } catch {}
+
+      const res = await fetch('/api/supplier-discovery/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notification_id: notif.id,
+          response,
+          want_request_id: data?.wantRequestId,
+          available_date: selectedDate || undefined
+        })
+      })
+      const result = await res.json()
+      if (result.redirect) {
+        window.location.href = result.redirect
+      } else {
+        await fetchAll()
+      }
+    } finally {
+      setRespondingTo(null)
+    }
+  }
+
+  useEffect(() => { fetchAll() }, [])
+
+  const handleRequestAction = async (id: number, action: "accept" | "reject") => {
+    setActionLoading(id)
+    try {
+      const res = await fetch(`/api/material-requests/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      })
+      if (res.ok) await fetchAll()
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   // Calculate live stats
-  const totalCo2 = listings.reduce((acc, curr) => acc + (curr.quantity * 0.5), 0).toFixed(0)
-  const totalValue = listings.reduce((acc, curr) => acc + curr.price, 0).toLocaleString()
-  const activeCount = listings.filter(l => l.status === 'available' || l.status === 'Active').length
+  const totalCo2 = listings.reduce((acc, curr) => acc + (curr.co2SavedKg || curr.co2_saved_kg || curr.quantity * 0.5), 0).toFixed(0)
+  const totalValue = listings.reduce((acc, curr) => acc + (curr.price || 0), 0).toLocaleString()
+  const activeCount = listings.filter(l => l.status === 'available').length
+  const pendingRequests = requests.filter(r => r.status === 'pending').length
 
   if (isLoading) {
     return (
@@ -47,143 +118,263 @@ export default function SupplierDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Supplier Dashboard</h1>
-          <p className="text-gray-500">Manage your surplus materials and track your environmental impact.</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Listings</h1>
+          <p className="text-gray-500">Manage your surplus materials and incoming requests.</p>
         </div>
         <Link href="/materials/new">
-          <Button className="bg-emerald-600 hover:bg-emerald-700 h-12 px-6 rounded-xl shadow-lg shadow-emerald-100 flex gap-2">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 h-11 px-6 rounded-xl gap-2">
             <Plus className="w-5 h-5" /> New Listing
           </Button>
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <Card className="bg-emerald-50 border-emerald-100 overflow-hidden relative">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-emerald-700 font-bold uppercase text-xs tracking-wider">Total CO₂ Saved</CardDescription>
-            <CardTitle className="text-3xl font-black text-emerald-900">{totalCo2} kg</CardTitle>
-          </CardHeader>
-          <div className="absolute top-4 right-4 text-emerald-200">
-            <Leaf className="w-12 h-12" />
-          </div>
-        </Card>
-        <Card className="bg-blue-50 border-blue-100 overflow-hidden relative">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-blue-700 font-bold uppercase text-xs tracking-wider">Circular Value Created</CardDescription>
-            <CardTitle className="text-3xl font-black text-blue-900">₹{totalValue}</CardTitle>
-          </CardHeader>
-          <div className="absolute top-4 right-4 text-blue-200">
-            <IndianRupee className="w-12 h-12" />
-          </div>
-        </Card>
-        <Card className="bg-amber-50 border-amber-100 overflow-hidden relative">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-amber-700 font-bold uppercase text-xs tracking-wider">Active Listings</CardDescription>
-            <CardTitle className="text-3xl font-black text-amber-900">{activeCount}</CardTitle>
-          </CardHeader>
-          <div className="absolute top-4 right-4 text-amber-200">
-            <Package className="w-12 h-12" />
-          </div>
-        </Card>
-        <Card className="bg-purple-50 border-purple-100 overflow-hidden relative">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-purple-700 font-bold uppercase text-xs tracking-wider">Trust Score</CardDescription>
-            <CardTitle className="text-3xl font-black text-purple-900">92/100</CardTitle>
-          </CardHeader>
-          <div className="absolute top-4 right-4 text-purple-200">
-            <Users className="w-12 h-12" />
-          </div>
-        </Card>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Total CO₂ Saved", value: `${totalCo2} kg`, icon: <Leaf className="w-10 h-10" />, bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-900", icon_color: "text-emerald-200" },
+          { label: "Circular Value", value: `₹${totalValue}`, icon: <IndianRupee className="w-10 h-10" />, bg: "bg-blue-50 border-blue-100", text: "text-blue-900", icon_color: "text-blue-200" },
+          { label: "Active Listings", value: activeCount, icon: <Package className="w-10 h-10" />, bg: "bg-amber-50 border-amber-100", text: "text-amber-900", icon_color: "text-amber-200" },
+          { label: "Pending Requests", value: pendingRequests, icon: <Inbox className="w-10 h-10" />, bg: "bg-purple-50 border-purple-100", text: "text-purple-900", icon_color: "text-purple-200" },
+        ].map(({ label, value, icon, bg, text, icon_color }) => (
+          <Card key={label} className={`${bg} overflow-hidden relative border`}>
+            <CardHeader className="pb-2">
+              <p className={`text-xs font-bold uppercase tracking-wider ${text.replace("900","700")}`}>{label}</p>
+              <CardTitle className={`text-2xl font-black ${text}`}>{value}</CardTitle>
+            </CardHeader>
+            <div className={`absolute top-4 right-4 ${icon_color}`}>{icon}</div>
+          </Card>
+        ))}
       </div>
 
-      <Tabs defaultValue="active" className="space-y-6">
+      <Tabs defaultValue="listings" className="space-y-6">
         <TabsList className="bg-gray-100/50 p-1 rounded-xl">
-          <TabsTrigger value="active" className="rounded-lg px-6">Active Listings</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg px-6">Past Successes</TabsTrigger>
-          <TabsTrigger value="impact" className="rounded-lg px-6">Impact Analysis</TabsTrigger>
+          <TabsTrigger value="listings" className="rounded-lg px-5">My Listings</TabsTrigger>
+          <TabsTrigger value="requests" className="rounded-lg px-5 relative">
+            Incoming Requests
+            {pendingRequests > 0 && (
+              <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingRequests}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="discovery" className="rounded-lg px-5">Discovery</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            {listings.length === 0 ? (
-              <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-900">No listings found</h3>
-                <p className="text-gray-500 mb-6">You haven't added any materials yet.</p>
-                <Link href="/materials/new">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 rounded-xl">Create Your First Listing</Button>
-                </Link>
-              </div>
-            ) : (
-              listings.map((listing) => (
+        {/* Tab 1: My Listings */}
+        <TabsContent value="listings" className="space-y-4">
+          {listings.length === 0 ? (
+            <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900">No listings yet</h3>
+              <p className="text-gray-500 mb-6">Create your first material listing to get started.</p>
+              <Link href="/materials/new"><Button className="bg-emerald-600">Create Listing</Button></Link>
+            </div>
+          ) : (
+            listings.map((listing) => {
+              const imgs = Array.isArray(listing.images) ? listing.images : listing.images?.split(',') || []
+              return (
                 <Card key={listing.id} className="overflow-hidden hover:shadow-md transition-all border-gray-100">
                   <CardContent className="p-0 flex flex-col md:flex-row">
-                    <div className="w-full md:w-48 h-48 md:h-auto shrink-0 overflow-hidden">
-                      <img 
-                        src={listing.images?.split(',')[0] || "https://images.unsplash.com/photo-1590069324154-04663e9f4577"} 
-                        alt={listing.title} 
-                        className="w-full h-full object-cover" 
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b"
-                        }}
-                      />
+                    <div className="w-full md:w-40 h-40 md:h-auto shrink-0 overflow-hidden bg-gray-100">
+                      {imgs[0] ? (
+                        <img src={imgs[0]} alt={listing.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300"><Package className="w-10 h-10" /></div>
+                      )}
                     </div>
-                    <div className="p-6 flex-grow flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-xl font-bold text-gray-900">{listing.title}</h3>
-                          <Badge className={`${
-                            listing.status === "available" || listing.status === "Active" 
-                              ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
-                              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                          } capitalize`}>
-                            {listing.status}
-                          </Badge>
-                        </div>
-                        <div className="flex gap-4 text-sm text-gray-500 mb-4 flex-wrap">
-                          <span className="flex items-center gap-1 font-medium"><IndianRupee className="w-4 h-4" /> {listing.price || "Free"}</span>
-                          <span className="flex items-center gap-1 font-medium"><Package className="w-4 h-4" /> {listing.quantity} {listing.unit}</span>
-                          <span className="flex items-center gap-1 font-medium text-emerald-600"><BarChart3 className="w-4 h-4" /> AI Scout: Active</span>
-                        </div>
-                        {listing.tags && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {listing.tags.split(',').slice(0, 3).map((tag: string) => (
-                              <span key={tag} className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">#{tag.trim()}</span>
-                            ))}
+                    <div className="p-5 flex-grow flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">{listing.title}</h3>
+                          <div className="flex gap-3 text-sm text-gray-500 mt-1 flex-wrap">
+                            <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" /> {listing.quantity} {listing.unit}</span>
+                            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {listing.city}</span>
+                            {listing.price > 0 && <span className="flex items-center gap-1"><IndianRupee className="w-3.5 h-3.5" /> {listing.price}</span>}
                           </div>
-                        )}
+                        </div>
+                        <Badge className={STATUS_COLORS[listing.status] || "bg-gray-100 text-gray-700"}>{listing.status}</Badge>
                       </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <div className="flex gap-2">
-                          <div className="bg-emerald-50 px-3 py-1 rounded-lg text-emerald-700 text-xs font-bold flex items-center gap-1">
-                            <Leaf className="w-3 h-3" /> {(listing.quantity * 0.5).toFixed(1)}kg CO₂
-                          </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
+                        <div className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                          <Leaf className="w-3 h-3" /> {listing.co2SavedKg || listing.co2_saved_kg || (listing.quantity * 0.5).toFixed(1)} kg CO₂
                         </div>
                         <div className="flex gap-2">
-                          <Link href={`/marketplace/${listing.id}`}>
-                            <Button variant="outline" size="sm" className="rounded-lg">View Details</Button>
+                          <Link href={`/materials/${listing.id}`}>
+                            <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs">View</Button>
                           </Link>
-                          <Button variant="secondary" size="sm" className="rounded-lg text-emerald-700 bg-emerald-50 border-emerald-100 hover:bg-emerald-100">See AI Matches</Button>
+                          <Link href={`/materials/${listing.id}?edit=1`}>
+                            <Button variant="secondary" size="sm" className="rounded-lg h-8 text-xs">Edit</Button>
+                          </Link>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            )}
-          </div>
+              )
+            })
+          )}
         </TabsContent>
 
-        <TabsContent value="history">
-          <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Clock className="w-8 h-8" />
+        {/* Tab 2: Incoming Requests */}
+        <TabsContent value="requests" className="space-y-4">
+          {requests.length === 0 ? (
+            <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed">
+              <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900">No incoming requests</h3>
+              <p className="text-gray-500">When receivers request your materials, they'll appear here.</p>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">No completed exchanges yet</h3>
-            <p className="text-gray-500">Your materials will appear here once they've been successfully rehoused.</p>
+          ) : (
+            requests.map((req: any) => (
+              <Card key={req.id} className="border-gray-100 hover:shadow-sm transition-all">
+                <CardContent className="p-5">
+                  <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                    <div className="flex gap-4">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarFallback className="bg-emerald-100 text-emerald-700">{req.receiver?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{req.receiver?.name || "Receiver"}</span>
+                          <Badge className={STATUS_COLORS[req.status] || "bg-gray-100 text-gray-700"} variant="secondary">{req.status}</Badge>
+                        </div>
+                        <p className="text-sm font-medium text-gray-800 mt-0.5">
+                          Requesting: <span className="text-emerald-700">{req.material?.title}</span>
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                          <span><Package className="w-3 h-3 inline mr-0.5" />{req.quantityRequested || req.quantity_requested} units</span>
+                          <span><Truck className="w-3 h-3 inline mr-0.5" />{TRANSPORT_LABELS[req.preferredTransport || req.preferred_transport] || "—"}</span>
+                          <span><Clock className="w-3 h-3 inline mr-0.5" />{new Date(req.createdAt || req.created_at).toLocaleDateString("en-IN")}</span>
+                        </div>
+                        {req.message && <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded-lg max-w-md">&ldquo;{req.message}&rdquo;</p>}
+                      </div>
+                    </div>
+                    {req.status === "pending" && (
+                      <div className="flex gap-2 shrink-0 items-start">
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 h-9 gap-1 text-xs"
+                          disabled={actionLoading === req.id}
+                          onClick={() => handleRequestAction(req.id, "accept")}
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 gap-1 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                          disabled={actionLoading === req.id}
+                          onClick={() => handleRequestAction(req.id, "reject")}
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* Tab 3: Discovery Responses */}
+        <TabsContent value="discovery">
+          <div className="space-y-4">
+            <Card className="border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50">
+              <CardContent className="p-5 flex gap-4">
+                <div className="p-3 bg-amber-100 rounded-xl shrink-0">
+                  <Bell className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-amber-900">Predictive Supplier Discovery</h3>
+                  <p className="text-sm text-amber-700 mt-0.5">
+                    ReCircle AI notifies you when someone nearby needs materials you've listed before.
+                    Respond to let them know your availability!
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {discoveryNotifs.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 rounded-3xl border border-dashed">
+                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-gray-900">No discovery alerts yet</h3>
+                <p className="text-gray-500 text-sm">We'll notify you when someone near you is looking for materials you typically supply.</p>
+              </div>
+            ) : (
+              discoveryNotifs.map((notif: any) => {
+                let notifData: any = {}
+                try { notifData = JSON.parse(notif.data || '{}') } catch {}
+                const isResponding = respondingTo === notif.id
+                return (
+                  <Card key={notif.id} className={`border transition-all ${notif.read ? 'border-gray-100 opacity-70' : 'border-amber-200 shadow-sm'}`}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+                          <Bell className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-gray-800">{notif.title}</p>
+                            {!notif.read && <span className="w-2 h-2 bg-amber-500 rounded-full" />}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-0.5">{notif.body}</p>
+                          {notifData.query && (
+                            <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-lg mt-2 inline-block">
+                              Looking for: {notifData.query}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-2">{new Date(notif.createdAt).toLocaleDateString('en-IN')}</p>
+
+                          {!notif.read && (
+                            <div className="mt-4 space-y-3">
+                              <p className="text-xs font-semibold text-gray-700">Your response:</p>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs h-9"
+                                  disabled={isResponding}
+                                  onClick={() => handleDiscoveryResponse(notif, 'available_now')}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" /> Available Now
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-blue-200 text-blue-700 hover:bg-blue-50 gap-1.5 text-xs h-9"
+                                  disabled={isResponding}
+                                  onClick={() => handleDiscoveryResponse(notif, 'available_later')}
+                                >
+                                  <Clock className="w-3.5 h-3.5" /> Available Later
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-gray-500 hover:text-red-600 gap-1.5 text-xs h-9"
+                                  disabled={isResponding}
+                                  onClick={() => handleDiscoveryResponse(notif, 'not_available')}
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> Not Available
+                                </Button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="date"
+                                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600"
+                                  value={selectedDate}
+                                  onChange={(e) => setSelectedDate(e.target.value)}
+                                  placeholder="Optional: available date"
+                                />
+                                <span className="text-xs text-gray-400">(optional: set future date)</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
           </div>
         </TabsContent>
       </Tabs>

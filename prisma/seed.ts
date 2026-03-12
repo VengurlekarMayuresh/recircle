@@ -8,148 +8,268 @@ async function main() {
 
   // 1. Categories
   const categoriesData = [
-    { name: 'Construction', slug: 'construction', icon: 'building', co2FactorKg: 0.9, landfillCostInrPerTonne: 1500, newCostInrPerUnit: 800, decompositionYears: 100, peakMonths: JSON.stringify([10, 11, 12, 1, 2, 3]), description: 'Surplus bricks, cement, steel rods, and other building materials.' },
-    { name: 'Furniture & Office', slug: 'furniture-office', icon: 'armchair', co2FactorKg: 3.5, landfillCostInrPerTonne: 2000, newCostInrPerUnit: 15000, decompositionYears: 50, peakMonths: JSON.stringify([5, 6, 7]), description: 'Used desks, chairs, cabinets, and office equipment.' },
-    { name: 'Packaging', slug: 'packaging', icon: 'box', co2FactorKg: 1.2, landfillCostInrPerTonne: 1200, newCostInrPerUnit: 500, decompositionYears: 20, peakMonths: JSON.stringify([9, 10, 11]), description: 'Cardboard boxes, pallets, crates, and wrapping materials.' },
-    { name: 'Electronics', slug: 'electronics', icon: 'cpu', co2FactorKg: 20.0, landfillCostInrPerTonne: 8000, newCostInrPerUnit: 25000, decompositionYears: 1000, peakMonths: JSON.stringify([10, 11]), description: 'Computers, printers, cables, and other e-waste for repair or recycling.' },
-    { name: 'Industrial Surplus', slug: 'industrial-surplus', icon: 'factory', co2FactorKg: 4.0, landfillCostInrPerTonne: 3000, newCostInrPerUnit: 10000, decompositionYears: 200, peakMonths: JSON.stringify([1, 2, 3, 4]), description: 'Machinery parts, factory surplus, and industrial chemicals/containers.' },
-    { name: 'Textiles', slug: 'textiles', icon: 'shirt', co2FactorKg: 15.0, landfillCostInrPerTonne: 1800, newCostInrPerUnit: 350, decompositionYears: 40, peakMonths: JSON.stringify([8, 9, 10]), description: 'Fabric scraps, old uniforms, and other textile waste.' },
-    { name: 'Metals & Scrap', slug: 'metals-scrap', icon: 'settings', co2FactorKg: 6.0, landfillCostInrPerTonne: 2500, newCostInrPerUnit: 40, decompositionYears: 1000, peakMonths: JSON.stringify([10, 11, 12, 1, 2, 3]), description: 'Steel scrap, copper wiring, and aluminum offcuts.' },
-    { name: 'Wood & Timber', slug: 'wood-timber', icon: 'log', co2FactorKg: 1.8, landfillCostInrPerTonne: 1000, newCostInrPerUnit: 1200, decompositionYears: 15, peakMonths: JSON.stringify([10, 11, 12, 1, 2]), description: 'Wooden planks, timber offcuts, and sawdust.' },
+    { name: 'Construction', slug: 'construction', icon: '🏗️', co2FactorKg: 0.9, waterFactorLiters: 50, landfillCostInrPerTonne: 1500, newCostInrPerUnit: 800, decompositionYears: 100, peakMonths: JSON.stringify([10,11,12,1,2,3]), description: 'Surplus bricks, cement, steel rods, and other building materials.' },
+    { name: 'Furniture & Office', slug: 'furniture-office', icon: '🪑', co2FactorKg: 3.5, waterFactorLiters: 200, landfillCostInrPerTonne: 2000, newCostInrPerUnit: 15000, decompositionYears: 50, peakMonths: JSON.stringify([5,6,7]), description: 'Used desks, chairs, cabinets, and office equipment.' },
+    { name: 'Packaging', slug: 'packaging', icon: '📦', co2FactorKg: 1.2, waterFactorLiters: 30, landfillCostInrPerTonne: 1200, newCostInrPerUnit: 500, decompositionYears: 20, peakMonths: JSON.stringify([9,10,11]), description: 'Cardboard boxes, pallets, crates, and wrapping materials.' },
+    { name: 'Electronics', slug: 'electronics', icon: '💻', co2FactorKg: 20.0, waterFactorLiters: 1000, landfillCostInrPerTonne: 8000, newCostInrPerUnit: 25000, decompositionYears: 1000, peakMonths: JSON.stringify([10,11]), description: 'Computers, printers, cables, and other e-waste for repair or recycling.' },
+    { name: 'Industrial Surplus', slug: 'industrial-surplus', icon: '🏭', co2FactorKg: 4.0, waterFactorLiters: 150, landfillCostInrPerTonne: 3000, newCostInrPerUnit: 10000, decompositionYears: 200, peakMonths: JSON.stringify([1,2,3,4]), description: 'Machinery parts, factory surplus, and industrial chemicals/containers.' },
+    { name: 'Textiles', slug: 'textiles', icon: '👕', co2FactorKg: 15.0, waterFactorLiters: 2700, landfillCostInrPerTonne: 1800, newCostInrPerUnit: 350, decompositionYears: 40, peakMonths: JSON.stringify([8,9,10]), description: 'Fabric scraps, old uniforms, and other textile waste.' },
+    { name: 'Metals & Scrap', slug: 'metals-scrap', icon: '⚙️', co2FactorKg: 6.0, waterFactorLiters: 80, landfillCostInrPerTonne: 2500, newCostInrPerUnit: 40, decompositionYears: 1000, peakMonths: JSON.stringify([10,11,12,1,2,3]), description: 'Steel scrap, copper wiring, and aluminum offcuts.' },
+    { name: 'Wood & Timber', slug: 'wood-timber', icon: '🪵', co2FactorKg: 1.8, waterFactorLiters: 60, landfillCostInrPerTonne: 1000, newCostInrPerUnit: 1200, decompositionYears: 15, peakMonths: JSON.stringify([10,11,12,1,2]), description: 'Wooden planks, timber offcuts, and sawdust.' },
   ]
 
-  const categories = []
+  const categories: any[] = []
   for (const cat of categoriesData) {
-    const createdCat = await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: cat,
-      create: cat,
-    })
+    const createdCat = await prisma.category.upsert({ where: { slug: cat.slug }, update: cat, create: cat })
     categories.push(createdCat)
   }
   console.log('Categories created.')
 
-  // 2. Users (Seed passwords with bcrypt)
+  // 2. Users
   const passwordHash = await bcrypt.hash('password123', 12)
+  const adminHash = await bcrypt.hash('admin123', 12)
   const usersData = [
-    { name: 'Admin User', email: 'admin@recircle.com', passwordHash, phone: '9876543210', role: 'admin', city: 'Mumbai', greenPoints: 1000, level: 'forest', trustScore: 100, verificationLevel: 'trusted', address: 'Worli, Mumbai' },
-    { name: 'BuildWell Corp', email: 'supply@buildwell.com', passwordHash, phone: '9876543211', role: 'business', city: 'Mumbai', orgName: 'BuildWell Construction', greenPoints: 500, level: 'tree', trustScore: 85, verificationLevel: 'verified', address: 'Andheri East, Mumbai' },
-    { name: 'Tech Solutions Pune', email: 'it@techsolutions.com', passwordHash, phone: '9876543212', role: 'business', city: 'Pune', orgName: 'Tech Solutions Ltd', greenPoints: 300, level: 'sapling', trustScore: 70, verificationLevel: 'basic', address: 'Hinjewadi, Pune' },
-    { name: 'Anita Sharma', email: 'anita@gmail.com', passwordHash, phone: '9876543213', role: 'individual', city: 'Delhi', greenPoints: 150, level: 'sprout', trustScore: 60, verificationLevel: 'unverified', address: 'Dwarka, Delhi' },
-    { name: 'Habitat for Humanity', email: 'ngo@habitat.org', passwordHash, phone: '9876543214', role: 'ngo', city: 'Mumbai', orgName: 'Habitat for Humanity India', greenPoints: 800, level: 'forest', trustScore: 95, verificationLevel: 'trusted', address: 'Chembur, Mumbai' },
-    { name: 'Rahul Courier', email: 'rahul@volunteer.com', passwordHash, phone: '9876543215', role: 'volunteer', city: 'Delhi', greenPoints: 400, level: 'tree', trustScore: 80, address: 'Rohini, Delhi' },
-    { name: 'Mumbai Transporters', email: 'mumbai@trans.com', passwordHash, phone: '9876543216', role: 'transporter', city: 'Mumbai', orgName: 'Mumbai Logistics Co', greenPoints: 200, level: 'sapling', trustScore: 75, address: 'Vashi, Navi Mumbai' },
-    { name: 'Arjun Singh', email: 'arjun@gmail.com', passwordHash, phone: '9876543217', role: 'individual', city: 'Bangalore', greenPoints: 50, level: 'seedling', trustScore: 40, address: 'Indiranagar, Bangalore' },
+    { name: 'Admin User', email: 'admin@recircle.in', passwordHash: adminHash, phone: '9876543210', role: 'admin', city: 'Mumbai', greenPoints: 1000, level: 'forest', trustScore: 100, verificationLevel: 'trusted', idVerified: true, avgRating: 5.0, totalRatings: 10, address: 'Worli, Mumbai', locationLat: 18.9981, locationLng: 72.8170 },
+    { name: 'Rahul Mehta', email: 'rahul@buildcorp.in', passwordHash, phone: '9876543211', role: 'business', orgName: 'BuildCorp Construction Pvt Ltd', city: 'Mumbai', greenPoints: 520, level: 'tree', trustScore: 85, verificationLevel: 'verified', idVerified: true, avgRating: 4.7, totalRatings: 23, address: 'Andheri East, Mumbai', locationLat: 19.1136, locationLng: 72.8697 },
+    { name: 'Priya Sharma', email: 'priya@gmail.com', passwordHash, phone: '9876543213', role: 'individual', city: 'Delhi', greenPoints: 180, level: 'sprout', trustScore: 65, verificationLevel: 'basic', avgRating: 4.3, totalRatings: 8, address: 'Saket, Delhi', locationLat: 28.5245, locationLng: 77.2066 },
+    { name: 'Habitat India', email: 'contact@habitatindia.org', passwordHash, phone: '9876543214', role: 'ngo', orgName: 'Habitat for Humanity India', city: 'Mumbai', greenPoints: 850, level: 'forest', trustScore: 95, verificationLevel: 'trusted', idVerified: true, avgRating: 4.9, totalRatings: 42, address: 'Chembur, Mumbai', locationLat: 19.0604, locationLng: 72.9001 },
+    { name: 'Amit Kumar', email: 'amit@gmail.com', passwordHash, phone: '9876543215', role: 'volunteer', city: 'Delhi', greenPoints: 430, level: 'tree', trustScore: 80, verificationLevel: 'verified', avgRating: 4.8, totalRatings: 15, address: 'Rohini, Delhi', locationLat: 28.7196, locationLng: 77.1203 },
+    { name: 'Deepak Logistics', email: 'deepak@transport.in', passwordHash, phone: '9876543216', role: 'transporter', orgName: 'Deepak Express Logistics', city: 'Mumbai', greenPoints: 250, level: 'sapling', trustScore: 78, verificationLevel: 'basic', avgRating: 4.5, totalRatings: 31, address: 'Vashi, Navi Mumbai', locationLat: 19.0771, locationLng: 73.0076 },
+    { name: 'TechSolutions Pune', email: 'it@techsolutions.com', passwordHash, phone: '9876543212', role: 'business', orgName: 'Tech Solutions Ltd', city: 'Pune', greenPoints: 310, level: 'sapling', trustScore: 72, verificationLevel: 'basic', avgRating: 4.2, totalRatings: 11, address: 'Hinjewadi, Pune', locationLat: 18.5912, locationLng: 73.7389 },
+    { name: 'Surat Textiles Co', email: 'info@surattextiles.com', passwordHash, phone: '9876543217', role: 'business', orgName: 'Surat Textiles Co Pvt Ltd', city: 'Surat', greenPoints: 400, level: 'tree', trustScore: 82, verificationLevel: 'verified', idVerified: true, avgRating: 4.6, totalRatings: 19, address: 'Katargam, Surat', locationLat: 21.2291, locationLng: 72.8363 },
+    { name: 'Arjun Singh', email: 'arjun@gmail.com', passwordHash, phone: '9876543218', role: 'individual', city: 'Bangalore', greenPoints: 60, level: 'seedling', trustScore: 45, verificationLevel: 'unverified', avgRating: 0, totalRatings: 0, address: 'Indiranagar, Bangalore', locationLat: 12.9784, locationLng: 77.6408 },
+    { name: 'Delhi Community NGO', email: 'contact@delhingo.org', passwordHash, phone: '9876543219', role: 'ngo', orgName: 'Delhi Community Foundation', city: 'Delhi', greenPoints: 620, level: 'tree', trustScore: 88, verificationLevel: 'trusted', idVerified: true, avgRating: 4.8, totalRatings: 28, address: 'Lajpat Nagar, Delhi', locationLat: 28.5672, locationLng: 77.2365 },
+    { name: 'Sneha Patel', email: 'sneha@gmail.com', passwordHash, phone: '9876543220', role: 'individual', city: 'Ahmedabad', greenPoints: 95, level: 'seedling', trustScore: 55, verificationLevel: 'basic', avgRating: 4.0, totalRatings: 5, address: 'Navrangpura, Ahmedabad', locationLat: 23.0225, locationLng: 72.5714 },
+    { name: 'Pune Transport Co', email: 'pune@transport.in', passwordHash, phone: '9876543221', role: 'transporter', orgName: 'Pune Rapid Logistics', city: 'Pune', greenPoints: 120, level: 'sprout', trustScore: 70, verificationLevel: 'basic', avgRating: 4.3, totalRatings: 14, address: 'Shivajinagar, Pune', locationLat: 18.5308, locationLng: 73.8475 },
   ]
 
-  const users = []
-  for (const userData of usersData) {
-    const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: userData,
-      create: userData,
-    })
+  const users: any[] = []
+  for (const ud of usersData) {
+    const user = await prisma.user.upsert({ where: { email: ud.email }, update: ud, create: ud })
     users.push(user)
   }
   console.log('Users created.')
 
+  const getU = (email: string) => users.find(u => u.email === email)!
+  const getC = (slug: string) => categories.find(c => c.slug === slug)!
+
   // 3. Transporters
-  const mumbaiTrans = users.find(u => u.email === 'mumbai@trans.com')!
-  const rahulVolunteer = users.find(u => u.email === 'rahul@volunteer.com')!
-
-  await prisma.transporter.upsert({
-    where: { userId: mumbaiTrans.id },
-    update: {},
-    create: {
-      userId: mumbaiTrans.id,
-      vehicleType: 'mini_truck',
-      vehicleCapacityKg: 500,
-      serviceAreaCity: 'Mumbai',
-      serviceRadiusKm: 30,
-      pricePerKm: 12,
-      baseRate: 200,
-      availabilityStatus: 'available',
-    }
-  })
-
-  await prisma.transporter.upsert({
-    where: { userId: rahulVolunteer.id },
-    update: {},
-    create: {
-      userId: rahulVolunteer.id,
-      vehicleType: 'bike',
-      vehicleCapacityKg: 20,
-      serviceAreaCity: 'Delhi',
-      serviceRadiusKm: 15,
-      pricePerKm: 0,
-      baseRate: 0,
-      isVolunteer: true,
-      availabilityStatus: 'available',
-    }
-  })
+  const deepak = getU('deepak@transport.in')
+  const amit = getU('amit@gmail.com')
+  const puneT = getU('pune@transport.in')
+  await prisma.transporter.upsert({ where: { userId: deepak.id }, update: {}, create: { userId: deepak.id, vehicleType: 'mini_truck', vehicleCapacityKg: 500, vehicleCapacityCbm: 12, serviceAreaCity: 'Mumbai', serviceRadiusKm: 30, pricePerKm: 12, baseRate: 200, availabilityStatus: 'available', totalDeliveries: 31, avgRating: 4.5, totalRatings: 31 } })
+  await prisma.transporter.upsert({ where: { userId: amit.id }, update: {}, create: { userId: amit.id, vehicleType: 'bike', vehicleCapacityKg: 20, serviceAreaCity: 'Delhi', serviceRadiusKm: 15, pricePerKm: 0, baseRate: 0, isVolunteer: true, availabilityStatus: 'available', totalDeliveries: 15, avgRating: 4.8, totalRatings: 15 } })
+  await prisma.transporter.upsert({ where: { userId: puneT.id }, update: {}, create: { userId: puneT.id, vehicleType: 'pickup_van', vehicleCapacityKg: 300, vehicleCapacityCbm: 6, serviceAreaCity: 'Pune', serviceRadiusKm: 25, pricePerKm: 10, baseRate: 150, availabilityStatus: 'available', totalDeliveries: 14, avgRating: 4.3, totalRatings: 14 } })
   console.log('Transporters created.')
 
-  // 4. Materials (Simplified list)
-  const buildWell = users.find(u => u.email === 'supply@buildwell.com')!
-  const constructionCat = categories.find(c => c.slug === 'construction')!
+  // 4. Materials (50+)
+  const rahul = getU('rahul@buildcorp.in')
+  const priya = getU('priya@gmail.com')
+  const habitat = getU('contact@habitatindia.org')
+  const techSol = getU('it@techsolutions.com')
+  const suratTex = getU('info@surattextiles.com')
+  const arjun = getU('arjun@gmail.com')
+  const delhiNgo = getU('contact@delhingo.org')
+  const sneha = getU('sneha@gmail.com')
 
-  await prisma.material.create({
-    data: {
-      userId: buildWell.id,
-      categoryId: constructionCat.id,
-      title: 'Surplus Bricks (500 pieces)',
-      description: 'Leftover burnt clay bricks from recent project. Good condition, ready for pickup.',
-      condition: 'good',
-      quantity: 500,
-      unit: 'pieces',
-      weightKg: 1500,
-      listingType: 'sell',
-      price: 2500,
-      status: 'available',
-      locationLat: 19.1136,
-      locationLng: 72.8697, // Andheri East
-      address: 'Near SEEPZ, Andheri East',
-      city: 'Mumbai',
-      images: JSON.stringify(['https://images.unsplash.com/photo-1590069324154-04663e9f4577']),
-      tags: JSON.stringify(['bricks', 'construction', 'surplus']),
-      co2SavedKg: 500 * 0.9,
-      rupeesSaved: 500 * 5,
-    }
-  })
+  const now = new Date()
+  const future1 = new Date(now); future1.setDate(now.getDate() + 10)
+  const future2 = new Date(now); future2.setDate(now.getDate() + 20)
+  const future3 = new Date(now); future3.setDate(now.getDate() + 7)
 
-  // 5. Badges
+  await prisma.material.deleteMany({})
+
+  const mats = [
+    // CONSTRUCTION - Mumbai
+    { userId: rahul.id, categoryId: getC('construction').id, title: 'Surplus Clay Bricks – 800 pieces', description: 'Premium burnt clay bricks leftover from a completed housing project. Standard ISI size (230×115×76mm). Structurally sound, minimal chipping. Ideal for boundary walls, garden landscaping, or small construction work.', condition: 'good', quantity: 800, unit: 'pieces', weightKg: 2400, listingType: 'sell', price: 4000, status: 'available', locationLat: 19.1136, locationLng: 72.8697, address: 'Near SEEPZ, Andheri East', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1590069324154-04663e9f4577,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'bricks,construction,clay,surplus,building', co2SavedKg: 2400*0.9, rupeesSaved: 800*8, reusePotentialScore: 82, aiUseCases: JSON.stringify(['Boundary wall construction','Garden raised beds','Pathway paving','Decorative feature walls']), aiRouteRecommendation: 'reuse', viewsCount: 124 },
+    { userId: rahul.id, categoryId: getC('construction').id, title: 'TMT Steel Rods – 100 pieces (12mm)', description: 'Grade Fe500 TMT steel bars, 12mm diameter, 12ft length. Excess from bridge repair project. Minimal rust, structurally sound. Perfect for RCC construction, fencing, gates.', condition: 'like_new', quantity: 100, unit: 'pieces', weightKg: 1200, listingType: 'sell', price: 15000, status: 'available', locationLat: 19.1200, locationLng: 72.8750, address: 'Andheri East, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'steel,rods,TMT,construction,metal', co2SavedKg: 1200*0.9, rupeesSaved: 100*150, reusePotentialScore: 90, aiUseCases: JSON.stringify(['RCC beam reinforcement','Fencing posts','Staircase railings','Gate fabrication']), aiRouteRecommendation: 'reuse', viewsCount: 87 },
+    { userId: rahul.id, categoryId: getC('construction').id, title: 'Hollow Concrete Blocks – 200 units', description: '6-inch hollow concrete blocks. Full truck surplus after demolishing old warehouse. Light grey color, uniform size. Great for non-load-bearing partitions.', condition: 'good', quantity: 200, unit: 'pieces', weightKg: 1800, listingType: 'donate', price: 0, status: 'available', locationLat: 19.1870, locationLng: 72.8483, address: 'Malad West, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1622372738946-62e02505feb3,https://images.unsplash.com/photo-1590069324154-04663e9f4577', tags: 'blocks,concrete,construction,building-materials', co2SavedKg: 1800*0.9, rupeesSaved: 200*40, reusePotentialScore: 75, aiUseCases: JSON.stringify(['Partition walls','Garden retaining walls','Planter boxes']), aiRouteRecommendation: 'reuse', viewsCount: 56 },
+    { userId: rahul.id, categoryId: getC('construction').id, title: 'Washed River Sand – 5 Tonnes', description: 'Clean washed river sand, moisture-free. Ideal for plastering and concrete work. Leftover from a large housing project. Pickup truck required.', condition: 'new', quantity: 5, unit: 'tonnes', weightKg: 5000, listingType: 'sell', price: 7500, status: 'available', locationLat: 19.0800, locationLng: 72.8850, address: 'Kurla, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1590069324154-04663e9f4577,https://images.unsplash.com/photo-1622372738946-62e02505feb3', tags: 'sand,river-sand,construction,plastering', co2SavedKg: 5000*0.9, rupeesSaved: 5*1500, reusePotentialScore: 70, aiUseCases: JSON.stringify(['Plastering','Concrete mixing',"Children's play area sandpit",'Road base']), aiRouteRecommendation: 'reuse', viewsCount: 43 },
+    { userId: rahul.id, categoryId: getC('construction').id, title: 'Ceramic Tiles – 500 sq ft (Future)', description: 'Premium vitrified tiles (2×2ft) from upcoming project demolition. Available after March 18. Light beige color, minimal wear.', condition: 'good', quantity: 500, unit: 'sq ft', weightKg: 1250, listingType: 'sell', price: 12500, status: 'future', availableFromDate: future1, locationLat: 19.0500, locationLng: 72.8300, address: 'Dadar, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1590069324154-04663e9f4577', tags: 'tiles,ceramic,vitrified,flooring,construction', co2SavedKg: 1250*0.9, rupeesSaved: 500*25, reusePotentialScore: 88, aiUseCases: JSON.stringify(['Flooring renovation','Bathroom tiling','Kitchen backsplash']), aiRouteRecommendation: 'reuse', viewsCount: 32 },
+    // FURNITURE - Pune/Delhi
+    { userId: techSol.id, categoryId: getC('furniture-office').id, title: 'Ergonomic Office Chairs – 20 pieces', description: 'Humanscale ergonomic office chairs from IT company relocation. 5-point base, adjustable armrests, mesh back. All functional, minimal wear.', condition: 'like_new', quantity: 20, unit: 'pieces', weightKg: 240, listingType: 'sell', price: 24000, status: 'available', locationLat: 18.5912, locationLng: 73.7389, address: 'Hinjewadi Phase 1, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7,https://images.unsplash.com/photo-1580480055273-228ff5388ef8', tags: 'chairs,office,ergonomic,furniture', co2SavedKg: 240*3.5, rupeesSaved: 20*8000, reusePotentialScore: 92, aiUseCases: JSON.stringify(['Home office setup','Startup office','Co-working space','School computer lab']), aiRouteRecommendation: 'reuse', viewsCount: 198 },
+    { userId: techSol.id, categoryId: getC('furniture-office').id, title: 'L-Shaped Workstations – 12 sets', description: 'Premium L-shaped office workstations with privacy panels. Includes wire management, pedestal cabinet. From 200-person IT office going remote.', condition: 'good', quantity: 12, unit: 'pieces', weightKg: 1200, listingType: 'sell', price: 60000, status: 'available', locationLat: 18.5800, locationLng: 73.7200, address: 'Hinjewadi, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1497366216548-37526070297c,https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122', tags: 'workstation,desk,office,furniture,L-shaped', co2SavedKg: 1200*3.5, rupeesSaved: 12*5000, reusePotentialScore: 88, aiUseCases: JSON.stringify(['Office setup','Coworking space','Home office','NGO office']), aiRouteRecommendation: 'reuse', viewsCount: 155 },
+    { userId: sneha.id, categoryId: getC('furniture-office').id, title: 'Wooden Study Tables – 5 pieces', description: 'Solid wood study tables from a closing coaching institute. 4×2ft size, good condition, some minor scratches. Can be refinished easily.', condition: 'fair', quantity: 5, unit: 'pieces', weightKg: 100, listingType: 'sell', price: 5000, status: 'available', locationLat: 23.0225, locationLng: 72.5714, address: 'Navrangpura, Ahmedabad', city: 'Ahmedabad', images: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd,https://images.unsplash.com/photo-1493809842364-78817add7ffb', tags: 'table,study,wooden,furniture', co2SavedKg: 100*3.5, rupeesSaved: 5*3000, reusePotentialScore: 68, aiUseCases: JSON.stringify(['Home study room','School donation','Library','Refinish for resale']), aiRouteRecommendation: 'repair', viewsCount: 67 },
+    { userId: techSol.id, categoryId: getC('furniture-office').id, title: 'Cafeteria Tables + Benches – 30 sets (Future)', description: 'Complete cafeteria furniture. Stainless steel + plywood. Available after office renovation next month.', condition: 'good', quantity: 30, unit: 'pieces', weightKg: 600, listingType: 'sell', price: 30000, status: 'future', availableFromDate: future2, locationLat: 18.5912, locationLng: 73.7389, address: 'Hinjewadi, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4,https://images.unsplash.com/photo-1555041469-a586c61ea9bc', tags: 'cafeteria,tables,benches,furniture', co2SavedKg: 600*3.5, rupeesSaved: 30*1000, reusePotentialScore: 80, aiUseCases: JSON.stringify(['School canteen','Office cafeteria','Community hall']), aiRouteRecommendation: 'reuse', viewsCount: 41 },
+    { userId: delhiNgo.id, categoryId: getC('furniture-office').id, title: 'Steel Almirahs – 10 pieces (2-door)', description: 'Heavy-duty steel almirahs (2-door, 72×36×18 inches). Powder-coated grey, fully functional. Some minor dents on sides.', condition: 'good', quantity: 10, unit: 'pieces', weightKg: 600, listingType: 'sell', price: 15000, status: 'available', locationLat: 28.5700, locationLng: 77.2400, address: 'Lajpat Nagar, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb,https://images.unsplash.com/photo-1586023492125-27b2c045efd7', tags: 'almirah,steel,cupboard,storage,furniture', co2SavedKg: 600*3.5, rupeesSaved: 10*1500, reusePotentialScore: 78, aiUseCases: JSON.stringify(['Office storage','Home wardrobe','School storeroom']), aiRouteRecommendation: 'reuse', viewsCount: 91 },
+    // PACKAGING
+    { userId: rahul.id, categoryId: getC('packaging').id, title: 'Industrial Wooden Pallets – 50 pieces', description: 'Heat-treated (HT) wooden Euro pallets 1200×800mm. Perfect condition, no broken boards. From logistics company clearing storage.', condition: 'good', quantity: 50, unit: 'pieces', weightKg: 750, listingType: 'sell', price: 10000, status: 'available', locationLat: 19.0771, locationLng: 73.0076, address: 'Vashi MIDC, Navi Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf,https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d', tags: 'pallets,wooden,packaging,shipping,HT-treated', co2SavedKg: 750*1.2, rupeesSaved: 50*200, reusePotentialScore: 85, aiUseCases: JSON.stringify(['DIY furniture','Garden decking','Storage rack','Shipping platform']), aiRouteRecommendation: 'reuse', viewsCount: 213 },
+    { userId: techSol.id, categoryId: getC('packaging').id, title: 'Corrugated Cardboard Boxes – 200 pieces', description: 'Large corrugated boxes (2×2×2ft) in excellent condition. Used once for server transport. Flat-folded. Perfect for moving, e-commerce.', condition: 'like_new', quantity: 200, unit: 'pieces', weightKg: 180, listingType: 'donate', price: 0, status: 'available', locationLat: 18.5700, locationLng: 73.7100, address: 'Wakad, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d,https://images.unsplash.com/photo-1600880292203-757bb62b4baf', tags: 'boxes,cardboard,packaging,moving,corrugated', co2SavedKg: 180*1.2, rupeesSaved: 200*50, reusePotentialScore: 78, aiUseCases: JSON.stringify(['Moving house','E-commerce packaging','Storage',"Children's crafts"]), aiRouteRecommendation: 'reuse', viewsCount: 89 },
+    { userId: sneha.id, categoryId: getC('packaging').id, title: 'Bubble Wrap Roll – 100 meters', description: 'Standard size bubble wrap roll (50cm wide) from packaging company leftover stock. Bubbles intact, unpopped.', condition: 'new', quantity: 100, unit: 'meters', weightKg: 15, listingType: 'sell', price: 500, status: 'available', locationLat: 23.0450, locationLng: 72.5550, address: 'Satellite, Ahmedabad', city: 'Ahmedabad', images: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d,https://images.unsplash.com/photo-1553361371-9b22f78e8b1d', tags: 'bubble-wrap,packaging,protective,fragile', co2SavedKg: 15*1.2, rupeesSaved: 100*10, reusePotentialScore: 72, aiUseCases: JSON.stringify(['Fragile item shipping','Greenhouse insulation','Temperature protection']), aiRouteRecommendation: 'reuse', viewsCount: 34 },
+    { userId: habitat.id, categoryId: getC('packaging').id, title: 'Wooden Crates – 30 pieces (large)', description: 'Heavy wooden crates from relief material transport. Sturdy plywood, hinged lid. NGO branding (can be painted). Size: 4×2×2ft.', condition: 'good', quantity: 30, unit: 'pieces', weightKg: 450, listingType: 'donate', price: 0, status: 'available', locationLat: 19.0700, locationLng: 72.8900, address: 'Chembur, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf,https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d', tags: 'crates,wooden,packaging,storage,NGO', co2SavedKg: 450*1.2, rupeesSaved: 30*500, reusePotentialScore: 76, aiUseCases: JSON.stringify(['Storage furniture','DIY coffee table','Shipping crates']), aiRouteRecommendation: 'reuse', viewsCount: 57 },
+    // ELECTRONICS
+    { userId: techSol.id, categoryId: getC('electronics').id, title: 'Dell Desktop Computers – 15 units (i5)', description: 'Dell OptiPlex 7060, i5 8th gen, 8GB RAM, 256GB SSD. Wiped and reset. All functional. From IT refresh cycle.', condition: 'good', quantity: 15, unit: 'pieces', weightKg: 75, listingType: 'sell', price: 45000, status: 'available', locationLat: 18.5912, locationLng: 73.7389, address: 'Hinjewadi, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1587740908075-9e245070dfaa,https://images.unsplash.com/photo-1593640408182-31c228b2cf4d', tags: 'computers,desktop,dell,electronics,i5', co2SavedKg: 75*20.0, rupeesSaved: 15*3000, reusePotentialScore: 76, aiUseCases: JSON.stringify(['School computer lab','NGO office','Refurbishment center']), aiRouteRecommendation: 'reuse', viewsCount: 267 },
+    { userId: techSol.id, categoryId: getC('electronics').id, title: 'Cisco 24-Port Network Switches – 8 units', description: 'Cisco Catalyst 2960 24-port switches. All functional, tested. Removed during network upgrade. Good for SME office.', condition: 'like_new', quantity: 8, unit: 'pieces', weightKg: 24, listingType: 'sell', price: 16000, status: 'available', locationLat: 18.6000, locationLng: 73.7500, address: 'Wakad, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8,https://images.unsplash.com/photo-1601597111158-2fceff292cdc', tags: 'cisco,networking,switches,electronics,IT', co2SavedKg: 24*20.0, rupeesSaved: 8*2000, reusePotentialScore: 84, aiUseCases: JSON.stringify(['Office networking','School IT lab','Testing/development']), aiRouteRecommendation: 'reuse', viewsCount: 92 },
+    { userId: arjun.id, categoryId: getC('electronics').id, title: 'Old Laptops – 5 units (For Parts)', description: 'Assorted laptops (HP, Lenovo) with dead batteries or cracked screens. Working motherboards. Useful for parts or refurbishment workshops.', condition: 'salvage', quantity: 5, unit: 'pieces', weightKg: 10, listingType: 'sell', price: 2500, status: 'available', locationLat: 12.9784, locationLng: 77.6408, address: 'Indiranagar, Bangalore', city: 'Bangalore', images: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302,https://images.unsplash.com/photo-1542393545-10f5b85e14fc', tags: 'laptops,parts,salvage,electronics,refurbishment', co2SavedKg: 10*20.0, rupeesSaved: 5*5000, reusePotentialScore: 45, aiUseCases: JSON.stringify(['Parts harvesting','E-waste recycling','Refurbishment training']), aiRouteRecommendation: 'recycle', viewsCount: 48 },
+    { userId: techSol.id, categoryId: getC('electronics').id, title: 'APC UPS Units – 10 pieces (1KVA)', description: 'APC Back-UPS 1KVA units, batteries replaced last year. Removed during data center downgrade. Comes with output cables.', condition: 'good', quantity: 10, unit: 'pieces', weightKg: 80, listingType: 'sell', price: 20000, status: 'available', locationLat: 18.5308, locationLng: 73.8475, address: 'Shivajinagar, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc,https://images.unsplash.com/photo-1593640408182-31c228b2cf4d', tags: 'UPS,power-backup,electronics,APC,inverter', co2SavedKg: 80*20.0, rupeesSaved: 10*2000, reusePotentialScore: 79, aiUseCases: JSON.stringify(['Home power backup','Small office','Medical equipment backup']), aiRouteRecommendation: 'reuse', viewsCount: 143 },
+    // INDUSTRIAL SURPLUS
+    { userId: rahul.id, categoryId: getC('industrial-surplus').id, title: 'GI Scaffolding Pipes – 200 pieces', description: 'GI scaffolding pipes (48.3mm OD, 3.2mm wall, 10ft length). From completed construction project. Good condition, pressure tested.', condition: 'good', quantity: 200, unit: 'pieces', weightKg: 3200, listingType: 'sell', price: 24000, status: 'available', locationLat: 19.1000, locationLng: 72.8800, address: 'Andheri, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd,https://images.unsplash.com/photo-1558618666-fcd25c85cd64', tags: 'scaffolding,pipes,GI,industrial,construction', co2SavedKg: 3200*4.0, rupeesSaved: 200*120, reusePotentialScore: 80, aiUseCases: JSON.stringify(['Construction scaffolding','Greenhouse frame','Sports net posts']), aiRouteRecommendation: 'reuse', viewsCount: 77 },
+    { userId: suratTex.id, categoryId: getC('industrial-surplus').id, title: 'Industrial Exhaust Fans – 6 units (1HP)', description: 'Heavy-duty industrial exhaust fans from factory renovation. 1HP motor, 900mm blade. All working, recently serviced.', condition: 'good', quantity: 6, unit: 'pieces', weightKg: 120, listingType: 'sell', price: 18000, status: 'available', locationLat: 21.2291, locationLng: 72.8363, address: 'Katargam GIDC, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'fans,industrial,exhaust,ventilation,motor', co2SavedKg: 120*4.0, rupeesSaved: 6*3000, reusePotentialScore: 82, aiUseCases: JSON.stringify(['Factory ventilation','Warehouse cooling','Agricultural drying']), aiRouteRecommendation: 'reuse', viewsCount: 61 },
+    { userId: suratTex.id, categoryId: getC('industrial-surplus').id, title: 'Hydraulic Pallet Jacks – 3 units (2-tonne)', description: 'Manual hydraulic pallet jacks (2-tonne capacity). All functional. Worn rubber wheels. From warehouse restructuring.', condition: 'fair', quantity: 3, unit: 'pieces', weightKg: 210, listingType: 'sell', price: 9000, status: 'available', locationLat: 21.2400, locationLng: 72.8200, address: 'Sachin, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'pallet-jack,hydraulic,warehouse,industrial', co2SavedKg: 210*4.0, rupeesSaved: 3*3000, reusePotentialScore: 72, aiUseCases: JSON.stringify(['Warehouse operations','Loading dock','Manufacturing plant']), aiRouteRecommendation: 'repair', viewsCount: 29 },
+    { userId: delhiNgo.id, categoryId: getC('industrial-surplus').id, title: 'Solar Panels – 10 units (250W monocrystalline)', description: 'Used solar panels from rooftop upgrade. 250W monocrystalline, ~85% efficiency. All pass basic electrical tests. Good for rural electrification.', condition: 'good', quantity: 10, unit: 'pieces', weightKg: 180, listingType: 'sell', price: 25000, status: 'available', locationLat: 28.5800, locationLng: 77.2500, address: 'Lajpat Nagar, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b,https://images.unsplash.com/photo-1509391366360-2e959784a276', tags: 'solar,panels,renewable,energy,monocrystalline', co2SavedKg: 180*4.0, rupeesSaved: 10*2500, reusePotentialScore: 84, aiUseCases: JSON.stringify(['Rural electrification','Rooftop solar','Community light']), aiRouteRecommendation: 'reuse', viewsCount: 178 },
+    // TEXTILES
+    { userId: suratTex.id, categoryId: getC('textiles').id, title: 'Cotton Fabric Rolls – 500 meters (Mixed)', description: 'Surplus cotton fabric from production run. 120cm width. Mix of plain and printed patterns. Excellent for garment making, upholstery.', condition: 'new', quantity: 500, unit: 'meters', weightKg: 150, listingType: 'sell', price: 7500, status: 'available', locationLat: 21.1702, locationLng: 72.8311, address: 'Ring Road, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1586023492125-27b2c045efd7', tags: 'cotton,fabric,textile,garment,rolls', co2SavedKg: 150*15.0, rupeesSaved: 500*15, reusePotentialScore: 88, aiUseCases: JSON.stringify(['Garment manufacturing','Upholstery','Bags and pouches','Reusable shopping bags']), aiRouteRecommendation: 'reuse', viewsCount: 189 },
+    { userId: suratTex.id, categoryId: getC('textiles').id, title: 'Polyester Scrap Fabric – 200 kg', description: 'Polyester blend fabric scraps from cutting rooms. Clean, no oils. Sizes 0.5–3 sq ft. Ideal for stuffing, rag making, insulation material.', condition: 'good', quantity: 200, unit: 'kg', weightKg: 200, listingType: 'sell', price: 2000, status: 'available', locationLat: 21.1900, locationLng: 72.8100, address: 'Pandesara, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1586023492125-27b2c045efd7', tags: 'polyester,scraps,textile,fabric,recycling', co2SavedKg: 200*15.0, rupeesSaved: 200*30, reusePotentialScore: 72, aiUseCases: JSON.stringify(['Stuffing material','Cleaning rags','Insulation backing','Craft material']), aiRouteRecommendation: 'reuse', viewsCount: 53 },
+    { userId: priya.id, categoryId: getC('textiles').id, title: 'School Uniforms – 150 sets (Donated)', description: 'Mix of school uniforms (shirts, skirts, trousers) in sizes 6–16 years. From school changing uniform. Good condition.', condition: 'fair', quantity: 150, unit: 'pieces', weightKg: 75, listingType: 'donate', price: 0, status: 'available', locationLat: 28.5245, locationLng: 77.2066, address: 'Saket, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1577743401035-4d72ab0fa8e8,https://images.unsplash.com/photo-1514995428455-447d4443fa7f', tags: 'uniforms,school,children,textiles,donation', co2SavedKg: 75*15.0, rupeesSaved: 150*350, reusePotentialScore: 77, aiUseCases: JSON.stringify(['Rural school donation','Fabric reuse','Tailoring practice']), aiRouteRecommendation: 'reuse', viewsCount: 112 },
+    { userId: delhiNgo.id, categoryId: getC('textiles').id, title: 'Woolen Blankets – 80 pieces (Unused)', description: 'Thick woolen blankets from NGO winter drive surplus. Never used in field. Perfect for NGOs doing cold-weather distribution.', condition: 'new', quantity: 80, unit: 'pieces', weightKg: 160, listingType: 'donate', price: 0, status: 'available', locationLat: 28.5672, locationLng: 77.2365, address: 'Lajpat Nagar, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc,https://images.unsplash.com/photo-1575540155779-d7f52684d47b', tags: 'blankets,woolen,winter,textiles,donation', co2SavedKg: 160*15.0, rupeesSaved: 80*800, reusePotentialScore: 90, aiUseCases: JSON.stringify(['Winter relief distribution','Homeless shelter','Rural school dormitory']), aiRouteRecommendation: 'reuse', viewsCount: 143 },
+    { userId: suratTex.id, categoryId: getC('textiles').id, title: 'Natural Jute Bags – 500 pieces', description: 'Premium quality natural jute bags (18×14 inch). From bulk order cancellation. Plain brown, unprinted. Ideal for retail, NGO distribution.', condition: 'new', quantity: 500, unit: 'pieces', weightKg: 75, listingType: 'sell', price: 7500, status: 'available', locationLat: 21.1800, locationLng: 72.8200, address: 'Sagram, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1577743401035-4d72ab0fa8e8,https://images.unsplash.com/photo-1558618666-fcd25c85cd64', tags: 'jute,bags,eco-friendly,textiles,sustainable', co2SavedKg: 75*15.0, rupeesSaved: 500*50, reusePotentialScore: 92, aiUseCases: JSON.stringify(['Grocery shopping bags','NGO distribution','Eco packaging']), aiRouteRecommendation: 'reuse', viewsCount: 204 },
+    // METALS
+    { userId: rahul.id, categoryId: getC('metals-scrap').id, title: 'MS Angle Iron – 500 kg (35mm)', description: 'Mild steel angle iron, 35×35×5mm, 6m lengths. Rust-free, from cancelled project. Ideal for shelving frames, gates, grilles.', condition: 'like_new', quantity: 500, unit: 'kg', weightKg: 500, listingType: 'sell', price: 18000, status: 'available', locationLat: 19.1300, locationLng: 72.8600, address: 'Chakala, Andheri', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd,https://images.unsplash.com/photo-1558618666-fcd25c85cd64', tags: 'angle-iron,steel,MS,metal,structural', co2SavedKg: 500*6.0, rupeesSaved: 500*36, reusePotentialScore: 86, aiUseCases: JSON.stringify(['Shelving systems','Gate fabrication','Greenhouse structure']), aiRouteRecommendation: 'reuse', viewsCount: 94 },
+    { userId: priya.id, categoryId: getC('metals-scrap').id, title: 'Copper Wire Coils – 50 kg', description: 'Copper wire coils (4mm, 6mm, 10mm) from electrical rewiring. Clean and untangled. High copper content.', condition: 'good', quantity: 50, unit: 'kg', weightKg: 50, listingType: 'sell', price: 22000, status: 'available', locationLat: 28.5100, locationLng: 77.1800, address: 'Patel Nagar, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'copper,wire,electrical,metal,scrap', co2SavedKg: 50*6.0, rupeesSaved: 50*440, reusePotentialScore: 82, aiUseCases: JSON.stringify(['Electrical rewiring','Copper scrap recycling','Earthing systems']), aiRouteRecommendation: 'reuse', viewsCount: 68 },
+    { userId: suratTex.id, categoryId: getC('metals-scrap').id, title: 'Aluminum Extrusion Offcuts – 300 kg', description: 'T-slot aluminum profiles and square extrusions from automated machinery surplus. Various lengths 50–500mm. Ideal for CNC frames, solar racking.', condition: 'new', quantity: 300, unit: 'kg', weightKg: 300, listingType: 'sell', price: 45000, status: 'available', locationLat: 21.2100, locationLng: 72.8500, address: 'Sachin GIDC, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'aluminum,extrusion,T-slot,metal,CNC', co2SavedKg: 300*6.0, rupeesSaved: 300*150, reusePotentialScore: 88, aiUseCases: JSON.stringify(['CNC machine frames','Solar panel mounting','DIY robotics']), aiRouteRecommendation: 'reuse', viewsCount: 76 },
+    { userId: arjun.id, categoryId: getC('metals-scrap').id, title: 'Old Iron Gate – Salvage (10×6 ft)', description: 'Heavy iron gate from demolished compound. Heavy rust but structurally intact. Good for scrap recycling or artistic installation.', condition: 'salvage', quantity: 1, unit: 'pieces', weightKg: 180, listingType: 'sell', price: 2000, status: 'available', locationLat: 12.9800, locationLng: 77.6200, address: 'Indiranagar, Bangalore', city: 'Bangalore', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1504307651254-35680f356dfd', tags: 'gate,iron,steel,salvage,scrap', co2SavedKg: 180*6.0, rupeesSaved: 180*40, reusePotentialScore: 40, aiUseCases: JSON.stringify(['Metal scrap recycling','Art installation','Forge raw material']), aiRouteRecommendation: 'recycle', viewsCount: 22 },
+    { userId: rahul.id, categoryId: getC('metals-scrap').id, title: 'GI Sheets – 80 pieces (20 gauge, 8×4 ft)', description: 'Plain GI sheets, 20 gauge, 8×4ft from roofing project. Some surface oxidation but intact galvanizing. Good for shed roofing.', condition: 'fair', quantity: 80, unit: 'pieces', weightKg: 1200, listingType: 'sell', price: 28000, status: 'available', locationLat: 19.1200, locationLng: 72.8800, address: 'Andheri, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd,https://images.unsplash.com/photo-1558618666-fcd25c85cd64', tags: 'GI-sheet,galvanized,roofing,metal,fabrication', co2SavedKg: 1200*6.0, rupeesSaved: 80*350, reusePotentialScore: 70, aiUseCases: JSON.stringify(['Shed roofing','Partition walls','Gate panels']), aiRouteRecommendation: 'reuse', viewsCount: 44 },
+    // WOOD
+    { userId: arjun.id, categoryId: getC('wood-timber').id, title: 'Teak Wood Planks – 100 pieces (2×6 inch)', description: 'Premium teak planks from old house renovation. 2×6 inch section, lengths 3–8ft. Minor surface wear but structurally excellent.', condition: 'good', quantity: 100, unit: 'pieces', weightKg: 600, listingType: 'sell', price: 25000, status: 'available', locationLat: 12.9800, locationLng: 77.6300, address: 'Koramangala, Bangalore', city: 'Bangalore', images: 'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9,https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd', tags: 'teak,wood,planks,timber,furniture', co2SavedKg: 600*1.8, rupeesSaved: 100*250, reusePotentialScore: 85, aiUseCases: JSON.stringify(['Custom furniture','Flooring planks','Door frames','Feature wall cladding']), aiRouteRecommendation: 'reuse', viewsCount: 167 },
+    { userId: rahul.id, categoryId: getC('wood-timber').id, title: 'Pine Wood Shuttering Boards – 300 kg', description: 'Used pine wood shuttering from construction. Treated with shuttering oil. Some concrete residue. Good for rough carpentry.', condition: 'fair', quantity: 300, unit: 'kg', weightKg: 300, listingType: 'sell', price: 6000, status: 'available', locationLat: 19.0800, locationLng: 72.8700, address: 'Govandi, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9,https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd', tags: 'pine,shuttering,wood,timber,construction', co2SavedKg: 300*1.8, rupeesSaved: 300*20, reusePotentialScore: 60, aiUseCases: JSON.stringify(['Rough shelving','Temporary partition','Biomass fuel']), aiRouteRecommendation: 'repair', viewsCount: 38 },
+    { userId: sneha.id, categoryId: getC('wood-timber').id, title: 'MDF Boards – 20 sheets (8×4ft, 18mm)', description: 'High-density MDF boards from interior design project. Slight paint one side, clean other side. ISI-marked, BWP grade.', condition: 'good', quantity: 20, unit: 'pieces', weightKg: 350, listingType: 'sell', price: 8000, status: 'available', locationLat: 23.0300, locationLng: 72.5600, address: 'Satellite, Ahmedabad', city: 'Ahmedabad', images: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd,https://images.unsplash.com/photo-1493809842364-78817add7ffb', tags: 'MDF,boards,wood,panels,furniture', co2SavedKg: 350*1.8, rupeesSaved: 20*400, reusePotentialScore: 80, aiUseCases: JSON.stringify(['Custom furniture','Kitchen cabinets','Wall paneling']), aiRouteRecommendation: 'reuse', viewsCount: 55 },
+    { userId: arjun.id, categoryId: getC('wood-timber').id, title: 'Bamboo Poles – 100 pieces (8ft)', description: 'Mature bamboo poles from garden clearing. 3–4 inch diameter, 8ft length. Some natural splits but structurally strong.', condition: 'good', quantity: 100, unit: 'pieces', weightKg: 200, listingType: 'donate', price: 0, status: 'available', locationLat: 12.9698, locationLng: 77.7500, address: 'Whitefield, Bangalore', city: 'Bangalore', images: 'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9,https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd', tags: 'bamboo,poles,garden,fencing,natural', co2SavedKg: 200*1.8, rupeesSaved: 100*80, reusePotentialScore: 75, aiUseCases: JSON.stringify(['Garden fencing','Furniture frames','Art installations']), aiRouteRecommendation: 'reuse', viewsCount: 89 },
+    { userId: rahul.id, categoryId: getC('wood-timber').id, title: 'Plywood Sheets – 50 sheets (12mm BWP) – Future', description: 'ISI-marked plywood from upcoming site clearance. 8×4ft, 12mm BWP grade. Available in 3 weeks.', condition: 'new', quantity: 50, unit: 'pieces', weightKg: 900, listingType: 'sell', price: 22500, status: 'future', availableFromDate: future3, locationLat: 19.1000, locationLng: 72.8600, address: 'Mulund, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd,https://images.unsplash.com/photo-1493809842364-78817add7ffb', tags: 'plywood,sheets,BWP,wood,construction', co2SavedKg: 900*1.8, rupeesSaved: 50*450, reusePotentialScore: 85, aiUseCases: JSON.stringify(['Concrete formwork','Furniture backing','Flooring base']), aiRouteRecommendation: 'reuse', viewsCount: 19 },
+    { userId: sneha.id, categoryId: getC('wood-timber').id, title: 'Sawdust – 500 kg (Teak/Pine Mix)', description: 'Fine sawdust from carpentry workshop. Teak and pine mix. Dry and odorous. Excellent for mushroom farming, animal bedding, composting.', condition: 'new', quantity: 500, unit: 'kg', weightKg: 500, listingType: 'donate', price: 0, status: 'available', locationLat: 23.0100, locationLng: 72.5800, address: 'Navrangpura, Ahmedabad', city: 'Ahmedabad', images: 'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9,https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd', tags: 'sawdust,wood,biomass,mushroom,compost', co2SavedKg: 500*1.8, rupeesSaved: 500*5, reusePotentialScore: 70, aiUseCases: JSON.stringify(['Mushroom farming substrate','Animal bedding','Garden mulch']), aiRouteRecommendation: 'reuse', viewsCount: 31 },
+    // Extra for reaching 50+
+    { userId: delhiNgo.id, categoryId: getC('construction').id, title: 'Mangalore Roof Tiles – 400 pieces', description: 'Classic Mangalore clay tiles removed during school renovation. Reddish brown, few chipped at edges. Good for traditional aesthetic projects.', condition: 'fair', quantity: 400, unit: 'pieces', weightKg: 1200, listingType: 'donate', price: 0, status: 'available', locationLat: 28.5600, locationLng: 77.2200, address: 'Lajpat Nagar, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1590069324154-04663e9f4577,https://images.unsplash.com/photo-1622372738946-62e02505feb3', tags: 'tiles,roof,clay,Mangalore,construction', co2SavedKg: 1200*0.9, rupeesSaved: 400*30, reusePotentialScore: 65, aiUseCases: JSON.stringify(['Roof restoration','Traditional architecture','Garden path paving']), aiRouteRecommendation: 'reuse', viewsCount: 48 },
+    { userId: habitat.id, categoryId: getC('construction').id, title: 'UPVC Drainage Pipes – 100 pieces (4-inch)', description: 'UPVC drainage pipes, 4-inch diameter, 3m lengths. ISI marked. Good condition, no cracks. Ideal for drainage, irrigation, cable conduit.', condition: 'good', quantity: 100, unit: 'pieces', weightKg: 400, listingType: 'sell', price: 12000, status: 'available', locationLat: 19.0604, locationLng: 72.9001, address: 'Chembur, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1590069324154-04663e9f4577,https://images.unsplash.com/photo-1622372738946-62e02505feb3', tags: 'UPVC,pipes,plumbing,drainage,construction', co2SavedKg: 400*0.9, rupeesSaved: 100*120, reusePotentialScore: 80, aiUseCases: JSON.stringify(['Drainage system','Irrigation piping','Cable conduit']), aiRouteRecommendation: 'reuse', viewsCount: 62 },
+    { userId: priya.id, categoryId: getC('furniture-office').id, title: 'Plastic Chairs – 30 pieces (Claimed)', description: 'Standard plastic monobloc chairs from community event. All 30 claimed.', condition: 'good', quantity: 0, unit: 'pieces', weightKg: 90, listingType: 'donate', price: 0, status: 'claimed', locationLat: 28.5300, locationLng: 77.2100, address: 'Saket, Delhi', city: 'Delhi', images: 'https://images.unsplash.com/photo-1503602642458-232111445657,https://images.unsplash.com/photo-1517248135467-4c7edcad34c4', tags: 'chairs,plastic,furniture,event', co2SavedKg: 90*3.5, rupeesSaved: 30*500, reusePotentialScore: 65, aiUseCases: JSON.stringify(['Community events','Outdoor seating']), aiRouteRecommendation: 'reuse', viewsCount: 78 },
+    { userId: techSol.id, categoryId: getC('electronics').id, title: 'Printer Toner Cartridges – 30 units (Unused)', description: 'Original HP and Canon toner cartridges for laser printers. Genuine sealed units from company switching to MFDs. Models listed on request.', condition: 'new', quantity: 30, unit: 'pieces', weightKg: 15, listingType: 'sell', price: 12000, status: 'available', locationLat: 18.5912, locationLng: 73.7389, address: 'Hinjewadi, Pune', city: 'Pune', images: 'https://images.unsplash.com/photo-1587740908075-9e245070dfaa,https://images.unsplash.com/photo-1544197150-b99a580bb7a8', tags: 'toner,cartridge,printer,electronics,HP,Canon', co2SavedKg: 15*20.0, rupeesSaved: 30*400, reusePotentialScore: 88, aiUseCases: JSON.stringify(['Office printing','School printing','Small business']), aiRouteRecommendation: 'reuse', viewsCount: 76 },
+    { userId: suratTex.id, categoryId: getC('industrial-surplus').id, title: 'Stainless Steel Drums – 20 pieces (200L)', description: '200-liter stainless steel drums from food processing plant. Food-grade certified, cleaned and inspected. Some with minor dents on exterior.', condition: 'good', quantity: 20, unit: 'pieces', weightKg: 600, listingType: 'sell', price: 30000, status: 'available', locationLat: 21.1800, locationLng: 72.8400, address: 'Sachin GIDC, Surat', city: 'Surat', images: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64,https://images.unsplash.com/photo-1621905252507-b35492cc74b4', tags: 'drums,stainless-steel,food-grade,industrial,storage', co2SavedKg: 600*4.0, rupeesSaved: 20*1500, reusePotentialScore: 83, aiUseCases: JSON.stringify(['Rain water harvesting','Chemical storage','Composting vessel','Biodiesel production']), aiRouteRecommendation: 'reuse', viewsCount: 95 },
+    { userId: habitat.id, categoryId: getC('textiles').id, title: 'Canvas Tarpaulins – 50 pieces (Heavy duty)', description: 'Heavy-duty waterproof canvas tarpaulins (12×15 ft). Used for relief operations. All intact, minor repair on 5 sheets. Ideal for agriculture, construction coverage.', condition: 'good', quantity: 50, unit: 'pieces', weightKg: 200, listingType: 'sell', price: 15000, status: 'available', locationLat: 19.0604, locationLng: 72.9001, address: 'Chembur, Mumbai', city: 'Mumbai', images: 'https://images.unsplash.com/photo-1577743401035-4d72ab0fa8e8,https://images.unsplash.com/photo-1555041469-a586c61ea9bc', tags: 'tarpaulin,canvas,waterproof,textiles,shelter', co2SavedKg: 200*15.0, rupeesSaved: 50*300, reusePotentialScore: 79, aiUseCases: JSON.stringify(['Agricultural cover','Construction weather protection','Temporary shelter','Event canopy']), aiRouteRecommendation: 'reuse', viewsCount: 67 },
+  ]
+
+  for (const mat of mats) {
+    await prisma.material.create({ data: mat as any })
+  }
+  console.log(`${mats.length} Materials created.`)
+
+  // 5. Badges (11)
+  await prisma.badge.deleteMany({})
   const badgesData = [
-    { name: 'First Listing', slug: 'first-listing', icon: 'award', description: 'Created your first material listing', requirementType: 'count', requirementValue: 1 },
-    { name: 'Waste Warrior', slug: 'waste-warrior', icon: 'award', description: 'Diverted 100kg of waste from landfill', requirementType: 'weight', requirementValue: 100 },
-    { name: 'Community Champion', slug: 'community-champion', icon: 'users', description: 'Completed 10 exchanges', requirementType: 'exchange_count', requirementValue: 10 },
+    { name: 'First Listing', slug: 'first-listing', icon: '🌱', description: 'Created your first material listing on ReCircle', requirementType: 'listing_count', requirementValue: 1 },
+    { name: 'Waste Warrior', slug: 'waste-warrior', icon: '♻️', description: 'Diverted 100kg of waste from landfill', requirementType: 'weight_kg', requirementValue: 100 },
+    { name: 'Community Champion', slug: 'community-champion', icon: '🤝', description: 'Completed 10 successful exchanges', requirementType: 'exchange_count', requirementValue: 10 },
+    { name: 'Green Courier', slug: 'green-courier', icon: '🚴', description: 'Made 5 volunteer deliveries', requirementType: 'delivery_count', requirementValue: 5 },
+    { name: 'Circular Hero', slug: 'circular-hero', icon: '🏆', description: 'Helped divert 1 tonne of material from landfill', requirementType: 'weight_kg', requirementValue: 1000 },
+    { name: 'Early Adopter', slug: 'early-adopter', icon: '⭐', description: 'Joined ReCircle in its first 3 months', requirementType: 'early_member', requirementValue: 1 },
+    { name: 'Trusted Trader', slug: 'trusted-trader', icon: '🛡️', description: 'Achieved Verified trust level', requirementType: 'trust_level', requirementValue: 3 },
+    { name: 'Impact Leader', slug: 'impact-leader', icon: '🌍', description: 'Saved 500kg of CO₂ through circular economy', requirementType: 'co2_kg', requirementValue: 500 },
+    { name: 'Super Supplier', slug: 'super-supplier', icon: '📦', description: 'Listed 25 or more materials', requirementType: 'listing_count', requirementValue: 25 },
+    { name: 'Five Star Supplier', slug: 'five-star-supplier', icon: '⭐', description: 'Received 5-star reviews from 5 different users', requirementType: 'five_star_reviews', requirementValue: 5 },
+    { name: 'Demand Driver', slug: 'demand-driver', icon: '📊', description: 'Posted 5 want requests on the board', requirementType: 'want_request_count', requirementValue: 5 },
   ]
-
   for (const badge of badgesData) {
-    await prisma.badge.upsert({
-      where: { slug: badge.slug },
-      update: badge,
-      create: badge,
-    })
+    await prisma.badge.upsert({ where: { slug: badge.slug }, update: badge, create: badge })
   }
+  const allBadges = await prisma.badge.findMany()
+  const getBadge = (slug: string) => allBadges.find(b => b.slug === slug)!
+  // Assign badges to rahul
+  for (const slug of ['first-listing', 'waste-warrior', 'trusted-trader', 'super-supplier', 'early-adopter', 'impact-leader']) {
+    try { await prisma.userBadge.create({ data: { userId: rahul.id, badgeId: getBadge(slug).id } }) } catch {}
+  }
+  for (const slug of ['first-listing', 'circular-hero', 'early-adopter']) {
+    try { await prisma.userBadge.create({ data: { userId: habitat.id, badgeId: getBadge(slug).id } }) } catch {}
+  }
+  for (const slug of ['green-courier', 'community-champion']) {
+    try { await prisma.userBadge.create({ data: { userId: amit.id, badgeId: getBadge(slug).id } }) } catch {}
+  }
+  console.log('Badges created.')
 
-  // 6. Repair Hubs
-  const repairHubsData = [
-    { name: 'Mumbai Makerspace', type: 'makerspace', address: 'Santacruz West, Mumbai', locationLat: 19.0843, locationLng: 72.8360, categories: JSON.stringify(['furniture-office', 'electronics']), website: 'https://mumbaimakerspace.com' },
-    { name: 'Pune Repair Cafe', type: 'workshop', address: 'Kothrud, Pune', locationLat: 18.5074, locationLng: 73.8077, categories: JSON.stringify(['electronics', 'textiles']) },
+  // 6. Repair Hubs (6)
+  await prisma.repairHub.deleteMany({})
+  const repairHubs = [
+    { name: 'Mumbai Makerspace', type: 'makerspace', address: 'Santacruz West, Mumbai', locationLat: 19.0843, locationLng: 72.8360, categories: JSON.stringify(['furniture-office','electronics','metals-scrap']), website: 'https://mumbaimakerspace.com', hours: 'Mon-Sat, 10am-8pm' },
+    { name: 'Pune Repair Cafe', type: 'workshop', address: 'FC Road, Koregaon Park, Pune', locationLat: 18.5308, locationLng: 73.8475, categories: JSON.stringify(['electronics','furniture-office','textiles']), website: 'https://repaircafe.org/pune', hours: 'Sat-Sun, 10am-4pm' },
+    { name: 'Delhi Upcycle Hub', type: 'workshop', address: 'Sarojini Nagar Market, Delhi', locationLat: 28.5720, locationLng: 77.1940, categories: JSON.stringify(['textiles','wood-timber','packaging']), hours: 'Tue-Sun, 11am-7pm' },
+    { name: 'Bangalore Tinkerers Lab', type: 'makerspace', address: 'HSR Layout, Bangalore', locationLat: 12.9116, locationLng: 77.6389, categories: JSON.stringify(['electronics','metals-scrap','industrial-surplus']), website: 'https://tinkererslab.in', hours: 'Mon-Sat, 9am-9pm' },
+    { name: 'Surat Craft Workshop', type: 'workshop', address: 'Varachha Road, Surat', locationLat: 21.1988, locationLng: 72.8626, categories: JSON.stringify(['textiles','wood-timber','packaging']), hours: 'Mon-Fri, 9am-6pm' },
+    { name: 'Ahmedabad Restart Club', type: 'event', address: 'CG Road, Navrangpura, Ahmedabad', locationLat: 23.0281, locationLng: 72.5572, categories: JSON.stringify(['electronics','furniture-office']), website: 'https://therestartproject.org', hours: 'First Saturday of each month, 10am-3pm' },
   ]
+  for (const hub of repairHubs) { await prisma.repairHub.create({ data: hub }) }
+  console.log('Repair Hubs created.')
 
-  for (const hub of repairHubsData) {
-    await prisma.repairHub.create({ data: hub })
+  // 7. Want Requests (5)
+  await prisma.wantRequest.deleteMany({})
+  const wantData = [
+    { userId: habitat.id, categoryId: getC('construction').id, title: 'Need Bricks for Affordable Housing Project', description: 'We are building 20 low-cost homes in Mankhurd. Need 5000+ good quality bricks. NGO project — any donation helps!', keywords: 'bricks,clay,construction,housing', quantityNeeded: 5000, locationLat: 19.0468, locationLng: 72.9288, radiusKm: 25, urgency: 'high', status: 'open' },
+    { userId: delhiNgo.id, categoryId: getC('furniture-office').id, title: 'Office Chairs for Community Learning Center', description: 'Setting up a new community learning center in Okhla. Need 30-40 chairs — any condition as long as functional.', keywords: 'chairs,office,seating,furniture', quantityNeeded: 35, locationLat: 28.5500, locationLng: 77.2800, radiusKm: 20, urgency: 'medium', status: 'open' },
+    { userId: arjun.id, categoryId: getC('electronics').id, title: 'Laptops for Rural School Computer Lab', description: 'Looking for working laptops for a government school in rural Karnataka that just got WiFi. Even old ones work!', keywords: 'laptops,computers,school,electronics', quantityNeeded: 10, locationLat: 12.9784, locationLng: 77.6408, radiusKm: 50, urgency: 'high', status: 'open' },
+    { userId: priya.id, categoryId: getC('textiles').id, title: "Fabric Scraps for NGO Livelihood Program", description: "A women's self-help group needs fabric scraps to make cloth bags for sale. Any textile scraps welcome.", keywords: 'fabric,scraps,textiles,SHG,livelihood', quantityNeeded: 50, locationLat: 28.5245, locationLng: 77.2066, radiusKm: 30, urgency: 'medium', status: 'open' },
+    { userId: sneha.id, categoryId: getC('wood-timber').id, title: 'Wooden Pallets for Urban Farm', description: 'Starting an urban vertical farm in Ahmedabad. Need wooden pallets to build vertical planters. Prefer HT-marked ones.', keywords: 'pallets,wood,farming,vertical-garden', quantityNeeded: 20, locationLat: 23.0225, locationLng: 72.5714, radiusKm: 15, urgency: 'low', status: 'open' },
+  ]
+  for (const wr of wantData) { await prisma.wantRequest.create({ data: wr }) }
+  console.log('Want Requests created.')
+
+  // 8. Direct Requests + Transactions + Reviews
+  await prisma.review.deleteMany({})
+  await prisma.transaction.deleteMany({})
+  await prisma.directRequest.deleteMany({})
+
+  const allMats = await prisma.material.findMany({ where: { status: 'available' }, take: 10 })
+
+  if (allMats.length >= 3) {
+    const mat0 = allMats[0], mat1 = allMats[1], mat5 = allMats[5] || allMats[2]
+
+    await prisma.directRequest.create({ data: { materialId: mat0.id, receiverId: habitat.id, quantityRequested: 100, message: 'Hello! We are an NGO building homes in Mankhurd. These bricks would be very helpful. Can we arrange pickup?', preferredTransport: 'self_pickup', status: 'pending' } })
+    await prisma.directRequest.create({ data: { materialId: mat1.id, receiverId: delhiNgo.id, quantityRequested: 10, message: 'We need these for our community center. Budget is limited. Can you hold for 3 days?', preferredTransport: 'need_delivery', status: 'pending' } })
+    const req3 = await prisma.directRequest.create({ data: { materialId: mat5.id, receiverId: arjun.id, quantityRequested: 5, message: 'Interested for a startup community office. Please confirm condition.', preferredTransport: 'flexible', status: 'accepted', responseMessage: 'Great! Please come Saturday between 10am-2pm.', respondedAt: new Date() } })
+
+    const tx1 = await prisma.transaction.create({ data: { materialId: mat5.id, supplierId: mat5.userId, receiverId: arjun.id, quantity: 5, transportMethod: 'self_pickup', status: 'confirmed', pickupAddress: mat5.address, deliveryAddress: '102 Brigade Road, Indiranagar, Bangalore', notes: 'All pieces checked before loading', supplierRating: 5, receiverRating: 4, qualityMatchScore: 8, completedAt: new Date(Date.now() - 2*24*3600*1000) } })
+    const tx2 = await prisma.transaction.create({ data: { materialId: mat0.id, supplierId: mat0.userId, receiverId: habitat.id, quantity: 200, transportMethod: 'platform_transporter', status: 'negotiating', pickupAddress: mat0.address, deliveryAddress: 'Mankhurd, Mumbai' } })
+
+    await prisma.review.create({ data: { transactionId: tx1.id, reviewerId: arjun.id, revieweeId: mat5.userId, rating: 5, comment: 'Excellent quality material, exactly as described. Quick response, very professional!', reviewType: 'supplier_review' } })
+    await prisma.review.create({ data: { transactionId: tx1.id, reviewerId: mat5.userId, revieweeId: arjun.id, rating: 4, comment: 'Good communication, picked up on time. Careful with material handling.', reviewType: 'receiver_review' } })
   }
+  console.log('Direct Requests, Transactions, Reviews created.')
 
-  console.log('Seed completed successfully.')
+  // 9. Demand History (6 months × 8 categories × 6 cities)
+  await prisma.demandHistory.deleteMany({})
+  const cities = ['Mumbai','Pune','Delhi','Bangalore','Surat','Ahmedabad']
+  const seasonal: Record<string, Record<number, number>> = {
+    'construction':     {1:1.3,2:1.3,3:1.2,4:0.8,5:0.6,6:0.5,7:0.5,8:0.6,9:0.8,10:1.2,11:1.4,12:1.3},
+    'furniture-office': {1:0.8,2:0.8,3:0.9,4:1.0,5:1.3,6:1.4,7:1.3,8:0.9,9:0.8,10:0.9,11:0.8,12:0.7},
+    'packaging':        {1:0.7,2:0.7,3:0.8,4:0.8,5:0.9,6:0.9,7:1.0,8:1.1,9:1.3,10:1.4,11:1.3,12:0.8},
+    'electronics':      {1:0.7,2:0.7,3:0.8,4:0.8,5:0.9,6:0.9,7:0.9,8:1.0,9:1.1,10:1.5,11:1.4,12:0.8},
+    'industrial-surplus':{1:1.2,2:1.3,3:1.3,4:1.1,5:0.9,6:0.8,7:0.8,8:0.9,9:1.0,10:1.1,11:1.2,12:1.1},
+    'textiles':         {1:0.8,2:0.8,3:0.9,4:1.0,5:1.0,6:1.0,7:0.9,8:1.1,9:1.3,10:1.4,11:1.2,12:0.9},
+    'metals-scrap':     {1:1.2,2:1.3,3:1.2,4:0.9,5:0.7,6:0.6,7:0.6,8:0.8,9:1.0,10:1.2,11:1.4,12:1.3},
+    'wood-timber':      {1:1.1,2:1.2,3:1.1,4:0.8,5:0.6,6:0.5,7:0.5,8:0.7,9:0.9,10:1.1,11:1.3,12:1.2},
+  }
+  const cityFactor: Record<string, number> = {Mumbai:1.2,Delhi:1.15,Bangalore:1.1,Pune:1.05,Surat:1.0,Ahmedabad:1.0}
+  const baseL: Record<string, number> = {'construction':18,'furniture-office':12,'packaging':10,'electronics':15,'industrial-surplus':9,'textiles':14,'metals-scrap':11,'wood-timber':8}
+  const demandEntries: any[] = []
+  const nowD = new Date()
+  for (let mo = 5; mo >= 0; mo--) {
+    const d = new Date(nowD.getFullYear(), nowD.getMonth() - mo, 1)
+    const month = d.getMonth() + 1, year = d.getFullYear()
+    for (const cat of categories) {
+      for (const city of cities) {
+        const base = baseL[cat.slug] || 8
+        const s = seasonal[cat.slug]?.[month] ?? 1.0
+        const cf = cityFactor[city] ?? 1.0
+        const noise = 0.85 + Math.random() * 0.3
+        const lc = Math.round(base * s * cf * noise)
+        const tc = Math.round(lc * (0.4 + Math.random() * 0.4))
+        demandEntries.push({ categoryId: cat.id, city, month, year, listingCount: lc, transactionCount: tc })
+      }
+    }
+  }
+  await prisma.demandHistory.createMany({ data: demandEntries })
+  console.log(`${demandEntries.length} demand history records created.`)
+
+  // 10. Agent Logs
+  await prisma.agentLog.deleteMany({})
+  const logMats = await prisma.material.findMany({ take: 8 })
+  for (const mat of logMats) {
+    await prisma.agentLog.create({ data: { agentName: 'scout', action: 'analyzed_material', materialId: mat.id, userId: mat.userId, details: JSON.stringify({ rps: mat.reusePotentialScore ?? 75, route: mat.aiRouteRecommendation ?? 'reuse', matches_found: Math.floor(Math.random() * 5) + 1 }) } })
+  }
+  await prisma.agentLog.create({ data: { agentName: 'sentinel', action: 'fraud_check_batch', details: JSON.stringify({ materials_scanned: 8, flags_raised: 0, avg_risk_score: 12 }) } })
+  await prisma.agentLog.create({ data: { agentName: 'quality', action: 'quality_verification', details: JSON.stringify({ transactions_checked: 1, avg_score: 8.0, flags_raised: 0 }) } })
+  await prisma.agentLog.create({ data: { agentName: 'advisor', action: 'chat_session', details: JSON.stringify({ query: 'How to list surplus bricks?', tool_calls: ['search_materials'], response_length: 245 }) } })
+  console.log('Agent Logs created.')
+
+  console.log('\n=== Seed completed! ===')
+  console.log(`  ${categories.length} categories | ${users.length} users | ${mats.length} materials`)
+  console.log(`  ${repairHubs.length} repair hubs | ${badgesData.length} badges | ${demandEntries.length} demand records`)
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  .catch(e => { console.error(e); process.exit(1) })
+  .finally(async () => { await prisma.$disconnect() })

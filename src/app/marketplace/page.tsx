@@ -2,17 +2,22 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, MapPin, Filter, Recycle, Leaf, IndianRupee, Clock, ArrowRight } from "lucide-react"
+import { Search, MapPin, Filter, Recycle, Leaf, Clock, ArrowRight, Sparkles, Star, TrendingUp } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { MarketplaceGridSkeleton } from "@/components/skeleton-card"
 
 export default function MarketplacePage() {
   const [materials, setMaterials] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [discoveredSuppliers, setDiscoveredSuppliers] = useState<any[]>([])
+  const [isDiscovering, setIsDiscovering] = useState(false)
 
   const categories = ["All", "Construction", "Furniture", "Packaging", "Electronics", "Industrial", "Textiles", "Metals", "Wood"]
 
@@ -20,10 +25,16 @@ export default function MarketplacePage() {
     const fetchMaterials = async () => {
       try {
         const res = await fetch("/api/materials")
+        if (!res.ok) throw new Error("Failed to load materials")
         const data = await res.json()
         setMaterials(data)
       } catch (err) {
         console.error("Failed to fetch materials:", err)
+        toast({
+          title: "Could not load materials",
+          description: "Please check your connection and try again.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -36,6 +47,26 @@ export default function MarketplacePage() {
     const matchesCategory = selectedCategory === "All" || m.category?.name === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  // Trigger supplier discovery when search yields 0 results
+  useEffect(() => {
+    if (filteredMaterials.length === 0 && searchQuery.length >= 3 && !isLoading) {
+      const timer = setTimeout(async () => {
+        setIsDiscovering(true)
+        try {
+          const params = new URLSearchParams({ query: searchQuery })
+          if (selectedCategory !== 'All') params.set('category', selectedCategory)
+          const res = await fetch(`/api/supplier-discovery/trigger?${params}`)
+          const data = await res.json()
+          setDiscoveredSuppliers(data.suppliers || [])
+        } catch {}
+        finally { setIsDiscovering(false) }
+      }, 800)
+      return () => clearTimeout(timer)
+    } else {
+      setDiscoveredSuppliers([])
+    }
+  }, [filteredMaterials.length, searchQuery, selectedCategory, isLoading])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -78,23 +109,109 @@ export default function MarketplacePage() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Recycle className="w-12 h-12 text-emerald-600 animate-spin" />
-          <p className="text-gray-500 font-medium">Scouting for materials...</p>
-        </div>
+        <MarketplaceGridSkeleton count={8} />
       ) : (
         <>
           {filteredMaterials.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-              <p className="text-gray-500 text-lg">No materials found matching your search.</p>
-              <Link href="/materials/new" className="text-emerald-600 font-bold hover:underline mt-2 inline-block">
-                Be the first to list one!
-              </Link>
+            <div className="space-y-8">
+              <div className="text-center py-16 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg font-medium">No exact matches found</p>
+                <p className="text-gray-400 mt-1">Try different keywords or browse all categories</p>
+                <Link href="/materials/new" className="mt-4 inline-block bg-emerald-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-emerald-700 transition">
+                  List a material
+                </Link>
+              </div>
+
+              {/* Supplier Discovery Section */}
+              {(isDiscovering || discoveredSuppliers.length > 0) && (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-amber-500 rounded-2xl flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Predictive Supplier Discovery</h3>
+                      <p className="text-sm text-gray-500">We found potential suppliers who might have what you need</p>
+                    </div>
+                  </div>
+
+                  {isDiscovering ? (
+                    <div className="flex items-center gap-3 py-4">
+                      <Recycle className="w-5 h-5 text-amber-500 animate-spin" />
+                      <span className="text-gray-600">AI is scanning past suppliers...</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {discoveredSuppliers.map((supplier: any) => (
+                        <div key={supplier.userId} className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                              {supplier.name[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-800 truncate">{supplier.name}</p>
+                              <p className="text-xs text-gray-500">{supplier.orgName || supplier.city}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-1 text-xs text-amber-600">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  {supplier.avgRating.toFixed(1)}
+                                </div>
+                                <span className="text-gray-300">•</span>
+                                <span className="text-xs text-gray-500">{supplier.pastListingCount} past listings</span>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                                {Math.round(supplier.likelihoodScore)}% match
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Link
+                              href={`/profile/${supplier.userId}`}
+                              className="flex-1 text-center text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl py-1.5 hover:border-emerald-300 transition"
+                            >
+                              View Profile
+                            </Link>
+                            <Link
+                              href={`/want-board/new`}
+                              className="flex-1 text-center text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl py-1.5 hover:bg-emerald-100 transition"
+                            >
+                              Post Want Request
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400 mt-4 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Discovery powered by ReCircle Scout AI — based on historical listing patterns
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.05 } },
+              }}
+            >
               {filteredMaterials.map((material) => (
-                <Link key={material.id} href={`/marketplace/${material.id}`}>
+                <motion.div
+                  key={material.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 16 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+                  }}
+                >
+                <Link href={`/materials/${material.id}`}>
                   <Card className="group overflow-hidden rounded-2xl border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white">
                     <div className="relative h-48 w-full overflow-hidden">
                       <img 
@@ -166,8 +283,9 @@ export default function MarketplacePage() {
                     </CardFooter>
                   </Card>
                 </Link>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </>
       )}

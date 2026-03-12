@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { runScoutAgent } from "@/lib/agents/scout"
 
 export async function POST(req: Request) {
   try {
@@ -56,6 +57,10 @@ export async function POST(req: Request) {
     })
 
     console.log("[Material API] Success:", material.id)
+
+    // Trigger Scout Agent asynchronously (non-blocking)
+    runScoutAgent(material.id).catch(err => console.error("[Scout] Failed:", err))
+
     return NextResponse.json(material, { status: 201 })
   } catch (error: any) {
     console.error("[Material API] Error:", error)

@@ -416,7 +416,7 @@ Wood & Timber      | co2: 1.8  | landfill: ₹1,000/t  | new_cost: ₹1,200/cft 
 
 ## Implementation Guide — Step by Step
 
-### STEP 1: Project Scaffolding
+### STEP 1: ✅ Project Scaffolding
 ```bash
 npx create-next-app@14 recircle --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 cd recircle
@@ -438,7 +438,7 @@ NEXTAUTH_URL=http://localhost:3000
 
 **IMPORTANT:** Get the DATABASE_URL from your Neon DB dashboard. Create a new project on neon.tech, select PostgreSQL **16.x** (NOT 17), copy the connection string.
 
-### STEP 2: Prisma Schema + Migration + Seed Data
+### STEP 2: ✅ Prisma Schema + Migration + Seed Data
 
 **File: `prisma/schema.prisma`**
 - Define all 21 models (tables) with proper relations, enums, and defaults
@@ -479,7 +479,7 @@ Add to `package.json`:
 }
 ```
 
-### STEP 3: Auth System
+### STEP 3: ✅ Auth System
 **File: `src/lib/auth.ts`** — NextAuth config
 - Credentials provider: email + password
 - Validate with bcryptjs compare against Prisma user record
@@ -530,7 +530,7 @@ Add to `package.json`:
 - Requires auth (session user)
 - Update via Prisma, return updated user
 
-### STEP 3B: Landing Page
+### STEP 3B: ✅ Landing Page
 
 **Page: `src/app/page.tsx`** — Home/Landing Page (shown to all visitors including unauthenticated)
 
@@ -544,7 +544,7 @@ Sections top to bottom:
 7. **Call-to-Action** — "Sign up in 30 seconds" + register button. If logged in, show "Go to Dashboard" instead.
 8. **Footer** — Links: About, FAQ, Contact, Terms. Social icons.
 
-### STEP 3C: Navbar (Role-Aware Navigation)
+### STEP 3C: ✅ Navbar (Role-Aware Navigation)
 
 **Component: `src/components/navbar.tsx`** — Top navigation bar, visible on all pages.
 
@@ -567,7 +567,7 @@ Marketplace | Dashboard | Admin Panel
 - If not logged in: Login / Register buttons
 - If logged in: Notification bell (with unread count badge) + Avatar dropdown menu (Profile, Settings, Logout) + Green Points display (e.g. "🌱 120 GP")
 
-### STEP 3D: Profile Pages
+### STEP 3D: ✅ Profile Pages
 
 **Page: `src/app/profile/page.tsx`** — Own Profile (view + edit mode)
 - Shows: name, email, phone, role, city, org_name, bio, avatar
@@ -586,7 +586,7 @@ Marketplace | Dashboard | Admin Panel
 - If supplier: recent active listings
 - If transporter: vehicle info, delivery count, avg rating
 
-### STEP 3E: Supplier Dashboard (My Listings)
+### STEP 3E: ✅ Supplier Dashboard (My Listings)
 
 **Page: `src/app/dashboard/my-listings/page.tsx`** — Supplier's Control Center
 
@@ -609,7 +609,7 @@ Marketplace | Dashboard | Admin Panel
 - Notifications from Predictive Supplier Discovery: "A user near you needs wooden pallets. Do you have any?"
 - Supplier responds: "Available now" (redirects to create listing, pre-filled) / "Available later" (set date, creates future listing) / "Not available"
 
-### STEP 4: Material CRUD + AI Listing
+### STEP 4: ✅ Material CRUD + AI Listing
 
 **API: `POST /api/materials`** — The most important endpoint. Flow:
 1. Receive form data (title, description, category_id, condition, quantity, weight_kg, listing_type, price, location, images)
@@ -669,7 +669,7 @@ Marketplace | Dashboard | Admin Panel
 - **Batch Listing option:** "Upload CSV" button for businesses to bulk-list 50+ items at once. CSV columns: title, category, condition, quantity, unit, weight_kg, listing_type, price, address, city
 - After submit: show RPS badge, use cases, matched receivers, route recommendation
 
-### STEP 5: Scout Agent
+### STEP 5: ✅ Scout Agent
 
 **File: `src/lib/agents/scout.ts`**
 
@@ -698,7 +698,7 @@ async function runScoutAgent(materialId: number) {
 
 Log every action to `agent_logs` table with `agent_name='scout'`.
 
-### STEP 6: Material Router
+### STEP 6: ✅ Material Router
 
 **File: `src/lib/material-router.ts`**
 
@@ -749,7 +749,7 @@ function routeMaterial(condition: string, categorySlug: string): RouteRecommenda
 
 **UI on material detail page:** Display as animated flowchart using Framer Motion. Show the route path with reason + extra data. User can click "Override" button to change the AI suggestion (e.g., list salvage material on marketplace anyway).
 
-### STEP 7: QR Code / Digital Material Passport
+### STEP 7: ✅ QR Code / Digital Material Passport
 
 **API: `GET /api/materials/[id]/qr`**
 - Generate QR code using `qrcode` package
@@ -765,7 +765,7 @@ function routeMaterial(condition: string, categorySlug: string): RouteRecommenda
 - Full audit trail: every transaction, handoff, photo
 - QR code display for sharing
 
-### STEP 8: Marketplace Browse
+### STEP 8: ✅ Marketplace Browse
 
 **Page: `src/app/marketplace/page.tsx`**
 - Toggle: Grid View (default) | Map View
@@ -781,7 +781,7 @@ function routeMaterial(condition: string, categorySlug: string): RouteRecommenda
 - **Saved/Watchlist:** Heart icon on each card to save material. Saved materials stored in `saved_materials` table (table 21 in DB schema). When a saved material's status changes, a notification is sent to the user who saved it. API: `POST /api/saved-materials` to save, `DELETE /api/saved-materials/[materialId]` to unsave, `GET /api/saved-materials` to list user's saved materials.
 - If search returns 0 results → show "No exact matches found" + trigger Predictive Supplier Discovery (Step 24) and show "We found potential suppliers who might have this" section
 
-### STEP 8B: Material Detail Page
+### STEP 8B: ✅ Material Detail Page
 
 **Page: `src/app/materials/[id]/page.tsx`** — The most information-dense page. Shows everything about a material.
 
@@ -825,7 +825,7 @@ function routeMaterial(condition: string, categorySlug: string): RouteRecommenda
 
 **If user is the supplier viewing their own listing:** Show "Edit Listing" and "Deactivate" buttons instead of "Request".
 
-### STEP 9: Matching Engine
+### STEP 9: ✅ Matching Engine
 
 **File: `src/lib/matching-engine.ts`**
 
@@ -886,7 +886,7 @@ const SYMBIOSIS_CHAINS = [
 // Advisor Agent uses this data when suggesting reuse ideas
 ```
 
-### STEP 10: Transaction Flow + Messaging
+### STEP 10: ✅ Transaction Flow + Messaging
 
 **When is a Transaction created?** A transaction record is created automatically when a supplier ACCEPTS a direct request (Step 19). The `POST /api/material-requests/[id]` accept action creates the transaction with status=`negotiating`.
 
@@ -935,7 +935,7 @@ The chosen method is saved as `transport_method` on the transaction record.
 - **API call:** `POST /api/disputes` with body `{ transaction_id, reason, evidence_images }`
 - **On submit:** Creates dispute with status=`open`, notifies admin + other party
 
-### STEP 11: India Sustainability Calculator
+### STEP 11: ✅ India Sustainability Calculator
 
 **File: `src/lib/sustainability-calc.ts`**
 
@@ -954,7 +954,7 @@ function calculateImpact(categoryId: number, weightKg: number): Impact {
 }
 ```
 
-### STEP 12: Advisor Agent (Chat UI)
+### STEP 12: ✅ Advisor Agent (Chat UI)
 
 **File: `src/lib/agents/advisor.ts`**
 
@@ -1011,7 +1011,7 @@ You understand cross-industry symbiosis — you can explain how one industry's w
 - Typing indicator while AI responds
 - Persists across page navigation
 
-### STEP 13: Quality Verification Agent
+### STEP 13: ✅ Quality Verification Agent
 
 **File: `src/lib/agents/quality.ts`**
 
@@ -1034,7 +1034,7 @@ async function verifyQuality(transactionId: number, pickupPhotoUrl: string) {
 
 **Trigger:** Called from `POST /api/transactions/[id]/verify` when receiver uploads pickup photo.
 
-### STEP 14: Sentinel Agent (Fraud Detection)
+### STEP 14: ✅ Sentinel Agent (Fraud Detection)
 
 **File: `src/lib/agents/sentinel.ts`**
 
@@ -1094,7 +1094,7 @@ async function computeFraudRisk(material: Material, user: User): Promise<FraudRe
 - Table of flagged listings with: material info, risk score, reasons, date
 - Actions: Approve (clear flag), Reject (archive listing), Ban user
 
-### STEP 15: Demand Forecasting
+### STEP 15: ✅ Demand Forecasting
 
 **File: `src/lib/demand-forecast.ts`**
 
@@ -1125,7 +1125,7 @@ When `forecastDemand` returns a `trend` of `'rising'` with `percentage_change > 
 - These appear as notifications (Step 27B) and optionally on the supplier dashboard (Step 3E).
 - API: `GET /api/dashboard/proactive-alerts?user_id=X` — returns personalized alerts based on user's past listing categories + current demand trends in their city.
 
-### STEP 16: Impact Dashboard
+### STEP 16: ✅ Impact Dashboard
 
 **Page: `src/app/dashboard/page.tsx`**
 
@@ -1143,7 +1143,7 @@ Sections (top to bottom):
 10. **Time Range Filter** — 7d / 30d / 90d / All time
 11. **"Export CSV" button** — Downloads all visible dashboard data as a CSV file (summary stats, category breakdown, monthly data)
 
-### STEP 17: Trust System
+### STEP 17: ✅ Trust System
 
 **File: `src/lib/trust-score.ts`**
 
@@ -1166,7 +1166,7 @@ function determineVerificationLevel(user): string {
 }
 ```
 
-### STEP 18: Gamification
+### STEP 18: ✅ Gamification
 
 **File: `src/lib/green-points.ts`**
 
@@ -1189,7 +1189,7 @@ Level thresholds:
 
 Check badge eligibility after each GP update.
 
-### STEP 19: Direct Material Request System
+### STEP 19: ✅ Direct Material Request System
 
 **How it works:** A receiver browses the marketplace, finds a listing they want, and sends a direct request to the supplier. The supplier can accept or reject. This is like placing an order on a specific listing.
 
@@ -1228,7 +1228,7 @@ Check badge eligibility after each GP update.
 - Each request card shows: material thumbnail, title, quantity, status badge, message preview, date
 - Supplier can Accept/Reject from this page
 
-### STEP 20: Want Board (Public Material Requests)
+### STEP 20: ✅ Want Board (Public Material Requests)
 
 **How it works:** A receiver posts a public "Want" request describing what material they need. The system matches it against available listings and notifies potential suppliers. Other users can browse the want board and offer their materials.
 
@@ -1252,7 +1252,7 @@ Check badge eligibility after each GP update.
 - Fields: Title (required), Description, Category (dropdown), Keywords (comma-separated), Quantity Needed (number), Location (city dropdown + optional lat/lng), Search Radius (km — slider: 10/25/50/100), Urgency (Low/Medium/High)
 - After submit: system triggers matching engine → if matches found, shows "We found X materials matching your request" + triggers notifications to matched suppliers
 
-### STEP 20B: Future Availability & Reservations
+### STEP 20B: ✅ Future Availability & Reservations
 
 **How it works:** Suppliers can list materials that are NOT available now but will be in the future. Receivers can reserve them.
 
@@ -1275,7 +1275,7 @@ Check badge eligibility after each GP update.
 - Background check (on page load or via API middleware): if material.status === 'future' AND available_from_date <= now → update status to 'available', notify reservers
 - Reservations use the same `direct_requests` table with a note that it's a reservation
 
-### STEP 21: Transporter Registration & Profile
+### STEP 21: ✅ Transporter Registration & Profile
 
 **Who is a Transporter?** A user with role=`transporter` or role=`volunteer` who has registered their vehicle. They earn money (or green points for volunteers) by delivering materials between suppliers and receivers. Both roles redirect to this page after registration (see Step 3 auth flow).
 
@@ -1302,7 +1302,7 @@ Check badge eligibility after each GP update.
 - Query params: city, min_capacity_kg, max_price_per_km, vehicle_type
 - Returns transporters with availability_status=available, sorted by rating
 
-### STEP 22: Transport Booking System
+### STEP 22: ✅ Transport Booking System
 
 **How it works:** When a transaction is created (after a direct request is accepted or a match is confirmed), the receiver chooses a transport method:
 1. **Self Pickup** — receiver picks up from supplier address. No booking needed.
@@ -1359,7 +1359,7 @@ function estimateDeliveryCost(transporter: Transporter, distanceKm: number): Cos
 - Shows any surcharges
 - Updates live as user selects different transporters
 
-### STEP 23: Delivery Tracking
+### STEP 23: ✅ Delivery Tracking
 
 **Delivery Status Flow (5 stages):**
 `pickup_scheduled → collected → in_transit → delivered → completed`
@@ -1377,7 +1377,7 @@ function estimateDeliveryCost(transporter: Transporter, distanceKm: number): Cos
 - Transporter can update status from their dashboard
 - Receiver sees real-time status updates
 
-### STEP 24: Predictive Supplier Discovery
+### STEP 24: ✅ Predictive Supplier Discovery
 
 **How it works:** When a receiver searches for a material that doesn't exist on the marketplace, the system suggests potential suppliers who are likely to have that material based on their history, category, location, and role.
 
@@ -1417,7 +1417,7 @@ async function discoverPotentialSuppliers(query: string, categoryId: number, cit
 - On want board: after posting a want request, show discovered suppliers with "Contact" button
 - On supplier dashboard (Step 3E, Tab 3): supplier sees discovery notifications and responds
 
-### STEP 25: No-Return Policy & Transparency Features
+### STEP 25: ✅ No-Return Policy & Transparency Features
 
 **Policy:** All materials are sold/donated AS-IS. No returns accepted. This is realistic for a reused materials marketplace.
 
@@ -1432,7 +1432,7 @@ async function discoverPotentialSuppliers(query: string, categoryId: number, cit
 
 **UI:** Show "No Returns — Inspect before accepting" banner on every listing detail page. Link to FAQ explaining the policy.
 
-### STEP 26: FAQ / Help Page
+### STEP 26: ✅ FAQ / Help Page
 
 **Page: `src/app/faq/page.tsx`**
 - Accordion-style FAQ sections:
@@ -1447,7 +1447,7 @@ async function discoverPotentialSuppliers(query: string, categoryId: number, cit
 - Search bar at top to filter FAQs
 - "Still need help?" section with contact form
 
-### STEP 27: Auto-Unavailable on Quantity Zero
+### STEP 27: ✅ Auto-Unavailable on Quantity Zero
 
 **Logic:** Whenever a material's quantity is reduced (via direct request acceptance or transaction confirmation):
 1. Check if remaining quantity = 0
@@ -1461,7 +1461,7 @@ async function discoverPotentialSuppliers(query: string, categoryId: number, cit
 - `PUT /api/transactions/[id]` (when confirming a transaction)
 - `PUT /api/materials/[id]` (manual quantity update by supplier)
 
-### STEP 27B: Notifications System
+### STEP 27B: ✅ Notifications System
 
 **How notifications work:** SSE (Server-Sent Events) for real-time + database storage for persistence.
 
@@ -1508,7 +1508,7 @@ export async function GET(req: Request) {
 - Material you saved/watchlisted changed status
 - Future material you reserved is now available
 
-### STEP 28: Admin Panel Enhancements
+### STEP 28: ✅ Admin Panel Enhancements
 
 **Page: `src/app/admin/users/page.tsx`** — User Management
 - Table of all users with: name, email, role, city, trust score, verification level, date joined
@@ -1520,7 +1520,7 @@ export async function GET(req: Request) {
 - Table of transporters with: name, vehicle type, capacity, city, rating, total deliveries, status
 - Actions: Approve transporter, Suspend, View booking history
 
-### STEP 28B: Admin Disputes Page
+### STEP 28B: ✅ Admin Disputes Page
 
 **Page: `src/app/admin/disputes/page.tsx`** — Dispute Resolution Panel
 - **Stats at top:** Open disputes | Under review | Resolved this week
@@ -1537,7 +1537,7 @@ export async function GET(req: Request) {
   - "Resolve" button → modal with: Resolution textarea (required), Action dropdown: Warn Supplier / Reduce Trust Score / Ban User / No Action, Submit button
 - **Filter by:** status (open/reviewing/resolved), date range
 
-### STEP 28C: Admin Overview Page
+### STEP 28C: ✅ Admin Overview Page
 
 **Page: `src/app/admin/page.tsx`** — Admin Home Dashboard
 - **Stats cards row:** Total users | Total active listings | Total transactions | Total CO₂ saved | Open disputes | Flagged listings
@@ -1545,7 +1545,7 @@ export async function GET(req: Request) {
 - **Quick links:** Manage Users | Review Flagged | Resolve Disputes | View Impact Dashboard
 - **Platform health indicators:** New users this week, listings this week, transactions this week (with % change vs last week)
 
-### STEP 29: Remaining Pages UI Specifications
+### STEP 29: ✅ Remaining Pages UI Specifications
 
 **Page: `src/app/leaderboard/page.tsx`** — Gamification Leaderboard
 - **Toggle tabs:** Weekly | Monthly | All Time
@@ -1612,7 +1612,7 @@ export async function GET(req: Request) {
 - **Sort by:** Nearest, Cheapest, Highest rated, Most deliveries
 - This page is for browsing only. Actual booking happens from within a transaction (Step 22)
 
-### STEP 29B: ESG Report Generator
+### STEP 29B: ✅ ESG Report Generator
 
 **API: `GET /api/reports/esg?user_id=X`** — Generate ESG data
 - Returns JSON with: total_materials_redistributed, kg_diverted, co2_saved, rupees_saved, water_saved, communities_impacted (distinct receiver cities), organizations_served (distinct receiver org_names), scope3_carbon_data, monthly_breakdown
@@ -1627,7 +1627,7 @@ export async function GET(req: Request) {
 - **"Download as PDF" button** (uses `window.print()` with `@media print` CSS styling)
 - **"Export CSV" button** for raw data download
 
-### STEP 29C: Material Flow Sankey Diagram
+### STEP 29C: ✅ Material Flow Sankey Diagram
 
 **Component: `src/components/sankey-diagram.tsx`**
 - Uses `d3-sankey` or custom SVG with Framer Motion animations
@@ -1638,7 +1638,7 @@ export async function GET(req: Request) {
 - **Hover on any flow:** shows tooltip with count + kg + CO₂ saved
 - Shown on the main Impact Dashboard (Step 16)
 
-### STEP 30: Polish
+### STEP 30: ✅ Polish
 - Framer Motion: page transitions, card hover effects, counter animations, flowchart animations
 - Responsive: test all pages on mobile/tablet breakpoints
 - Loading states: skeleton loaders on all data-fetching pages
