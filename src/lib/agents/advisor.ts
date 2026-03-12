@@ -27,9 +27,9 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
       parameters: {
         type: "object",
         properties: {
-          query:     { type: "string", description: "Search query" },
-          category:  { type: "string", description: "Category name" },
-          city:      { type: "string", description: "City name in India" },
+          query: { type: "string", description: "Search query" },
+          category: { type: "string", description: "Category name" },
+          city: { type: "string", description: "City name in India" },
           radius_km: { type: "number", description: "Search radius in km" },
         },
       },
@@ -44,9 +44,9 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         type: "object",
         required: ["category", "weight_kg"],
         properties: {
-          category:  { type: "string" },
+          category: { type: "string" },
           weight_kg: { type: "number" },
-          quantity:  { type: "number" },
+          quantity: { type: "number" },
         },
       },
     },
@@ -61,7 +61,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["material_type", "condition"],
         properties: {
           material_type: { type: "string" },
-          condition:     { type: "string", enum: ["new","like_new","good","fair","salvage"] },
+          condition: { type: "string", enum: ["new", "like_new", "good", "fair", "salvage"] },
         },
       },
     },
@@ -75,7 +75,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         type: "object",
         required: ["city"],
         properties: {
-          city:     { type: "string" },
+          city: { type: "string" },
           category: { type: "string", description: "What type of repair" },
         },
       },
@@ -91,7 +91,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["category", "city"],
         properties: {
           category: { type: "string" },
-          city:     { type: "string" },
+          city: { type: "string" },
         },
       },
     },
@@ -119,7 +119,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         type: "object",
         properties: {
           category: { type: "string" },
-          city:     { type: "string" },
+          city: { type: "string" },
         },
       },
     },
@@ -134,7 +134,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["material", "issue"],
         properties: {
           material: { type: "string", description: "What material/item to repair" },
-          issue:    { type: "string", description: "What the problem is" },
+          issue: { type: "string", description: "What the problem is" },
         },
       },
     },
@@ -187,13 +187,13 @@ async function executeTool(name: string, args: any): Promise<string> {
 
     case "suggest_reuse_ideas": {
       const ideas: Record<string, string[]> = {
-        wood:         ["Pallet furniture", "Garden raised beds", "Compost bin frames"],
-        metal:        ["Garden tools", "Art sculptures", "Building reinforcement"],
-        textile:      ["Cleaning rags", "Insulation batting", "Tote bags"],
-        electronics:  ["Parts harvesting", "E-waste recycling", "STEM education kits"],
+        wood: ["Pallet furniture", "Garden raised beds", "Compost bin frames"],
+        metal: ["Garden tools", "Art sculptures", "Building reinforcement"],
+        textile: ["Cleaning rags", "Insulation batting", "Tote bags"],
+        electronics: ["Parts harvesting", "E-waste recycling", "STEM education kits"],
         construction: ["Road fill", "Rubble walls", "Foundation material"],
-        furniture:    ["Refurbishment + resale", "Community center donation", "NGO shelter use"],
-        packaging:    ["Craft workshops", "Seed starters", "Storage boxes"],
+        furniture: ["Refurbishment + resale", "Community center donation", "NGO shelter use"],
+        packaging: ["Craft workshops", "Seed starters", "Storage boxes"],
       }
       const key = Object.keys(ideas).find(k => args.material_type.toLowerCase().includes(k)) || "construction"
       return `Reuse ideas for ${args.material_type} (${args.condition} condition): ${ideas[key].join(", ")}`
@@ -212,7 +212,7 @@ async function executeTool(name: string, args: any): Promise<string> {
       const now = new Date()
       const history = await prisma.demandHistory.findMany({
         where: {
-          city:     { contains: args.city, mode: "insensitive" },
+          city: { contains: args.city, mode: "insensitive" },
           category: { name: { contains: args.category, mode: "insensitive" } },
         },
         orderBy: [{ year: "desc" }, { month: "desc" }],
@@ -226,14 +226,14 @@ async function executeTool(name: string, args: any): Promise<string> {
 
     case "get_symbiosis_suggestions": {
       const chains: Record<string, string> = {
-        coffee:     "Coffee grounds → Mushroom farms (substrate for mushroom farming)",
-        sawdust:    "Sawdust → Particleboard manufacturers (raw material)",
-        textile:    "Textile scraps → Rag makers / Insulation (stuffing, cleaning rags)",
+        coffee: "Coffee grounds → Mushroom farms (substrate for mushroom farming)",
+        sawdust: "Sawdust → Particleboard manufacturers (raw material)",
+        textile: "Textile scraps → Rag makers / Insulation (stuffing, cleaning rags)",
         construction: "Construction rubble → Road construction (fill material)",
         cooking_oil: "Used cooking oil → Biodiesel producers (feedstock)",
-        packaging:  "Food packaging → Craft workshops (art/craft raw material)",
-        wood:       "Wood offcuts → Furniture makers / Charcoal producers",
-        metal:      "Metal scrap → Foundries / Blacksmiths",
+        packaging: "Food packaging → Craft workshops (art/craft raw material)",
+        wood: "Wood offcuts → Furniture makers / Charcoal producers",
+        metal: "Metal scrap → Foundries / Blacksmiths",
       }
       const key = Object.keys(chains).find(k => args.waste_type.toLowerCase().includes(k))
       return key ? chains[key] : `For ${args.waste_type}: Consider listing on ReCircle marketplace — manufacturers, NGOs, and workshops often need surplus materials.`
@@ -300,7 +300,7 @@ export async function runAdvisorAgent(
 
   // First call
   let response = await openai.chat.completions.create({
-    model: "openai/gpt-4o-mini",
+    model: "openai/gpt-oss-120b:free",
     messages,
     tools,
     tool_choice: "auto",
@@ -332,7 +332,7 @@ export async function runAdvisorAgent(
 
     // Continue conversation
     response = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
+      model: "openai/gpt-oss-120b:free",
       messages,
       tools,
       tool_choice: "auto",
@@ -360,7 +360,7 @@ export async function runAdvisorAgent(
         details: JSON.stringify({ tools_used: toolsUsed, message_preview: userMessage.slice(0, 100) }),
       },
     })
-  } catch (_) {}
+  } catch (_) { }
 
   return { reply, toolsUsed }
 }

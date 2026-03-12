@@ -17,7 +17,7 @@ async function callAI(messages: any[]): Promise<string> {
         "X-Title": "ReCircle"
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "openai/gpt-oss-120b:free",
         messages,
         max_tokens: 500,
         temperature: 0.7
@@ -97,7 +97,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
         // Extract array from response if wrapped in text
         const match = aiResponse.match(/\[[\s\S]*\]/)
         if (match) {
-          try { aiUseCases = JSON.parse(match[0]).slice(0, 5) } catch {}
+          try { aiUseCases = JSON.parse(match[0]).slice(0, 5) } catch { }
         }
       }
     }
@@ -190,7 +190,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
             status: "pending",
             notified: true
           }
-        }).catch(() => {})
+        }).catch(() => { })
       }
 
       // Notify matched user
@@ -202,7 +202,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
           body: `A material matching your request "${match.request.title}" was just listed.`,
           data: JSON.stringify({ materialId, matchScore: match.score })
         }
-      }).catch(() => {})
+      }).catch(() => { })
     }
 
     logData.matchesFound = top5.length
@@ -228,7 +228,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
         userId: material.userId,
         details: JSON.stringify({ ...logData, durationMs: Date.now() - startTime })
       }
-    }).catch(() => {})
+    }).catch(() => { })
 
   } catch (error) {
     console.error("[Scout Agent] Error:", error)
@@ -240,7 +240,7 @@ export async function runScoutAgent(materialId: number): Promise<void> {
         materialId,
         details: JSON.stringify({ error: String(error), durationMs: Date.now() - startTime })
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }
 }
 

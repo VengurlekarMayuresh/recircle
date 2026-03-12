@@ -218,7 +218,7 @@ export async function runBargainAgent(
   let content = ""
   try {
     const response = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
+      model: "openai/gpt-oss-120b:free",
       messages: conversationMessages,
       max_tokens: 500,
       temperature: 0.7,
@@ -267,7 +267,7 @@ export async function runBargainAgent(
               result.currentOffer = meta.currentOffer
               break
             }
-          } catch {}
+          } catch { }
         }
       }
       // Final fallback: use asking price
@@ -384,7 +384,7 @@ export async function runBargainAgent(
         messageCount: session.messageCount + 1,
       }),
     },
-  }).catch(() => {})
+  }).catch(() => { })
 
   return result
 }

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         "X-Title": "ReCircle",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "openai/gpt-oss-120b:free",
         messages: [
           {
             role: "system",
