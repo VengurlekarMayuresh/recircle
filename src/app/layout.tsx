@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import NextAuthProvider from "@/components/providers";
@@ -8,9 +8,7 @@ import ChatPanel from "@/components/chat-panel";
 import PageTransition from "@/components/page-transition";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "ReCircle — Circular Economy Marketplace",
@@ -23,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" className={cn("font-sans", inter.variable)}>
       <body className={inter.className}>
         <NextAuthProvider>
           <div className="min-h-screen bg-gray-50 flex flex-col">
