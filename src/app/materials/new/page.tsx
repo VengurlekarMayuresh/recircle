@@ -113,6 +113,73 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 }
 
+  const generateTags = async () => {
+    console.log("[CreateListing] Generating tags for:", { title: formData.title, description: formData.description })
+    setIsGeneratingTags(true)
+    try {
+      const resp = await fetch("/api/ai/tag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: formData.title, description: formData.description }),
+      })
+      console.log("[CreateListing] API Response Status:", resp.status)
+      const data = await resp.json()
+      console.log("[CreateListing] API Response Data:", data)
+      if (data.tags) {
+        setFormData(prev => ({ ...prev, tags: data.tags }))
+        toast({
+          title: "AI Tagging Complete",
+          description: `Generated ${data.tags.length} smart tags for your listing.`,
+        })
+      }
+    } catch (err) {
+      console.error("[CreateListing] Tag Generation Failed:", err)
+    } finally {
+      setIsGeneratingTags(false)
+      setStep(2)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const payload = {
+        ...formData,
+        images: uploadedImageUrl ? [uploadedImageUrl] : []
+      }
+      const response = await fetch("/api/materials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      console.log("[CreateListing] Submit Response Status:", response.status)
+      const result = await response.json()
+      console.log("[CreateListing] Submit Response Data:", result)
+
+      if (response.ok) {
+        toast({
+          title: "Listing Created!",
+          description: "Your material is now being scouted by our AI agents.",
+        })
+        router.push("/marketplace")
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to create listing. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
