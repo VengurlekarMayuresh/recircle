@@ -92,6 +92,11 @@ export default function MarketplacePage() {
     const sorted = [...filtered]
     if (sortBy === "nearest" && userLocation) {
       sorted.sort((a, b) => {
+        const hasA = a.locationLat && a.locationLng
+        const hasB = b.locationLat && b.locationLng
+        if (!hasA && !hasB) return 0
+        if (!hasA) return 1
+        if (!hasB) return -1
         const distA = haversineDistance(userLocation.lat, userLocation.lng, a.locationLat, a.locationLng)
         const distB = haversineDistance(userLocation.lat, userLocation.lng, b.locationLat, b.locationLng)
         return distA - distB
@@ -101,10 +106,16 @@ export default function MarketplacePage() {
     } else if (sortBy === "price_high") {
       sorted.sort((a, b) => b.price - a.price)
     } else if (sortBy === "relevance" && searchWords.length > 0) {
-      // Relevance: more word hits in title = higher rank
+      // Weighted relevance: title x3, tags x2, description x1
       sorted.sort((a, b) => {
-        const scoreA = searchWords.filter(w => a.title.toLowerCase().includes(w)).length
-        const scoreB = searchWords.filter(w => b.title.toLowerCase().includes(w)).length
+        const titleA = (a.title || "").toLowerCase()
+        const tagsA = (a.tags || "").toLowerCase()
+        const descA = (a.description || "").toLowerCase()
+        const titleB = (b.title || "").toLowerCase()
+        const tagsB = (b.tags || "").toLowerCase()
+        const descB = (b.description || "").toLowerCase()
+        const scoreA = searchWords.reduce((s, w) => s + (titleA.includes(w) ? 3 : 0) + (tagsA.includes(w) ? 2 : 0) + (descA.includes(w) ? 1 : 0), 0)
+        const scoreB = searchWords.reduce((s, w) => s + (titleB.includes(w) ? 3 : 0) + (tagsB.includes(w) ? 2 : 0) + (descB.includes(w) ? 1 : 0), 0)
         return scoreB - scoreA
       })
     }
@@ -120,7 +131,16 @@ export default function MarketplacePage() {
         setIsDiscovering(true)
         try {
           const params = new URLSearchParams({ query: searchQuery })
-          if (selectedCategory !== 'All') params.set('category', selectedCategory)
+          // Resolve category name → ID from loaded materials
+          if (selectedCategory !== 'All') {
+            const catMatch = materials.find(m => m.category?.name === selectedCategory)
+            if (catMatch?.category?.id) params.set('category_id', String(catMatch.category.id))
+          }
+          // Pass user location for proximity scoring
+          if (userLocation) {
+            params.set('lat', String(userLocation.lat))
+            params.set('lng', String(userLocation.lng))
+          }
           const res = await fetch(`/api/supplier-discovery/trigger?${params}`)
           const data = await res.json()
           setDiscoveredSuppliers(data.suppliers || [])
@@ -131,7 +151,7 @@ export default function MarketplacePage() {
     } else {
       setDiscoveredSuppliers([])
     }
-  }, [filteredMaterials.length, searchQuery, selectedCategory, isLoading])
+  }, [filteredMaterials.length, searchQuery, selectedCategory, isLoading, materials, userLocation])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
