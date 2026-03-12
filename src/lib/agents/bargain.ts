@@ -1,14 +1,7 @@
-import OpenAI from "openai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import prisma from "@/lib/prisma"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-  defaultHeaders: {
-    "HTTP-Referer": "https://recircle.in",
-    "X-Title": "ReCircle",
-  },
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 
 const MAX_MESSAGES = 15
 
@@ -168,65 +161,74 @@ export async function runBargainAgent(
     demandLevel = openRequests >= 5 ? "high" : openRequests >= 2 ? "medium" : "low"
   }
 
-  // Build conversation history for OpenAI
-  const conversationMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    {
-      role: "system",
-      content: buildSystemPrompt({
-        title: material.title,
-        condition: material.condition,
-        category: material.category?.name || "General",
-        sellerName: material.user.name,
-        city: material.city,
-        askingPrice: session.askingPrice,
-        floorPrice: session.floorPrice,
-        negotiationStyle: session.negotiationStyle,
-        marketAverage,
-        demandLevel,
-        dealSweeteners: material.dealSweeteners,
-        autoAcceptPrice: material.autoAcceptPrice,
-        buyerTrustScore: session.buyer.trustScore,
-        viewsCount: material.viewsCount,
-        co2SavedKg: material.co2SavedKg,
-        messageCount: session.messageCount,
-      }),
-    },
-  ]
+  const systemPrompt = buildSystemPrompt({
+    title: material.title,
+    condition: material.condition,
+    category: material.category?.name || "General",
+    sellerName: material.user.name,
+    city: material.city,
+    askingPrice: session.askingPrice,
+    floorPrice: session.floorPrice,
+    negotiationStyle: session.negotiationStyle,
+    marketAverage,
+    demandLevel,
+    dealSweeteners: material.dealSweeteners,
+    autoAcceptPrice: material.autoAcceptPrice,
+    buyerTrustScore: session.buyer.trustScore,
+    viewsCount: material.viewsCount,
+    co2SavedKg: material.co2SavedKg,
+    messageCount: session.messageCount,
+  })
 
-  // Add conversation history
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction: systemPrompt,
+  })
+
+  // Build conversation history for Gemini
+  const history: any[] = []
+  
   for (const msg of session.messages) {
-    if (msg.role === "buyer") {
-      conversationMessages.push({ role: "user", content: msg.content })
-    } else {
-      // Extract just the message text from previous assistant responses
+    let content = msg.content
+    if (msg.role !== "buyer") {
       try {
         const parsed = JSON.parse(msg.content)
-        conversationMessages.push({
-          role: "assistant",
-          content: JSON.stringify(parsed),
-        })
+        content = JSON.stringify(parsed)
       } catch {
-        conversationMessages.push({ role: "assistant", content: msg.content })
+        content = msg.content
       }
+    }
+    const role = msg.role === "buyer" ? "user" : "model"
+    if (history.length === 0 && role !== "user") {
+      // Gemini requires history to start with 'user'
+      history.push({ role: "user", parts: [{ text: "Hi, I am interested in negotiating." }] })
+    }
+    if (history.length > 0 && history[history.length - 1].role === role) {
+      history[history.length - 1].parts[0].text += "\n\n" + content
+    } else {
+      history.push({
+        role,
+        parts: [{ text: content }]
+      })
     }
   }
 
-  // Add current buyer message
-  conversationMessages.push({ role: "user", content: buyerMessage })
-
-  // Call OpenAI with error handling
+  // Call Gemini API with error handling
   let content = ""
   try {
-    const response = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
-      messages: conversationMessages,
-      max_tokens: 500,
-      temperature: 0.7,
-      response_format: { type: "json_object" },
+    const chat = model.startChat({
+      history,
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+        responseMimeType: "application/json",
+      }
     })
-    content = response.choices[0]?.message?.content || ""
+
+    const result = await chat.sendMessage([{ text: buyerMessage }])
+    content = result.response.text()
   } catch (apiError: any) {
-    console.error("[Bargain Agent] OpenRouter API error:", apiError?.message || apiError)
+    console.error("[Bargain Agent] Gemini API error:", apiError?.message || apiError)
     // Fallback to rule-based response when API is unavailable
     return generateFallbackResponse(buyerMessage, session)
   }

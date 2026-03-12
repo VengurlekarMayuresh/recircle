@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(req: Request) {
   try {
@@ -10,52 +11,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Title and description are required" }, { status: 400 })
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://recircle.com",
-        "X-Title": "ReCircle",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert in circular economy and material recycling. 
-            Analyze the provided material title and description. 
-            Identify the material type, its potential uses, and relevant keywords for a marketplace search.
-            Return ONLY a JSON object with a key 'tags' containing an array of 5-10 specific, searchable tags.
-            Example: { "tags": ["construction", "red bricks", "burnt clay", "surplus", "building material"] }`
-          },
-          {
-            role: "user",
-            content: `Material Title: ${title}\nDescription: ${description}`
-          }
-        ],
-        response_format: { type: "json_object" }
-      })
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[AI Tag Route] OpenRouter Error:", response.status, errorText)
-      return NextResponse.json({ tags: ["circular", "recycled", "sustainable"] })
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      console.error("[AI Tag Route] Missing GEMINI_API_KEY")
+      return NextResponse.json({ message: "API key configuration missing" }, { status: 500 })
     }
 
-    const data = await response.json()
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+
+    const prompt = `You are an expert in circular economy and material recycling. 
+Analyze the provided material title and description. 
+Identify the material type, its potential uses, and relevant keywords for a marketplace search.
+Return ONLY a JSON object with a key 'tags' containing an array of 5-10 specific, searchable tags.
+Example: { "tags": ["construction", "red bricks", "burnt clay", "surplus", "building material"] }
+
+Material Title: ${title}
+Description: ${description}`
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    })
+
+    const responseText = result.response.text()
+
     let tags: string[] = []
 
     try {
-      const content = data.choices?.[0]?.message?.content || "{}"
-      const parsed = JSON.parse(content)
+      const parsed = JSON.parse(responseText)
       tags = parsed.tags || []
     } catch (e) {
       console.error("[AI Tag Route] Failed to parse AI response content:", e)
-      const rawContent = data.choices?.[0]?.message?.content || ""
-      tags = rawContent.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      tags = responseText.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean)
     }
 
     // Ensure we always return something

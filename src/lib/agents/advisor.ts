@@ -1,14 +1,7 @@
-import OpenAI from "openai"
+import { GoogleGenerativeAI, SchemaType, Tool } from "@google/generative-ai"
 import prisma from "@/lib/prisma"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-  defaultHeaders: {
-    "HTTP-Referer": "https://recircle.in",
-    "X-Title": "ReCircle",
-  },
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 
 const SYSTEM_PROMPT = `You are ReCircle's AI Sustainability Advisor. You help users in India's circular economy marketplace.
 You can search for materials, find matches, estimate environmental impact, suggest reuse ideas, and more.
@@ -18,128 +11,106 @@ You also provide repair guides when asked — e.g., "How to fix a wobbly table",
 "How to restore wooden furniture". Give step-by-step repair instructions with estimated cost and tools needed.
 You understand cross-industry symbiosis — you can explain how one industry's waste becomes another's input.`
 
-const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
+const tools: Tool[] = [{
+  functionDeclarations: [
+    {
       name: "search_materials",
       description: "Search marketplace for available materials",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         properties: {
-          query: { type: "string", description: "Search query" },
-          category: { type: "string", description: "Category name" },
-          city: { type: "string", description: "City name in India" },
-          radius_km: { type: "number", description: "Search radius in km" },
+          query: { type: SchemaType.STRING, description: "Search query" },
+          category: { type: SchemaType.STRING, description: "Category name" },
+          city: { type: SchemaType.STRING, description: "City name in India" },
+          radius_km: { type: SchemaType.NUMBER, description: "Search radius in km" },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "get_impact_estimate",
       description: "Estimate CO2 and ₹ impact of reusing a material",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["category", "weight_kg"],
         properties: {
-          category: { type: "string" },
-          weight_kg: { type: "number" },
-          quantity: { type: "number" },
+          category: { type: SchemaType.STRING },
+          weight_kg: { type: SchemaType.NUMBER },
+          quantity: { type: SchemaType.NUMBER },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "suggest_reuse_ideas",
       description: "Suggest specific reuse ideas for a material in Indian context",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["material_type", "condition"],
         properties: {
-          material_type: { type: "string" },
-          condition: { type: "string", enum: ["new", "like_new", "good", "fair", "salvage"] },
+          material_type: { type: SchemaType.STRING },
+          condition: { type: SchemaType.STRING, description: "enum of: new, like_new, good, fair, salvage" },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "find_repair_hubs",
       description: "Find nearby repair hubs in a city",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["city"],
         properties: {
-          city: { type: "string" },
-          category: { type: "string", description: "What type of repair" },
+          city: { type: SchemaType.STRING },
+          category: { type: SchemaType.STRING, description: "What type of repair" },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "get_demand_forecast",
       description: "Get demand forecast for a category in a city",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["category", "city"],
         properties: {
-          category: { type: "string" },
-          city: { type: "string" },
+          category: { type: SchemaType.STRING },
+          city: { type: SchemaType.STRING },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "get_symbiosis_suggestions",
       description: "Get cross-industry symbiosis suggestions — what industry can use this waste",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["waste_type"],
         properties: {
-          waste_type: { type: "string", description: "Type of waste/material" },
+          waste_type: { type: SchemaType.STRING, description: "Type of waste/material" },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "get_want_board",
       description: "Get open want requests from the Want Board",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         properties: {
-          category: { type: "string" },
-          city: { type: "string" },
+          category: { type: SchemaType.STRING },
+          city: { type: SchemaType.STRING },
         },
       },
     },
-  },
-  {
-    type: "function",
-    function: {
+    {
       name: "get_repair_guide",
       description: "Generate a step-by-step repair guide for a material",
       parameters: {
-        type: "object",
+        type: SchemaType.OBJECT,
         required: ["material", "issue"],
         properties: {
-          material: { type: "string", description: "What material/item to repair" },
-          issue: { type: "string", description: "What the problem is" },
+          material: { type: SchemaType.STRING, description: "What material/item to repair" },
+          issue: { type: SchemaType.STRING, description: "What the problem is" },
         },
       },
     },
-  },
-]
+  ]
+}]
 
 // Tool implementations
 async function executeTool(name: string, args: any): Promise<string> {
@@ -290,58 +261,68 @@ export async function runAdvisorAgent(
   userId: string,
   history: AdvisorMessage[]
 ): Promise<{ reply: string; toolsUsed: string[] }> {
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...history.map(m => ({ role: m.role, content: m.content })),
-    { role: "user", content: userMessage },
-  ]
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction: SYSTEM_PROMPT,
+    tools
+  })
 
   const toolsUsed: string[] = []
 
-  // First call
-  let response = await openai.chat.completions.create({
-    model: "openai/gpt-4o-mini",
-    messages,
-    tools,
-    tool_choice: "auto",
-    max_tokens: 1000,
-  })
-
-  let assistantMessage = response.choices[0].message
-
-  // Agentic loop — max 3 rounds of tool calls
-  for (let round = 0; round < 3; round++) {
-    if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) break
-
-    messages.push(assistantMessage)
-
-    // Execute all tool calls
-    const toolResults: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = []
-    for (const call of assistantMessage.tool_calls) {
-      const args = JSON.parse(call.function.arguments)
-      const result = await executeTool(call.function.name, args)
-      toolsUsed.push(call.function.name)
-      toolResults.push({
-        role: "tool",
-        tool_call_id: call.id,
-        content: result,
-      })
+  const geminiHistory: { role: string; parts: { text: string }[] }[] = []
+  for (const m of history) {
+    const role = m.role === "user" ? "user" : "model"
+    if (geminiHistory.length === 0 && role !== "user") continue
+    if (geminiHistory.length > 0 && geminiHistory[geminiHistory.length - 1].role === role) {
+      geminiHistory[geminiHistory.length - 1].parts[0].text += "\n\n" + m.content
+    } else {
+      geminiHistory.push({ role, parts: [{ text: m.content }] })
     }
-
-    messages.push(...toolResults)
-
-    // Continue conversation
-    response = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
-      messages,
-      tools,
-      tool_choice: "auto",
-      max_tokens: 1000,
-    })
-    assistantMessage = response.choices[0].message
   }
 
-  const reply = assistantMessage.content ?? "I'm sorry, I couldn't generate a response."
+  const chat = model.startChat({
+    history: geminiHistory,
+    generationConfig: { maxOutputTokens: 1000 },
+  })
+
+  let responseText = ""
+  try {
+    let result = await chat.sendMessage([{ text: userMessage }])
+
+    // Agentic loop — max 3 rounds of tool calls
+    for (let round = 0; round < 3; round++) {
+      const toolCalls = result.response.functionCalls()
+      if (!toolCalls || toolCalls.length === 0) {
+        responseText = result.response.text()
+        break
+      }
+
+      const functionResponses = []
+      for (const call of toolCalls) {
+        // Handle object arguments parsing explicitly if needed by Gemini wrapper though it is usually an object already
+        const args = call.args
+        const resultArgs = await executeTool(call.name, args)
+        toolsUsed.push(call.name)
+        functionResponses.push({
+          functionResponse: {
+            name: call.name,
+            response: { result: resultArgs },
+          },
+        })
+      }
+
+      result = await chat.sendMessage(functionResponses)
+    }
+
+    if (!responseText && result.response) {
+      responseText = result.response.text()
+    }
+  } catch (err: any) {
+    console.error("Advisor Error:", err.message, err.stack)
+    responseText = "I'm sorry, I couldn't generate a response at this time."
+  }
+
+  const reply = responseText || "I'm sorry, I couldn't generate a response."
 
   // Save to chat history
   try {
