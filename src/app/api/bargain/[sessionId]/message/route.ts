@@ -56,8 +56,20 @@ export async function POST(
       data: { messageCount: { increment: 1 } },
     })
 
-    // Run the AI bargain agent
-    const aiResponse = await runBargainAgent(message.trim(), sessionId)
+    // Run the AI bargain agent (with fallback on failure)
+    let aiResponse
+    try {
+      aiResponse = await runBargainAgent(message.trim(), sessionId)
+    } catch (agentError: any) {
+      console.error("[Bargain Agent] Failed:", agentError?.message || agentError)
+      // Provide a basic fallback so the user isn't stuck
+      aiResponse = {
+        message: "I'm having a moment — could you try sending your offer again? 🙏",
+        currentOffer: null,
+        status: "negotiating" as const,
+        tactic: "concession",
+      }
+    }
 
     // Save AI response
     await prisma.bargainMessage.create({

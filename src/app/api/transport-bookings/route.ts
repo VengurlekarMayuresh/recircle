@@ -15,11 +15,22 @@ export async function GET(req: NextRequest) {
         OR: [
           { receiverId: userId },
           { transporter: { userId } },
+          { transaction: { supplierId: userId } },
         ],
       },
       include: {
-        transporter: { include: { user: { select: { name: true, avatarUrl: true } } } },
-        transaction: { include: { material: { select: { title: true } } } },
+        transporter: {
+          include: {
+            user: { select: { id: true, name: true, phone: true, avatarUrl: true } },
+          },
+        },
+        transaction: {
+          include: {
+            material: { select: { title: true, images: true } },
+            supplier: { select: { id: true, name: true, phone: true, city: true } },
+            receiver: { select: { id: true, name: true, phone: true, city: true } },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     })

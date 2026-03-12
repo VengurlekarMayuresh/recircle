@@ -22,15 +22,28 @@ export async function GET(req: NextRequest) {
 
     const userId = session.user.id
 
-    // Get volunteer's transporter profile
+    // Get volunteer's transporter profile with user location
     const transporter = await prisma.transporter.findUnique({
       where: { userId },
-      include: { verification: true },
+      include: {
+        verification: true,
+        user: { select: { locationLat: true, locationLng: true } },
+      },
     })
 
     if (!transporter || !transporter.isVolunteer) {
       return NextResponse.json({ error: "Not a registered volunteer" }, { status: 403 })
     }
+
+    // Cleanup: auto-cancel stale pending_approval bookings older than 24h
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    await prisma.transportBooking.deleteMany({
+      where: {
+        status: "pending_approval",
+        createdAt: { lt: twentyFourHoursAgo },
+        transporter: { isVolunteer: true },
+      },
+    }).catch(() => {})
 
     // Find unclaimed transactions needing platform transport
     const transactions = await prisma.transaction.findMany({
@@ -76,7 +89,15 @@ export async function GET(req: NextRequest) {
 
         if (!cityMatch) return null
 
-        // Calculate distances
+        // Check if pickup is within volunteer's service radius
+        const volLat = transporter.user?.locationLat
+        const volLng = transporter.user?.locationLng
+        if (volLat && volLng && pickupLat && pickupLng) {
+          const distToPickup = haversineDistance(volLat, volLng, pickupLat, pickupLng)
+          if (distToPickup > transporter.serviceRadiusKm) return null
+        }
+
+        // Calculate delivery distance
         let estimatedDistance = 0
         if (pickupLat && pickupLng && deliveryLat && deliveryLng) {
           estimatedDistance = haversineDistance(pickupLat, pickupLng, deliveryLat, deliveryLng)
