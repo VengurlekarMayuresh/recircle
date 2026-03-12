@@ -218,7 +218,7 @@ export async function runBargainAgent(
   let content = ""
   try {
     const response = await openai.chat.completions.create({
-      model: "openai/gpt-oss-120b:free",
+      model: "openai/gpt-4o-mini",
       messages: conversationMessages,
       max_tokens: 500,
       temperature: 0.7,

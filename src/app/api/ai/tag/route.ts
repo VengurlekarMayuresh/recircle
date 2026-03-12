@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         "X-Title": "ReCircle",
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b:free",
+        model: "openai/gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
     const data = await response.json()
     let tags: string[] = []
-    
+
     try {
       const content = data.choices?.[0]?.message?.content || "{}"
       const parsed = JSON.parse(content)

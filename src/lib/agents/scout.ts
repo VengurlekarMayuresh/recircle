@@ -17,7 +17,7 @@ async function callAI(messages: any[]): Promise<string> {
         "X-Title": "ReCircle"
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b:free",
+        model: "openai/gpt-4o-mini",
         messages,
         max_tokens: 500,
         temperature: 0.7

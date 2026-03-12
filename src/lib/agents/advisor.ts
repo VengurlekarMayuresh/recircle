@@ -300,7 +300,7 @@ export async function runAdvisorAgent(
 
   // First call
   let response = await openai.chat.completions.create({
-    model: "openai/gpt-oss-120b:free",
+    model: "openai/gpt-4o-mini",
     messages,
     tools,
     tool_choice: "auto",
@@ -332,7 +332,7 @@ export async function runAdvisorAgent(
 
     // Continue conversation
     response = await openai.chat.completions.create({
-      model: "openai/gpt-oss-120b:free",
+      model: "openai/gpt-4o-mini",
       messages,
       tools,
       tool_choice: "auto",
