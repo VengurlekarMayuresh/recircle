@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" })
 
     const prompt = `You are an expert in circular economy and material recycling. 
 Analyze the provided material title and description. 

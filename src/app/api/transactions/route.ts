@@ -17,8 +17,9 @@ export async function GET(req: Request) {
       },
       include: {
         material: { include: { category: true } },
-        supplier: { select: { id: true, name: true, avatarUrl: true, city: true, trustScore: true } },
-        receiver: { select: { id: true, name: true, avatarUrl: true, city: true, trustScore: true } },
+        supplier: { select: { id: true, name: true, avatarUrl: true, city: true, phone: true, trustScore: true } },
+        receiver: { select: { id: true, name: true, avatarUrl: true, city: true, phone: true, trustScore: true } },
+        transportBooking: { select: { id: true, status: true } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 }
       },
       orderBy: { createdAt: "desc" }

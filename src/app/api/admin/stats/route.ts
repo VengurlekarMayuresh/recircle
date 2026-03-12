@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       totalCo2SavedData,
       openDisputes,
       flaggedListings,
+      pendingVerifications,
       recentActivityData
     ] = await Promise.all([
       prisma.user.count(),
@@ -25,6 +26,7 @@ export async function GET(req: Request) {
       prisma.material.aggregate({ _sum: { co2SavedKg: true } }),
       prisma.dispute.count({ where: { status: "open" } }),
       prisma.fraudFlag.count({ where: { status: "pending" } }),
+      prisma.volunteerVerification.count({ where: { status: "pending" } }),
       // Fetch some recent agent logs
       prisma.agentLog.findMany({
         take: 10,
@@ -42,6 +44,7 @@ export async function GET(req: Request) {
         totalCo2Saved,
         openDisputes,
         flaggedListings,
+        pendingVerifications,
       },
       recentActivity: recentActivityData,
     });

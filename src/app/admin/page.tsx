@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Package, ArrowLeftRight, Settings, AlertTriangle, ShieldAlert, Activity, LayoutDashboard, Truck } from "lucide-react";
+import { Users, Package, ArrowLeftRight, Settings, AlertTriangle, ShieldAlert, Activity, LayoutDashboard, Truck, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 interface AdminStats {
@@ -12,6 +12,7 @@ interface AdminStats {
   totalCo2Saved: number;
   openDisputes: number;
   flaggedListings: number;
+  pendingVerifications: number;
 }
 
 export default function AdminOverviewPage() {
@@ -136,6 +137,40 @@ export default function AdminOverviewPage() {
               ) : (
                 <p className="text-xs text-amber-900 font-medium mt-1">Manage open disputes</p>
               )}
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+        <Link href="/admin/verifications" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-cyan-500/10 to-sky-500/10 hover:from-cyan-500/20 hover:to-sky-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-cyan-900">🛡️ Volunteer Verifications</CardTitle>
+              <ShieldCheck className={stats?.pendingVerifications ? "h-4 w-4 text-cyan-800 animate-pulse" : "h-4 w-4 text-cyan-900/30"} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold ${stats?.pendingVerifications ? "text-cyan-900" : "text-cyan-900/40"}`}>
+                {stats?.pendingVerifications || 0}
+              </div>
+              {stats && stats.pendingVerifications > 0 ? (
+                <p className="text-xs text-cyan-900 mt-1 font-black">Pending approval</p>
+              ) : (
+                <p className="text-xs text-cyan-900 font-medium mt-1">Review volunteer documents</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/transporters" className="hover:scale-105 transition-transform">
+          <Card className="h-full border-none bg-gradient-to-br from-slate-500/10 to-gray-500/10 hover:from-slate-500/20 hover:to-gray-500/20 transition-colors cursor-pointer shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-bold text-slate-900">🚛 Transporters</CardTitle>
+              <Truck className="h-4 w-4 text-slate-900" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-slate-900">—</div>
+              <p className="text-xs text-slate-900 font-medium mt-1">Manage transporters</p>
             </CardContent>
           </Card>
         </Link>

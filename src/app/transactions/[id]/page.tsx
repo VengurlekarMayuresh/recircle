@@ -32,6 +32,7 @@ export default function TransactionMessagesPage() {
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState("")
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -126,6 +127,21 @@ export default function TransactionMessagesPage() {
   const otherParty = isBuyer ? transaction.supplier : transaction.receiver
   const sc = STATUS_CONFIG[transaction.status] || STATUS_CONFIG.scheduled
   const messages = transaction.messages || []
+  const canConfirm = isBuyer && ["negotiating", "scheduled", "delivered"].includes(transaction.status)
+
+  const handleConfirm = async () => {
+    setConfirming(true)
+    try {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "confirmed" }),
+      })
+      if (res.ok) await fetchTransaction()
+    } finally {
+      setConfirming(false)
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col" style={{ height: "calc(100vh - 80px)" }}>
@@ -181,6 +197,11 @@ export default function TransactionMessagesPage() {
                   <div>
                     <p className="text-xs text-gray-400">{isBuyer ? "Seller" : "Buyer"}</p>
                     <p className="text-sm font-semibold text-gray-800">{otherParty?.name}</p>
+                    {otherParty?.phone && (
+                      <a href={`tel:${otherParty.phone}`} className="text-xs text-blue-600 hover:underline flex items-center gap-1 justify-end">
+                        <Phone className="w-3 h-3" /> {otherParty.phone}
+                      </a>
+                    )}
                   </div>
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={otherParty?.avatarUrl} />
@@ -191,6 +212,23 @@ export default function TransactionMessagesPage() {
                 </div>
               </div>
             </div>
+
+            {/* Action buttons */}
+            {canConfirm && (
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <p className="text-xs text-gray-500">Received the material? Mark this transaction as complete.</p>
+                <Button size="sm" onClick={handleConfirm} disabled={confirming}
+                  className="bg-blue-600 hover:bg-blue-700 text-xs h-8 gap-1">
+                  {confirming ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                  Confirm Received
+                </Button>
+              </div>
+            )}
+            {transaction.status === "confirmed" && (
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-emerald-700 text-xs">
+                <CheckCircle className="w-4 h-4" /> Transaction completed — material received
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
