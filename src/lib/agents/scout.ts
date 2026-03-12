@@ -46,9 +46,12 @@ export async function runScoutAgent(materialId: number): Promise<void> {
 
     // 2. Compute Reuse Potential Score (RPS)
     const totalOpenRequests = await prisma.wantRequest.count({ where: { status: "open" } })
-    const categoryRequests = await prisma.wantRequest.count({
-      where: { status: "open", categoryId: material.categoryId }
-    })
+    let categoryRequests = 0
+    if (material.categoryId) {
+      categoryRequests = await prisma.wantRequest.count({
+        where: { status: "open", categoryId: material.categoryId }
+      })
+    }
     const categoryDemand = totalOpenRequests > 0 ? categoryRequests / totalOpenRequests : 0
 
     const conditionFactors: Record<string, number> = {
@@ -116,11 +119,11 @@ export async function runScoutAgent(materialId: number): Promise<void> {
     logData.route = routeResult.route
 
     // 5. Find top matches
-    const openRequests = await prisma.wantRequest.findMany({
+    const openRequests = material.categoryId ? await prisma.wantRequest.findMany({
       where: { status: "open", categoryId: material.categoryId },
       include: { user: true },
       take: 20
-    })
+    }) : []
 
     interface ScoredRequest {
       request: typeof openRequests[0]

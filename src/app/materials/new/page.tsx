@@ -45,11 +45,6 @@ export default function CreateListingPage() {
       setIsAnalyzing(true)
       setTimeout(() => {
         setIsAnalyzing(false)
-        setFormData(prev => ({
-          ...prev,
-          title: "Premium Construction Bricks",
-          description: "High-quality burnt clay bricks detected. Standard size, structurally sound.",
-        }))
         toast({
           title: "AI Analysis Complete",
           description: "Vison AI identified your material!",
