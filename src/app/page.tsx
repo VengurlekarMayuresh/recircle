@@ -1,25 +1,35 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { ArrowRight, Leaf, Recycle, Heart, Shield, Award, Trash2, Zap } from "lucide-react"
 
 export default function LandingPage() {
+  const [statsData, setStatsData] = useState<any>(null)
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/dashboard/stats")
+        if (res.ok) {
+          const data = await res.json()
+          setStatsData(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch landing page stats:", err)
+      }
+    }
+    fetchStats()
+  }, [])
+
   const stats = [
-    { label: "Materials Reused", value: "12,450+", icon: Recycle },
-    { label: "kg CO₂ Saved", value: "85,200", icon: Leaf },
-    { label: "₹ Saved", value: "₹4.2M", icon: Zap },
+    { label: "Materials Reused", value: statsData?.total_materials?.toLocaleString() || "...", icon: Recycle },
+    { label: "kg CO₂ Saved", value: statsData?.co2_saved?.toLocaleString() || "...", icon: Leaf },
+    { label: "Scrap Diverted (kg)", value: `${statsData?.kg_diverted?.toLocaleString() || "..."}`, icon: Trash2 },
   ]
 
-  const categories = [
-    { name: "Construction", icon: ArrowRight, color: "bg-orange-100 text-orange-600" },
-    { name: "Furniture", icon: ArrowRight, color: "bg-blue-100 text-blue-600" },
-    { name: "Packaging", icon: ArrowRight, color: "bg-emerald-100 text-emerald-600" },
-    { name: "Electronics", icon: ArrowRight, color: "bg-purple-100 text-purple-600" },
-    { name: "Industrial", icon: ArrowRight, color: "bg-gray-100 text-gray-600" },
-    { name: "Textiles", icon: ArrowRight, color: "bg-rose-100 text-rose-600" },
-  ]
 
   return (
     <div className="flex flex-col w-full overflow-hidden">
@@ -64,23 +74,32 @@ export default function LandingPage() {
 
       {/* Animated Stats Bar */}
       <section className="bg-emerald-900 py-12 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {stats.map((stat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="flex flex-col items-center text-center space-y-2"
-            >
-              <div className="bg-emerald-800 p-3 rounded-2xl mb-2">
-                <stat.icon className="w-8 h-8 text-emerald-400" />
-              </div>
-              <span className="text-4xl font-bold text-white tracking-tight">{stat.value}</span>
-              <span className="text-emerald-300 font-medium uppercase tracking-widest text-sm">{stat.label}</span>
-            </motion.div>
-          ))}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {stats.map((stat, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="flex flex-col items-center text-center space-y-2"
+              >
+                <div className="bg-emerald-800 p-3 rounded-2xl mb-2">
+                  <stat.icon className="w-8 h-8 text-emerald-400" />
+                </div>
+                <span className="text-4xl font-bold text-white tracking-tight">{stat.value}</span>
+                <span className="text-emerald-300 font-medium uppercase tracking-widest text-sm">{stat.label}</span>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-12 text-center">
+            <Link href="/dashboard">
+              <Button size="lg" variant="outline" className="bg-transparent border-emerald-400 text-emerald-400 hover:bg-emerald-800 hover:text-white rounded-full">
+                View Full Details <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -125,24 +144,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Category Showcase */}
-      <section className="py-24 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {categories.map((cat, idx) => (
-            <Link key={idx} href={`/marketplace?category=${cat.name.toLowerCase()}`}>
-              <motion.div
-                whileHover={{ y: -5 }}
-                className={`${cat.color} p-6 rounded-3xl flex flex-col items-center justify-center space-y-3 cursor-pointer shadow-sm border border-white/20`}
-              >
-                <div className="bg-white/50 p-3 rounded-full">
-                  <cat.icon className="w-6 h-6" />
-                </div>
-                <span className="font-bold text-sm tracking-wide">{cat.name}</span>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-20 px-4 bg-emerald-600 relative overflow-hidden">

@@ -358,7 +358,7 @@ function BargainInboxContent() {
         <div className="p-4 border-b border-gray-100">
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
-            Negotiations
+            Deals
           </h1>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
