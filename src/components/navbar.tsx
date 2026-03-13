@@ -26,6 +26,7 @@ export default function Navbar() {
       return (
         <>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
           <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
           <Link href="/faq" className="text-gray-600 hover:text-emerald-600 font-medium">FAQ</Link>
         </>
@@ -36,6 +37,7 @@ export default function Navbar() {
       return (
         <>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
           <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
           <Link href="/admin" className="text-gray-600 hover:text-emerald-600 font-medium">Admin Panel</Link>
         </>
@@ -48,6 +50,7 @@ export default function Navbar() {
           <Link href="/volunteer/available" className="text-gray-600 hover:text-emerald-600 font-medium">Available Deliveries</Link>
           <Link href="/volunteer/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">My Deliveries</Link>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
           <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
         </>
       )
@@ -57,6 +60,7 @@ export default function Navbar() {
       return (
         <>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
           <Link href="/transporters/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">My Deliveries</Link>
           <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
         </>
@@ -67,20 +71,17 @@ export default function Navbar() {
       return (
         <>
           <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+          <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
           <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
         </>
       )
     }
 
-    // individual, ngo
     return (
       <>
         <Link href="/marketplace" className="text-gray-600 hover:text-emerald-600 font-medium">Marketplace</Link>
+        <Link href="/suppliers-desk" className="text-gray-600 hover:text-emerald-600 font-medium">Suppliers Desk</Link>
         <Link href="/want-board" className="text-gray-600 hover:text-emerald-600 font-medium">Want Board</Link>
-        <Link href="/materials/new" className="text-gray-600 hover:text-emerald-600 font-medium">Create Listing</Link>
-        <Link href="/bargain" className="text-gray-600 hover:text-emerald-600 font-medium">Negotiations</Link>
-        <Link href="/dashboard/my-listings" className="text-gray-600 hover:text-emerald-600 font-medium">My Listings</Link>
-        <Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 font-medium">Dashboard</Link>
       </>
     )
   }
@@ -135,22 +136,23 @@ export default function Navbar() {
                     <DropdownMenuItem asChild>
                       <Link href="/profile">My Profile</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/materials/new">Create Listing</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/my-listings">My Listings</Link>
-                    </DropdownMenuItem>
-                    {user?.role === "business" ? (
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard/business/waste">Waste Tracking</Link>
-                      </DropdownMenuItem>
-                    ) : (
+                    {user?.role === "business" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/my-deals">My Deals</Link>
+                          <Link href="/materials/new">Create Listing</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/my-listings">My Listings</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/business/waste">Waste Tracking</Link>
                         </DropdownMenuItem>
                       </>
+                    )}
+                    {user?.role !== "business" && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/my-deals">My Deals</Link>
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/my-impact">My Impact</Link>
@@ -202,11 +204,6 @@ export default function Navbar() {
           {status === "authenticated" ? (
             <div className="flex flex-col space-y-4 pt-2">
               <Link href="/profile" className="text-gray-600">My Profile</Link>
-              <Link href="/materials/new" className="text-gray-600">Create Listing</Link>
-              <Link href="/dashboard/my-listings" className="text-gray-600">My Listings</Link>
-              <Link href="/bargain" className="text-gray-600 flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" /> Negotiations
-              </Link>
               {user?.role === "business" ? (
                 <Link href="/dashboard/business/waste" className="text-gray-600">Waste Tracking</Link>
               ) : (

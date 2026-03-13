@@ -9,7 +9,9 @@ Always provide specific, actionable advice. Use Indian context (₹ currency, In
 When estimating impact, always show both CO₂ AND ₹ (rupees) saved.
 You also provide repair guides when asked — e.g., "How to fix a wobbly table", "How to refurbish old electronics",
 "How to restore wooden furniture". Give step-by-step repair instructions with estimated cost and tools needed.
-You understand cross-industry symbiosis — you can explain how one industry's waste becomes another's input.`
+You understand cross-industry symbiosis — you can explain how one industry's waste becomes another's input.
+You have access to ReCircle's "Want Board" where users post requests for materials.
+You also have access to "Business Waste Tracking" data, which shows what various suppliers/businesses generate monthly.`
 
 const toolDeclarations = [
   {
@@ -105,6 +107,18 @@ const toolDeclarations = [
       properties: {
         material: { type: "string", description: "What material/item to repair" },
         issue: { type: "string", description: "What the problem is" },
+      },
+    },
+  },
+  {
+    name: "get_business_waste_tracking",
+    description: "Get waste tracking data for businesses (what they generate monthly)",
+    parametersJsonSchema: {
+      type: "object",
+      properties: {
+        business_name: { type: "string", description: "Optional: Filter by business name" },
+        city: { type: "string", description: "Optional: Filter by city" },
+        category: { type: "string", description: "Optional: Filter by category" },
       },
     },
   },
@@ -256,6 +270,47 @@ Steps:
 Cost estimate (Mumbai): Materials ₹150–300 + Labour (if hired) ₹200–400`
     }
 
+    case "get_business_waste_tracking": {
+      const where: any = { status: "active" }
+      if (args.city) {
+        where.user = { city: { contains: args.city, mode: "insensitive" } }
+      }
+      if (args.business_name) {
+        where.user = { 
+          ...where.user,
+          OR: [
+            { name: { contains: args.business_name, mode: "insensitive" } },
+            { orgName: { contains: args.business_name, mode: "insensitive" } }
+          ]
+        }
+      }
+      if (args.category) {
+        where.category = { name: { contains: args.category, mode: "insensitive" } }
+      }
+
+      const streams = await prisma.businessWasteStream.findMany({
+        where,
+        take: 10,
+        include: {
+          user: { select: { name: true, orgName: true, city: true } },
+          category: { select: { name: true } }
+        },
+        orderBy: { lastUpdated: "desc" }
+      })
+
+      if (streams.length === 0) return "No business waste tracking data found for your search."
+
+      return JSON.stringify(streams.map(s => ({
+        business: s.user.orgName || s.user.name,
+        city: s.user.city,
+        category: s.category.name,
+        title: s.title,
+        description: s.description,
+        monthly_volume: `${s.monthlyVolumeKg} ${s.unit}`,
+        last_updated: s.lastUpdated
+      })))
+    }
+
     default:
       return `Tool ${name} not implemented.`
   }
@@ -340,8 +395,8 @@ export async function runAdvisorAgent(
   try {
     await prisma.chatHistory.createMany({
       data: [
-        { userId, role: "user", content: userMessage },
-        { userId, role: "assistant", content: reply, toolCalls: toolsUsed.length > 0 ? JSON.stringify(toolsUsed) : null },
+        { userId: userId || "anonymous", role: "user", content: userMessage || "" },
+        { userId: userId || "anonymous", role: "assistant", content: reply, toolCalls: toolsUsed.length > 0 ? JSON.stringify(toolsUsed) : null },
       ],
     })
     await prisma.agentLog.create({

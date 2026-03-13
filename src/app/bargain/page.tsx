@@ -41,7 +41,7 @@ interface ConversationItem {
 }
 
 interface ThreadMessage {
-  role: "buyer" | "assistant"
+  role: "buyer" | "assistant" | "seller"
   content: string
   metadata?: { currentOffer?: number; tactic?: string } | null
   createdAt: string
@@ -156,9 +156,14 @@ function BargainInboxContent() {
 
     const paramSessionId = searchParams.get("sessionId")
     const paramMaterialId = searchParams.get("materialId")
+    const paramStreamId = searchParams.get("streamId")
+    const paramSupplierId = searchParams.get("supplierId")
+    const paramIntent = searchParams.get("intent")
 
     if (paramSessionId) {
       openThread(paramSessionId)
+    } else if (paramIntent === "waste_stream" && paramStreamId && paramSupplierId) {
+      startSessionFromStream(paramStreamId, paramSupplierId)
     } else if (paramMaterialId) {
       // Find existing session for this material, or start new one
       const existing = conversations.find(
@@ -222,6 +227,33 @@ function BargainInboxContent() {
     }
   }
 
+  // Start chat from a Waste Stream
+  const startSessionFromStream = async (streamId: string, supplierId: string) => {
+    setStartingNew(true)
+    setMobileShowThread(true)
+    setError("")
+    try {
+      const res = await fetch("/api/bargain/start-from-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ streamId, supplierId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.message || "Failed to start chat with supplier")
+        setStartingNew(false)
+        return
+      }
+      // Reload list and open the new thread
+      await fetchConversations()
+      openThread(data.sessionId)
+    } catch {
+      setError("Failed to connect to supplier")
+    } finally {
+      setStartingNew(false)
+    }
+  }
+
   // Scroll on new messages
   useEffect(() => { scrollToBottom() }, [thread?.messages])
 
@@ -258,14 +290,18 @@ function BargainInboxContent() {
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input.trim()
     if (!text || !activeSessionId || sending) return
-    if (!thread?.isBuyer || thread?.status !== "active") return
+    
+    // Allow if active and user is either buyer or seller
+    const canUserSend = thread?.status === "active" && (thread.isBuyer || thread.isSeller)
+    if (!canUserSend) return
 
     setInput("")
     setError("")
 
     // Optimistic update
-    const buyerMsg: ThreadMessage = { role: "buyer", content: text, createdAt: new Date().toISOString() }
-    setThread((prev) => prev ? { ...prev, messages: [...prev.messages, buyerMsg] } : prev)
+    const role = thread.isBuyer ? "buyer" : "seller"
+    const myMsg: ThreadMessage = { role, content: text, createdAt: new Date().toISOString() }
+    setThread((prev) => prev ? { ...prev, messages: [...prev.messages, myMsg] } : prev)
     setSending(true)
 
     try {
@@ -280,19 +316,31 @@ function BargainInboxContent() {
         return
       }
 
-      const aiMsg: ThreadMessage = {
-        role: "assistant",
-        content: data.reply,
-        metadata: { currentOffer: data.currentOffer, tactic: data.tactic },
-        createdAt: new Date().toISOString(),
+      // If there's an AI reply, add it
+      if (data.reply) {
+        const aiMsg: ThreadMessage = {
+          role: "assistant",
+          content: data.reply,
+          metadata: { currentOffer: data.currentOffer, tactic: data.tactic },
+          createdAt: new Date().toISOString(),
+        }
+        setThread((prev) => {
+          if (!prev) return prev
+          const updated = { ...prev, messages: [...prev.messages, aiMsg] }
+          if (data.status && data.status !== "negotiating") updated.status = data.status
+          if (data.status === "agreed" && data.currentOffer) updated.agreedPrice = data.currentOffer
+          return updated
+        })
+      } else {
+        // No AI reply (human only or seller sent a message)
+        // Just update status if it changed
+        setThread((prev) => {
+          if (!prev) return prev
+          const updated = { ...prev }
+          if (data.status && data.status !== "negotiating") updated.status = data.status
+          return updated
+        })
       }
-      setThread((prev) => {
-        if (!prev) return prev
-        const updated = { ...prev, messages: [...prev.messages, aiMsg] }
-        if (data.status && data.status !== "negotiating") updated.status = data.status
-        if (data.status === "agreed" && data.currentOffer) updated.agreedPrice = data.currentOffer
-        return updated
-      })
 
       // Optimistically update sidebar conversation status
       if (data.status && data.status !== "negotiating") {
@@ -348,7 +396,7 @@ function BargainInboxContent() {
   }
 
   const isEnded = thread && ["agreed", "rejected", "closed"].includes(thread.status)
-  const canSend = thread?.isBuyer && thread?.status === "active"
+  const canSend = (thread?.isBuyer || thread?.isSeller) && thread?.status === "active"
 
   return (
     <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-gray-50">
@@ -548,7 +596,7 @@ function BargainInboxContent() {
               {thread.messages.map((msg, i) => {
                 // Date separator
                 const showDate = i === 0 || dateSeparator(msg.createdAt) !== dateSeparator(thread.messages[i - 1].createdAt)
-                const isMine = (thread.isBuyer && msg.role === "buyer") || (thread.isSeller && msg.role === "assistant")
+                const isMine = (thread.isBuyer && msg.role === "buyer") || (thread.isSeller && msg.role === "seller")
 
                 return (
                   <div key={i}>
@@ -561,7 +609,7 @@ function BargainInboxContent() {
                     )}
                     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
                       <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                        msg.role === "buyer"
+                        isMine
                           ? "bg-emerald-600 text-white rounded-br-md"
                           : "bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100"
                       }`}>

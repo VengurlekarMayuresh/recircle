@@ -21,16 +21,20 @@ export async function POST(
       return NextResponse.json({ message: "Message is required" }, { status: 400 })
     }
 
-    // Verify the session belongs to this buyer
+    // Verify permission: sender must be buyer or seller
     const bargainSession = await prisma.bargainSession.findUnique({
       where: { id: sessionId },
+      include: { material: { select: { userId: true } } }
     })
 
     if (!bargainSession) {
       return NextResponse.json({ message: "Session not found" }, { status: 404 })
     }
 
-    if (bargainSession.buyerId !== session.user.id) {
+    const isBuyer = bargainSession.buyerId === session.user.id
+    const isSeller = bargainSession.material.userId === session.user.id
+
+    if (!isBuyer && !isSeller) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -41,11 +45,13 @@ export async function POST(
       }, { status: 400 })
     }
 
-    // Save buyer's message
+    const role = isBuyer ? "buyer" : "seller"
+
+    // Save message
     await prisma.bargainMessage.create({
       data: {
         sessionId,
-        role: "buyer",
+        role,
         content: message.trim(),
       },
     })
@@ -56,13 +62,23 @@ export async function POST(
       data: { messageCount: { increment: 1 } },
     })
 
-    // Run the AI bargain agent (with fallback on failure)
+    // Skip AI agent if:
+    // 1. Negotiation is human-only (direct chat)
+    // 2. The sender is the seller (don't want bot to reply to seller's own message immediately)
+    if (bargainSession.negotiationStyle === "human" || isSeller) {
+      return NextResponse.json({
+        reply: null,
+        status: bargainSession.status,
+        humanOnly: true
+      })
+    }
+
+    // Run the AI bargain agent for buyers in AI-enabled sessions
     let aiResponse
     try {
       aiResponse = await runBargainAgent(message.trim(), sessionId)
     } catch (agentError: any) {
       console.error("[Bargain Agent] Failed:", agentError?.message || agentError)
-      // Provide a basic fallback so the user isn't stuck
       aiResponse = {
         message: "I'm having a moment — could you try sending your offer again? 🙏",
         currentOffer: null,
@@ -84,7 +100,7 @@ export async function POST(
       },
     })
 
-    // Update message count again (for assistant message)
+    // Update message count again
     await prisma.bargainSession.update({
       where: { id: sessionId },
       data: { messageCount: { increment: 1 } },
