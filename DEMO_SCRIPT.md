@@ -322,6 +322,62 @@ Use these when the judges ask questions or when you're explaining between screen
 - Sankey diagram visualizes the full material lifecycle: Source → Category → Destination
 - ESG report page lets businesses export their sustainability data for CSR compliance
 
+### How We Calculate Sustainability Metrics (If Asked "How Are These Numbers Calculated?")
+
+Say: *"We use India-specific emission factors from CPCB (Central Pollution Control Board) and TERI research. Every material category has its own CO₂ factor, water factor, and new-cost baseline. Here's how it works in simple terms:"*
+
+**CO₂ Saved:**
+- Logic: "When you reuse 1 tonne of construction bricks instead of making new ones, you save 0.9 tonnes of CO₂ — because you avoided the mining, kiln-firing, and transport of new bricks."
+- Formula: `weight in tonnes × CO₂ factor per tonne = kg CO₂ saved`
+- Example: 2400 kg of bricks → (2400/1000) × 0.9 × 1000 = **2,160 kg CO₂ saved**
+- Each category has a different factor because different materials have different manufacturing emissions:
+  - Construction: **0.9** kg CO₂/kg (low — bricks & cement are heavy but simple to make)
+  - Furniture: **3.5** (wood processing, finishing, transport)
+  - Packaging: **1.2** (cardboard production)
+  - Electronics: **20.0** (highest — mining rare earth metals, complex manufacturing)
+  - Industrial: **4.0** (heavy machinery, energy-intensive)
+  - Textiles: **15.0** (cotton farming, dyeing, water treatment)
+  - Metals: **6.0** (smelting, refining)
+  - Wood: **1.8** (logging, sawing, treatment)
+
+**Water Saved:**
+- Logic: "Manufacturing new textiles uses enormous amounts of water — dyeing alone uses ~2700 liters per tonne. When you reuse textiles, all that water is saved."
+- Formula: `weight in tonnes × water factor (liters per tonne) × 1000`
+- Each category has a water factor:
+  - Textiles: **2,700** liters/tonne (highest — cotton farming + dyeing)
+  - Electronics: **1,000** liters/tonne (semiconductor fabrication)
+  - Furniture: **200** liters/tonne
+  - Industrial: **150** liters/tonne
+  - Metals: **80** liters/tonne
+  - Wood: **60** liters/tonne
+  - Construction: **50** liters/tonne
+  - Packaging: **30** liters/tonne
+
+**Rupees Saved:**
+- Logic: "We compare the price of buying these materials brand new vs. what the buyer paid on our platform. The difference is the rupees saved."
+- Formula: `new market price of the material − actual transaction price`
+- Each category has a baseline new-cost (e.g., new office chair = ₹15,000, new electronics = ₹25,000)
+
+**kg Diverted from Landfill:**
+- Simply the total weight (kg) of all materials listed on the platform
+- "Every kilogram listed here is a kilogram that didn't end up in a landfill."
+
+**Tree Equivalents:**
+- 1 tree absorbs ~21 kg of CO₂ per year
+- Formula: `total CO₂ saved ÷ 21 = number of trees equivalent`
+- "So if we saved 2,100 kg CO₂, that's like planting 100 trees."
+
+**Green Points:**
+- Formula: `CO₂ saved (kg) + rupees saved × 0.001`
+- "It rewards both environmental and economic impact."
+
+**Where do these factors come from?**
+- Say: *"The CO₂ and water factors are based on CPCB (Central Pollution Control Board) emission data and TERI (The Energy and Resources Institute) research — these are India-specific, not global averages. For example, India's brick kilns are less efficient than European ones, so the construction CO₂ factor reflects Indian manufacturing reality."*
+- The factors are stored in our database per category — so if CPCB updates their data, we just update the category table and all calculations auto-adjust
+
+**Quick Example for Judges:**
+> "Let's say someone lists 500 meters of surplus cotton fabric weighing 150 kg. Our system calculates: 150 kg × 15.0 CO₂ factor = 2,250 kg CO₂ saved. That's like planting 107 trees. Water saved: 150 × 2,700 = 405,000 liters — that's enough to fill 2,700 buckets. And since new cotton fabric costs ~₹350/unit, the buyer saves thousands of rupees. All of this shows up on the dashboard and in the ESG report automatically."
+
 ### Gamification (If Asked "How Do You Drive User Engagement?")
 - **Green Points** — earned for listing materials (+10), completing exchanges (+25), volunteer deliveries (+50), getting reviews (+5)
 - **Levels** — Seedling → Sprout → Sapling → Tree → Forest (based on Green Points)
