@@ -65,6 +65,7 @@ export async function GET(
       },
       counterparty,
       sellerName: bargainSession.material.user.name,
+      negotiationStyle: bargainSession.negotiationStyle,
       messages: bargainSession.messages.map((m) => ({
         role: m.role,
         content: m.role === "assistant"

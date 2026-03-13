@@ -183,7 +183,7 @@ export default function WantBoardPage() {
                     Needs: {req.quantityNeeded} units
                   </span>
                   {session && (
-                    <Link href={`/materials/new?prefill=${encodeURIComponent(req.keywords || req.title)}`}>
+                    <Link href={`/bargain?intent=want_request&wantId=${req.id}`}>
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7">
                         I Have This <ChevronRight className="w-3 h-3 ml-1" />
                       </Button>

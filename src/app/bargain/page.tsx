@@ -58,6 +58,7 @@ interface ThreadData {
   material: { id: number; title: string; price: number; city: string; condition: string; image: string | null; materialStatus: string }
   counterparty: { id: string; name: string; avatarUrl: string | null; city: string | null }
   sellerName: string
+  negotiationStyle: string
   messages: ThreadMessage[]
 }
 
@@ -158,12 +159,15 @@ function BargainInboxContent() {
     const paramMaterialId = searchParams.get("materialId")
     const paramStreamId = searchParams.get("streamId")
     const paramSupplierId = searchParams.get("supplierId")
+    const paramWantId = searchParams.get("wantId")
     const paramIntent = searchParams.get("intent")
 
     if (paramSessionId) {
       openThread(paramSessionId)
     } else if (paramIntent === "waste_stream" && paramStreamId && paramSupplierId) {
       startSessionFromStream(paramStreamId, paramSupplierId)
+    } else if (paramIntent === "want_request" && paramWantId) {
+      startSessionFromWant(paramWantId)
     } else if (paramMaterialId) {
       // Find existing session for this material, or start new one
       const existing = conversations.find(
@@ -249,6 +253,33 @@ function BargainInboxContent() {
       openThread(data.sessionId)
     } catch {
       setError("Failed to connect to supplier")
+    } finally {
+      setStartingNew(false)
+    }
+  }
+
+  // Start chat from a Want Request
+  const startSessionFromWant = async (wantId: string) => {
+    setStartingNew(true)
+    setMobileShowThread(true)
+    setError("")
+    try {
+      const res = await fetch("/api/bargain/start-from-want", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wantId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.message || "Failed to start chat with requester")
+        setStartingNew(false)
+        return
+      }
+      // Reload list and open the new thread
+      await fetchConversations()
+      openThread(data.sessionId)
+    } catch {
+      setError("Failed to connect to requester")
     } finally {
       setStartingNew(false)
     }
@@ -615,7 +646,7 @@ function BargainInboxContent() {
                       }`}>
                         {msg.role === "assistant" && (
                           <p className="text-[11px] font-bold text-emerald-600 mb-1 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> {thread.sellerName}'s Assistant
+                            <Sparkles className="w-3 h-3" /> {thread.negotiationStyle === "human" ? "System Message" : `${thread.sellerName}'s Assistant`}
                           </p>
                         )}
                         {msg.role === "buyer" && thread.isSeller && (
@@ -686,8 +717,8 @@ function BargainInboxContent() {
               </div>
             )}
 
-            {/* Seller read-only banner */}
-            {thread.isSeller && thread.status === "active" && (
+            {/* AI Banner - hide if human negotiation */}
+            {thread.isSeller && thread.status === "active" && thread.negotiationStyle !== "human" && (
               <div className="px-4 py-2.5 bg-purple-50 border-t border-purple-100 text-center">
                 <p className="text-xs text-purple-700 font-medium flex items-center justify-center gap-1">
                   <Eye className="w-3.5 h-3.5" /> Your AI assistant is handling this negotiation. This is a read-only view.
