@@ -1,0 +1,585 @@
+You are a senior full-stack engineer. Your task is to design and implement a **production-quality Circular Economy Marketplace platform** using the **MERN stack (MongoDB, Express, React, Node.js)** with AI integration.
+
+The goal of the platform is to reduce waste by enabling individuals, businesses, and organizations to **redistribute reusable materials instead of discarding them**.
+
+The application should be **modular, scalable, cleanly architected, and visually impressive**, with a strong focus on sustainability impact and user experience.
+
+Do not build a simple CRUD app.
+Build a **complete intelligent circular economy platform**.
+
+---
+
+# Project Overview
+
+Cities generate large amounts of waste such as:
+
+* construction materials
+* furniture
+* electronics
+* packaging materials
+* industrial surplus
+
+Many of these materials are still usable but end up in landfills due to the lack of a redistribution system.
+
+This platform solves that problem by providing:
+
+• a **marketplace for reusable materials**
+• **AI-powered recommendations and material insights**
+• **logistics coordination and transportation marketplace**
+• **environmental impact tracking**
+
+The system must demonstrate how digital platforms can enable a **circular economy**.
+
+---
+
+# Technology Stack
+
+Frontend:
+React with modern architecture
+
+Use:
+
+* React
+* Tailwind CSS
+* Framer Motion
+* React Router
+* Axios
+* Recharts for charts
+* Leaflet for maps
+
+Backend:
+Node.js + Express
+
+Responsibilities:
+
+* authentication
+* material management
+* request processing
+* transportation booking
+* transaction tracking
+* AI integrations
+* sustainability calculations
+
+Database:
+MongoDB
+
+Use proper models with Mongoose.
+
+AI Integration:
+OpenAI API
+
+Used for:
+
+* material detection from images
+* reuse recommendations
+* sustainability assistant chatbot
+
+---
+
+# User Roles
+
+The platform must support four roles:
+
+Supplier
+Receiver
+Transporter
+Administrator
+
+---
+
+## Supplier
+
+Suppliers are users who provide surplus materials.
+
+Examples:
+
+* companies
+* construction firms
+* offices
+* warehouses
+* households
+
+Suppliers can:
+
+* create material listings
+* upload images
+* describe materials
+* manage availability
+* review requests
+* coordinate pickup
+
+---
+
+## Receiver
+
+Receivers are users who want reusable materials.
+
+Receivers can:
+
+* browse marketplace
+* search materials
+* filter by category or location
+* view details
+* request materials
+* communicate with suppliers
+* coordinate pickup or delivery
+
+---
+
+## Transporter
+
+Transporters are local delivery providers.
+
+Examples:
+
+* mini truck drivers
+* pickup van owners
+* courier services
+* small logistics companies
+
+Transporters can:
+
+* register on the platform
+* list vehicle type
+* define price per km
+* define service area
+* accept transport requests
+* complete deliveries
+
+---
+
+## Administrator
+
+Admins manage the system.
+
+Admins can:
+
+* manage users
+* moderate listings
+* review flagged activity
+* monitor platform impact
+* view system analytics
+
+---
+
+# Core Platform Modules
+
+---
+
+# 1 User Authentication System
+
+Users must create accounts.
+
+Fields include:
+
+* name
+* email
+* password
+* role
+* location
+* organization name (optional)
+* phone number
+* profile image
+
+Use JWT authentication.
+
+Provide:
+
+* signup
+* login
+* profile editing
+
+---
+
+# 2 Material Listing System
+
+Suppliers can create reusable material listings.
+
+Each listing contains:
+
+* title
+* description
+* category
+* quantity
+* condition
+* location
+* images
+* price or donation indicator
+* supplier information
+* listing date
+* availability status
+
+Suppliers must be able to:
+
+* create listings
+* update listings
+* deactivate listings
+* delete listings
+
+Listings automatically become unavailable when quantity becomes zero.
+
+---
+
+# 3 Marketplace Discovery
+
+Users must be able to explore materials.
+
+Features include:
+
+Search functionality
+
+Filters:
+
+* category
+* location
+* condition
+* availability
+
+Sorting:
+
+* newest listings
+* nearest listings
+
+Listing preview must show:
+
+* image
+* title
+* category
+* quantity
+* condition
+* location
+
+---
+
+# 4 Material Request System
+
+Receivers can request materials.
+
+Request contains:
+
+* requested material
+* quantity
+* message
+* receiver information
+* request timestamp
+* request status
+
+Statuses include:
+
+pending
+accepted
+rejected
+completed
+
+Suppliers can approve or reject requests.
+
+---
+
+# 5 Smart Matching Engine
+
+The system should automatically suggest matches between supply and demand.
+
+Matching factors:
+
+* material category
+* keyword similarity
+* geographic distance
+* request urgency
+
+---
+
+# 6 Predictive Supplier Discovery System
+
+If a requested material is not currently available, the system should identify **potential suppliers**.
+
+Potential suppliers include users who:
+
+* previously listed similar materials
+* belong to industries likely to generate that material
+* are located near the requester
+
+The system notifies them that a material is requested.
+
+Suppliers can respond with:
+
+* available now
+* available later
+* not available
+
+---
+
+# 7 Future Availability Matching
+
+Suppliers can indicate materials that will become available in the future.
+
+Example:
+
+Material: Wooden pallets
+Available date: 18 March
+Quantity: 50
+
+Receivers can reserve future availability.
+
+---
+
+# 8 AI Sustainability Assistant
+
+An AI chatbot must help users understand reuse opportunities.
+
+Example questions:
+
+* Where can I find construction materials nearby?
+* What can I do with wooden pallets?
+* Which organizations might need this material?
+
+The assistant should provide intelligent recommendations.
+
+---
+
+# 9 AI Image Material Detection
+
+Users can upload an image when listing a material.
+
+AI should analyze the image and suggest:
+
+* material type
+* category
+* condition
+* reuse ideas
+
+---
+
+# 10 AI Reuse Recommendation
+
+The system generates reuse suggestions.
+
+Example:
+
+Material: Wooden pallets
+
+Suggestions:
+
+* furniture
+* garden planters
+* storage racks
+
+---
+
+# 11 Sustainability Impact Tracking
+
+The platform must estimate environmental impact.
+
+Metrics include:
+
+* CO₂ emissions saved
+* waste diverted from landfill
+* reuse transactions
+
+Example formula:
+
+CO₂ saved = material weight × emission factor
+
+---
+
+# 12 Landfill / Dumping Cost Estimator
+
+The system estimates landfill costs avoided.
+
+Example:
+
+Weight: 500kg
+Landfill cost per ton: ₹1500
+
+Cost saved = ₹750
+
+---
+
+# 13 Sustainability Impact Dashboard
+
+Dashboard must show:
+
+* total users
+* materials listed
+* materials reused
+* waste diverted
+* CO₂ saved
+
+Use charts such as:
+
+* category distribution
+* reuse trends
+* transaction analytics
+
+---
+
+# 14 Integrated Logistics Marketplace
+
+Transport providers can list their services.
+
+Transporter profile contains:
+
+* vehicle type
+* capacity
+* service area
+* price per km
+* availability
+* ratings
+
+---
+
+# 15 Transport Booking System
+
+Once a request is accepted, users can choose transport options:
+
+Self pickup
+Supplier delivery
+Book transporter
+
+---
+
+# 16 Nearby Transporter Matching
+
+The system suggests nearby transporters based on distance.
+
+Users can book a transporter directly.
+
+---
+
+# 17 Delivery Cost Estimator
+
+Estimate delivery cost based on:
+
+Base rate + distance × price per km
+
+---
+
+# 18 Route Optimization
+
+Use map integration to suggest the best transport route.
+
+---
+
+# 19 Delivery Tracking System
+
+Track transport progress:
+
+Pickup scheduled
+Material collected
+In transit
+Delivered
+Completed
+
+---
+
+# 20 Volunteer Transport Network
+
+Allow volunteers to help transport materials.
+
+They earn reward points for deliveries.
+
+---
+
+# 21 Review and Rating System
+
+Users can leave reviews after transactions.
+
+Each review includes:
+
+* rating
+* comment
+* timestamp
+
+---
+
+# 22 No Return Policy
+
+The platform follows a no-return policy due to the reused nature of materials.
+
+Transparency is ensured through:
+
+* images
+* inspection options
+* reviews
+
+---
+
+# 23 On-Site Inspection Agent (Future Scope)
+
+Users may request an inspection before accepting materials.
+
+An inspection agent visits the location and uploads:
+
+* photos
+* quality report
+* material condition score
+
+AI analyzes the inspection data and provides insights.
+
+Inspection service includes a fee.
+
+---
+
+# 24 Map-Based Marketplace
+
+Users can explore materials on an interactive map.
+
+---
+
+# 25 FAQ Page
+
+Include a help page explaining:
+
+* how listings work
+* how pickup works
+* sustainability metrics
+* platform rules
+
+---
+
+# 26 Modern UI / UX Design
+
+The platform must have a clean modern UI.
+
+Include:
+
+* responsive layout
+* animated dashboards
+* material cards
+* map view
+* floating AI assistant
+
+---
+
+# 27 Admin Panel
+
+Admins can:
+
+* manage users
+* moderate listings
+* view reports
+* analyze environmental impact
+
+---
+
+# Final Objective
+
+The system must demonstrate how technology enables a **circular economy** by redistributing reusable materials and reducing landfill waste.
+
+The final application should show:
+
+* material reuse marketplace
+* supply and demand matching
+* logistics coordination
+* measurable sustainability impact
+* AI-powered reuse guidance
+
+Build the full project structure including:
+
+frontend
+backend
+database models
+API routes
+core services
+and UI pages.
+
+Ensure the architecture is modular, scalable, and production ready.
